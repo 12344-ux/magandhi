@@ -48,11 +48,14 @@
     display:flex;align-items:center;justify-content:center;
     padding:26px 24px 6px;
   }
-  .hg-marca{display:flex;flex-direction:column;align-items:center;gap:9px}
-  .hg-marca img{width:52px;height:52px;display:block}
-  .hg-word{font-weight:600;font-size:22px;letter-spacing:.2em;color:var(--negro);line-height:1}
-  .hg-word i{color:var(--rojo);font-style:normal}
-  .hg-tag{font-size:10.5px;letter-spacing:.28em;text-transform:uppercase;color:var(--gris-cl)}
+  .hg-marca{display:flex;flex-direction:column;align-items:center;gap:12px}
+  .hg-marca img{width:76px;height:76px;display:block}
+  /* wordmark: todo negro, centrado y AJUSTADO (letter-spacing menor = letras juntas) */
+  .hg-word{
+    font-weight:600;font-size:26px;letter-spacing:.16em;color:var(--negro);
+    line-height:1;text-indent:.16em; /* compensa el spacing del último caracter para centrar óptico */
+  }
+  .hg-tag{font-size:10.5px;letter-spacing:.26em;text-transform:uppercase;color:var(--gris-cl);text-indent:.26em}
 
   /* ---------- intro corta ---------- */
   .hg-intro{max-width:620px;margin:14px auto 0;padding:0 24px;text-align:center}
@@ -152,8 +155,8 @@
 <!-- header -->
 <header class="hg-head">
   <div class="hg-marca">
-    <img src="logo-mark.png" alt="MAGANDHI">
-    <div class="hg-word">MAG<i>A</i>NDHI</div>
+    <img src="logo-mark-terracota.png" alt="MAGANDHI">
+    <div class="hg-word">MAGANDHI</div>
     <div class="hg-tag">Lo que encuentras aquí, está escogido</div>
   </div>
 </header>
