@@ -1,0 +1,409 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Shampoo Manzanilla Grisi Gold · MAGANDHI</title>
+<meta name="description" content="Shampoo de manzanilla con extracto de cúrcuma, marca Grisi. Escogido y revisado por el equipo de MAGANDHI.">
+<meta name="robots" content="noindex, nofollow">
+<link rel="icon" type="image/png" href="../../favicon.png">
+<meta name="theme-color" content="#D32F2F">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+<!--
+  MAGANDHI · PROTOTIPO de página de producto (solo diseño, no conecta nada).
+  · CSS autocontenido. Prefijo de clases mg- para no colisionar.
+  · Sistema de marca: rojo #D32F2F (acento/estructura), negro #111, hueso #FAF7F5, Poppins.
+  · ACENTO DE PRODUCTO: variable --acento (aquí DORADO para el Grisi Gold). Cambia por
+    producto (azul para un jabón, etc.) sin tocar el resto del sistema.
+  · Objetivo de percepción: "una tienda que llegó", no "una tienda empezando".
+  · Voz de marca: MAGANDHI / "el equipo". Nunca una persona individual.
+-->
+<style>
+  *{box-sizing:border-box}
+  :root{
+    --rojo:#D32F2F;
+    --rojo-osc:#B02525;
+    --negro:#111111;
+    --tinta:#1C1C1C;
+    --blanco:#FFFFFF;
+    --hueso:#FAF7F5;
+    --gris:#6B6B6B;
+    --gris-cl:#9A9A9A;
+    --linea:rgba(17,17,17,.10);
+
+    /* ---- ACENTO DEL PRODUCTO (dorado para el Grisi Gold) ---- */
+    --acento:#C9962E;
+    --acento-cl:#E7C56B;
+    --acento-sombra:rgba(201,150,46,.16);
+  }
+  html,body{margin:0;padding:0}
+  body{
+    background:var(--hueso);color:var(--tinta);
+    font-family:'Poppins',system-ui,-apple-system,'Segoe UI',Roboto,sans-serif;
+    line-height:1.65;-webkit-font-smoothing:antialiased;
+  }
+  a{color:inherit}
+
+  /* ---------- barra de confianza ---------- */
+  .mg-barra{
+    background:var(--negro);color:#fff;font-size:12.5px;letter-spacing:.3px;
+    display:flex;justify-content:center;gap:30px;padding:9px 16px;flex-wrap:wrap;
+  }
+  .mg-barra span{display:inline-flex;align-items:center;gap:7px;opacity:.92}
+  .mg-barra svg{width:15px;height:15px;flex:none}
+
+  /* ---------- header ---------- */
+  header{
+    display:flex;align-items:center;justify-content:space-between;
+    max-width:1120px;margin:0 auto;padding:18px 24px;gap:16px;
+  }
+  .mg-marca{display:flex;align-items:center;gap:11px;text-decoration:none}
+  .mg-marca img{width:38px;height:38px;display:block}
+  .mg-word{font-weight:600;font-size:20px;letter-spacing:.16em;color:var(--negro);line-height:1}
+  .mg-word i{color:var(--rojo);font-style:normal}
+  .mg-nav{display:flex;gap:24px;font-size:14px;font-weight:500}
+  .mg-nav a{text-decoration:none;color:var(--tinta);opacity:.8}
+  .mg-nav a:hover{opacity:1;color:var(--rojo)}
+  @media(max-width:720px){.mg-nav{display:none}}
+
+  /* ---------- migas ---------- */
+  .mg-migas{max-width:1120px;margin:0 auto;padding:8px 24px 0;font-size:12.5px;color:var(--gris-cl)}
+  .mg-migas a{text-decoration:none}
+  .mg-migas a:hover{color:var(--rojo)}
+
+  /* ---------- ficha de producto ---------- */
+  .mg-ficha{
+    max-width:1120px;margin:14px auto 0;padding:0 24px;
+    display:grid;grid-template-columns:1fr 1fr;gap:48px;align-items:start;
+  }
+  @media(max-width:860px){.mg-ficha{grid-template-columns:1fr;gap:28px}}
+
+  /* galería con el ACENTO del producto */
+  .mg-galeria{position:relative}
+  .mg-foto{
+    position:relative;background:var(--blanco);border-radius:18px;overflow:hidden;
+    border:1px solid var(--linea);
+    /* margen/acento del producto: filo superior de color */
+    box-shadow:0 18px 40px rgba(17,17,17,.06);
+    aspect-ratio:1/1;display:flex;align-items:center;justify-content:center;
+  }
+  .mg-foto::before{
+    content:"";position:absolute;inset:0;border-radius:18px;pointer-events:none;
+    border:1.5px solid var(--acento-cl);
+    box-shadow:inset 0 0 0 4px var(--acento-sombra);
+  }
+  .mg-foto__ph{
+    color:var(--gris-cl);font-size:13px;text-align:center;padding:24px;
+    display:flex;flex-direction:column;align-items:center;gap:10px;
+  }
+  .mg-foto__ph svg{width:46px;height:46px;color:var(--acento)}
+  .mg-tiras{display:flex;gap:10px;margin-top:12px}
+  .mg-tira{
+    width:64px;height:64px;border-radius:11px;background:var(--blanco);
+    border:1px solid var(--linea);flex:none;display:flex;align-items:center;justify-content:center;
+    color:var(--gris-cl);
+  }
+  .mg-tira.activa{border-color:var(--acento);box-shadow:0 0 0 2px var(--acento-sombra)}
+  .mg-tira svg{width:22px;height:22px}
+
+  /* info */
+  .mg-info{padding-top:4px}
+  .mg-sello{
+    display:inline-flex;align-items:center;gap:7px;
+    font-size:11.5px;font-weight:600;letter-spacing:.12em;text-transform:uppercase;
+    color:var(--acento);background:var(--acento-sombra);
+    border:1px solid var(--acento-cl);border-radius:999px;padding:5px 13px;
+  }
+  .mg-sello svg{width:14px;height:14px}
+  .mg-titulo{font-size:clamp(24px,3.6vw,32px);font-weight:600;line-height:1.2;margin:16px 0 4px;letter-spacing:-.3px}
+  .mg-sub{font-size:14.5px;color:var(--gris);margin:0 0 18px}
+  .mg-precio{display:flex;align-items:baseline;gap:10px;margin:0 0 6px}
+  .mg-precio b{font-size:28px;font-weight:600;color:var(--negro)}
+  .mg-precio small{font-size:13px;color:var(--gris-cl)}
+
+  .mg-estrellas{display:flex;align-items:center;gap:8px;font-size:13px;color:var(--gris);margin:0 0 22px}
+  .mg-estrellas .s{display:inline-flex;color:var(--acento)}
+  .mg-estrellas .s svg{width:16px;height:16px}
+  .mg-estrellas a{color:var(--rojo);text-decoration:none}
+  .mg-estrellas a:hover{text-decoration:underline}
+
+  .mg-desc{font-size:15px;color:#333;margin:0 0 22px;max-width:520px}
+
+  /* bloque de curaduría: el diferenciador */
+  .mg-curaduria{
+    background:var(--blanco);border:1px solid var(--linea);border-left:3px solid var(--acento);
+    border-radius:12px;padding:16px 18px;margin:0 0 24px;
+  }
+  .mg-curaduria h3{display:flex;align-items:center;gap:8px;font-size:13.5px;font-weight:600;margin:0 0 8px;letter-spacing:.02em}
+  .mg-curaduria h3 svg{width:17px;height:17px;color:var(--rojo)}
+  .mg-curaduria p{font-size:13.5px;color:var(--gris);margin:0}
+
+  .mg-cta{display:flex;gap:12px;flex-wrap:wrap;margin:0 0 16px}
+  .mg-btn{
+    font-family:inherit;font-size:15px;font-weight:600;cursor:pointer;border-radius:12px;
+    padding:14px 26px;border:0;transition:background .15s,transform .08s,box-shadow .15s;
+  }
+  .mg-btn--primario{background:var(--rojo);color:#fff}
+  .mg-btn--primario:hover{background:var(--rojo-osc)}
+  .mg-btn--primario:active{transform:translateY(1px)}
+  .mg-btn--wa{background:#fff;color:var(--tinta);border:1px solid var(--linea)}
+  .mg-btn--wa:hover{border-color:var(--rojo);color:var(--rojo)}
+  .mg-btn svg{width:17px;height:17px;vertical-align:-3px;margin-right:7px}
+
+  .mg-entrega{font-size:13px;color:var(--gris);display:flex;align-items:center;gap:8px}
+  .mg-entrega svg{width:16px;height:16px;color:var(--acento)}
+
+  /* ---------- detalle largo ---------- */
+  .mg-detalle{max-width:1120px;margin:56px auto 0;padding:0 24px;display:grid;grid-template-columns:1.3fr 1fr;gap:40px}
+  @media(max-width:860px){.mg-detalle{grid-template-columns:1fr;gap:24px}}
+  .mg-detalle h2{font-size:19px;font-weight:600;margin:0 0 14px}
+  .mg-detalle p{font-size:14.5px;color:#333;margin:0 0 14px}
+  .mg-tabla{width:100%;border-collapse:collapse;font-size:14px}
+  .mg-tabla td{padding:11px 4px;border-bottom:1px solid var(--linea)}
+  .mg-tabla td:first-child{color:var(--gris);width:44%}
+  .mg-tabla td:last-child{font-weight:500}
+
+  /* ---------- reseñas ---------- */
+  .mg-resenas{max-width:1120px;margin:56px auto 0;padding:0 24px}
+  .mg-resenas__cab{display:flex;align-items:flex-end;justify-content:space-between;gap:16px;flex-wrap:wrap;margin-bottom:20px}
+  .mg-resenas h2{font-size:22px;font-weight:600;margin:0}
+  .mg-prom{display:flex;align-items:center;gap:14px}
+  .mg-prom b{font-size:34px;font-weight:600;line-height:1}
+  .mg-prom .s{display:inline-flex;color:var(--acento)}
+  .mg-prom .s svg{width:18px;height:18px}
+  .mg-prom span{font-size:13px;color:var(--gris)}
+  .mg-grid-r{display:grid;grid-template-columns:repeat(2,1fr);gap:16px}
+  @media(max-width:720px){.mg-grid-r{grid-template-columns:1fr}}
+  .mg-resena{background:var(--blanco);border:1px solid var(--linea);border-radius:14px;padding:18px 20px}
+  .mg-resena__top{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px}
+  .mg-resena__pers{display:flex;align-items:center;gap:11px}
+  .mg-avatar{width:38px;height:38px;border-radius:50%;background:var(--acento-sombra);color:var(--acento);
+    display:flex;align-items:center;justify-content:center;font-weight:600;font-size:15px}
+  .mg-resena__nom{font-size:14px;font-weight:600;line-height:1.1}
+  .mg-resena__ver{font-size:11.5px;color:#1B7A46;display:flex;align-items:center;gap:4px}
+  .mg-resena__ver svg{width:13px;height:13px}
+  .mg-resena .s{display:inline-flex;color:var(--acento)}
+  .mg-resena .s svg{width:14px;height:14px}
+  .mg-resena p{font-size:14px;color:#333;margin:8px 0 0}
+  .mg-resena__fecha{font-size:12px;color:var(--gris-cl);margin-top:10px}
+  .mg-resena--vacia{border-style:dashed;text-align:center;color:var(--gris);font-size:14px;display:flex;flex-direction:column;gap:10px;align-items:center;justify-content:center;padding:30px}
+  .mg-resena--vacia svg{width:28px;height:28px;color:var(--acento)}
+
+  /* ---------- footer ---------- */
+  footer{margin-top:70px;border-top:1px solid var(--linea);background:#fff}
+  .mg-foot{max-width:1120px;margin:0 auto;padding:34px 24px;display:flex;justify-content:space-between;gap:24px;flex-wrap:wrap}
+  .mg-foot p{font-size:12.5px;color:var(--gris-cl);margin:0}
+  .mg-foot a{color:var(--gris);text-decoration:none;font-size:12.5px;margin-right:16px}
+  .mg-foot a:hover{color:var(--rojo)}
+
+  /* nota de prototipo */
+  .mg-nota-proto{
+    max-width:1120px;margin:20px auto 0;padding:12px 24px;
+  }
+  .mg-nota-proto div{
+    background:#FFF7E6;border:1px solid #F0D89A;border-radius:10px;padding:11px 15px;
+    font-size:12.5px;color:#8A6D1E;
+  }
+</style>
+</head>
+<body>
+
+<!-- barra de confianza -->
+<div class="mg-barra">
+  <span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z"/></svg>Cada producto revisado por el equipo</span>
+  <span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M7.9 20A9 9 0 1 0 4 16.1L2 22z"/></svg>Atención por WhatsApp</span>
+  <span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="14" rx="2"/><path d="M3 10h18M7 15h4"/></svg>Entrega local</span>
+</div>
+
+<!-- header -->
+<header>
+  <a class="mg-marca" href="../../index.html">
+    <img src="../../logo-mark.png" alt="MAGANDHI">
+    <span class="mg-word">MAG<i>A</i>NDHI</span>
+  </a>
+  <nav class="mg-nav">
+    <a href="#">Productos</a>
+    <a href="#">Cómo trabajamos</a>
+    <a href="#">Contacto</a>
+  </nav>
+</header>
+
+<div class="mg-nota-proto"><div><b>Prototipo de diseño.</b> Nada aquí está conectado todavía: los precios, reseñas y la foto son de ejemplo para ver la dirección visual. Lo revisamos y ajustamos juntos.</div></div>
+
+<!-- migas -->
+<div class="mg-migas"><a href="../../index.html">Inicio</a> › <a href="#">Cuidado personal</a> › Shampoo Manzanilla Grisi Gold</div>
+
+<!-- ficha -->
+<section class="mg-ficha">
+  <!-- galería -->
+  <div class="mg-galeria">
+    <div class="mg-foto">
+      <div class="mg-foto__ph">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="9" cy="9" r="2"/><path d="m21 15-3.09-3.09a2 2 0 0 0-2.82 0L6 21"/></svg>
+        Aquí va la foto real del<br>Shampoo Manzanilla Grisi Gold<br><small>(la sube el equipo)</small>
+      </div>
+    </div>
+    <div class="mg-tiras">
+      <div class="mg-tira activa"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="3" width="18" height="18" rx="2"/></svg></div>
+      <div class="mg-tira"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="3" width="18" height="18" rx="2"/></svg></div>
+      <div class="mg-tira"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="3" width="18" height="18" rx="2"/></svg></div>
+    </div>
+  </div>
+
+  <!-- info -->
+  <div class="mg-info">
+    <span class="mg-sello">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m9 12 2 2 4-4"/><circle cx="12" cy="12" r="10"/></svg>
+      Escogido por MAGANDHI
+    </span>
+    <h1 class="mg-titulo">Shampoo Manzanilla Grisi Gold</h1>
+    <p class="mg-sub">Con extracto de cúrcuma · 400 mL · Marca Grisi</p>
+
+    <div class="mg-precio"><b>$ 24.900</b><small>COP</small></div>
+
+    <div class="mg-estrellas">
+      <span class="s">
+        <svg viewBox="0 0 24 24" fill="currentColor"><path d="m12 2 3 6.3 6.9 1-5 4.9 1.2 6.8L12 17.8 5.9 21l1.2-6.8-5-4.9 6.9-1z"/></svg>
+        <svg viewBox="0 0 24 24" fill="currentColor"><path d="m12 2 3 6.3 6.9 1-5 4.9 1.2 6.8L12 17.8 5.9 21l1.2-6.8-5-4.9 6.9-1z"/></svg>
+        <svg viewBox="0 0 24 24" fill="currentColor"><path d="m12 2 3 6.3 6.9 1-5 4.9 1.2 6.8L12 17.8 5.9 21l1.2-6.8-5-4.9 6.9-1z"/></svg>
+        <svg viewBox="0 0 24 24" fill="currentColor"><path d="m12 2 3 6.3 6.9 1-5 4.9 1.2 6.8L12 17.8 5.9 21l1.2-6.8-5-4.9 6.9-1z"/></svg>
+        <svg viewBox="0 0 24 24" fill="currentColor"><path d="m12 2 3 6.3 6.9 1-5 4.9 1.2 6.8L12 17.8 5.9 21l1.2-6.8-5-4.9 6.9-1z"/></svg>
+      </span>
+      4.8 · <a href="#resenas">12 opiniones</a>
+    </div>
+
+    <p class="mg-desc">
+      Shampoo de manzanilla con extracto de cúrcuma de la marca Grisi, presentación de 400 mL.
+      Pensado para quienes buscan un shampoo de uso diario con ingredientes de origen botánico.
+    </p>
+
+    <div class="mg-curaduria">
+      <h3><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z"/></svg> Por qué está en MAGANDHI</h3>
+      <p>El equipo revisó este producto antes de ofrecerlo: verificamos que sea original, que esté
+      dentro de su fecha y que la presentación llegue en buen estado. Si algo no cumple, no entra.</p>
+    </div>
+
+    <div class="mg-cta">
+      <button class="mg-btn mg-btn--primario">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="8" cy="21" r="1"/><circle cx="19" cy="21" r="1"/><path d="M2.05 2.05h2l2.66 12.42a2 2 0 0 0 2 1.58h9.78a2 2 0 0 0 1.95-1.57l1.65-7.43H5.12"/></svg>
+        Comprar ahora
+      </button>
+      <button class="mg-btn mg-btn--wa">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M7.9 20A9 9 0 1 0 4 16.1L2 22z"/></svg>
+        Preguntar por WhatsApp
+      </button>
+    </div>
+    <p class="mg-entrega">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="1" y="3" width="15" height="13" rx="1"/><path d="M16 8h4l3 3v5h-7z"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></svg>
+      Entrega local · coordinamos día y hora contigo
+    </p>
+  </div>
+</section>
+
+<!-- detalle -->
+<section class="mg-detalle">
+  <div>
+    <h2>Sobre este producto</h2>
+    <p>La manzanilla es un ingrediente tradicional en el cuidado del cabello. Este shampoo de la
+    línea Gold de Grisi combina manzanilla con extracto de cúrcuma en una presentación de 400 mL
+    para uso diario.</p>
+    <p>MAGANDHI describe el producto tal como es: te contamos qué contiene y para qué tipo de uso
+    está pensado, sin prometer resultados que no podamos sostener. La información de ingredientes y
+    modo de uso viene del fabricante y está impresa en el envase.</p>
+  </div>
+  <div>
+    <h2>Ficha</h2>
+    <table class="mg-tabla">
+      <tr><td>Marca</td><td>Grisi</td></tr>
+      <tr><td>Línea</td><td>Manzanilla Gold</td></tr>
+      <tr><td>Contenido</td><td>400 mL</td></tr>
+      <tr><td>Tipo</td><td>Shampoo de uso diario</td></tr>
+      <tr><td>Ingrediente destacado</td><td>Manzanilla + cúrcuma</td></tr>
+      <tr><td>Disponibilidad</td><td>Entrega local</td></tr>
+    </table>
+  </div>
+</section>
+
+<!-- reseñas -->
+<section class="mg-resenas" id="resenas">
+  <div class="mg-resenas__cab">
+    <h2>Opiniones de quienes compraron</h2>
+    <div class="mg-prom">
+      <b>4.8</b>
+      <div>
+        <span class="s">
+          <svg viewBox="0 0 24 24" fill="currentColor"><path d="m12 2 3 6.3 6.9 1-5 4.9 1.2 6.8L12 17.8 5.9 21l1.2-6.8-5-4.9 6.9-1z"/></svg>
+          <svg viewBox="0 0 24 24" fill="currentColor"><path d="m12 2 3 6.3 6.9 1-5 4.9 1.2 6.8L12 17.8 5.9 21l1.2-6.8-5-4.9 6.9-1z"/></svg>
+          <svg viewBox="0 0 24 24" fill="currentColor"><path d="m12 2 3 6.3 6.9 1-5 4.9 1.2 6.8L12 17.8 5.9 21l1.2-6.8-5-4.9 6.9-1z"/></svg>
+          <svg viewBox="0 0 24 24" fill="currentColor"><path d="m12 2 3 6.3 6.9 1-5 4.9 1.2 6.8L12 17.8 5.9 21l1.2-6.8-5-4.9 6.9-1z"/></svg>
+          <svg viewBox="0 0 24 24" fill="currentColor"><path d="m12 2 3 6.3 6.9 1-5 4.9 1.2 6.8L12 17.8 5.9 21l1.2-6.8-5-4.9 6.9-1z"/></svg>
+        </span>
+        <span>basado en 12 opiniones verificadas</span>
+      </div>
+    </div>
+  </div>
+  <div class="mg-grid-r">
+    <div class="mg-resena">
+      <div class="mg-resena__top">
+        <div class="mg-resena__pers">
+          <div class="mg-avatar">L</div>
+          <div>
+            <div class="mg-resena__nom">Laura M.</div>
+            <div class="mg-resena__ver"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="m9 12 2 2 4-4"/></svg> Compra verificada</div>
+          </div>
+        </div>
+        <span class="s">
+          <svg viewBox="0 0 24 24" fill="currentColor"><path d="m12 2 3 6.3 6.9 1-5 4.9 1.2 6.8L12 17.8 5.9 21l1.2-6.8-5-4.9 6.9-1z"/></svg>
+          <svg viewBox="0 0 24 24" fill="currentColor"><path d="m12 2 3 6.3 6.9 1-5 4.9 1.2 6.8L12 17.8 5.9 21l1.2-6.8-5-4.9 6.9-1z"/></svg>
+          <svg viewBox="0 0 24 24" fill="currentColor"><path d="m12 2 3 6.3 6.9 1-5 4.9 1.2 6.8L12 17.8 5.9 21l1.2-6.8-5-4.9 6.9-1z"/></svg>
+          <svg viewBox="0 0 24 24" fill="currentColor"><path d="m12 2 3 6.3 6.9 1-5 4.9 1.2 6.8L12 17.8 5.9 21l1.2-6.8-5-4.9 6.9-1z"/></svg>
+          <svg viewBox="0 0 24 24" fill="currentColor"><path d="m12 2 3 6.3 6.9 1-5 4.9 1.2 6.8L12 17.8 5.9 21l1.2-6.8-5-4.9 6.9-1z"/></svg>
+        </span>
+      </div>
+      <p>Llegó bien empacado y en el día que acordamos. El trato por WhatsApp fue muy cercano.</p>
+      <div class="mg-resena__fecha">Hace 2 semanas</div>
+    </div>
+    <div class="mg-resena">
+      <div class="mg-resena__top">
+        <div class="mg-resena__pers">
+          <div class="mg-avatar">J</div>
+          <div>
+            <div class="mg-resena__nom">Julián R.</div>
+            <div class="mg-resena__ver"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="m9 12 2 2 4-4"/></svg> Compra verificada</div>
+          </div>
+        </div>
+        <span class="s">
+          <svg viewBox="0 0 24 24" fill="currentColor"><path d="m12 2 3 6.3 6.9 1-5 4.9 1.2 6.8L12 17.8 5.9 21l1.2-6.8-5-4.9 6.9-1z"/></svg>
+          <svg viewBox="0 0 24 24" fill="currentColor"><path d="m12 2 3 6.3 6.9 1-5 4.9 1.2 6.8L12 17.8 5.9 21l1.2-6.8-5-4.9 6.9-1z"/></svg>
+          <svg viewBox="0 0 24 24" fill="currentColor"><path d="m12 2 3 6.3 6.9 1-5 4.9 1.2 6.8L12 17.8 5.9 21l1.2-6.8-5-4.9 6.9-1z"/></svg>
+          <svg viewBox="0 0 24 24" fill="currentColor"><path d="m12 2 3 6.3 6.9 1-5 4.9 1.2 6.8L12 17.8 5.9 21l1.2-6.8-5-4.9 6.9-1z"/></svg>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m12 2 3 6.3 6.9 1-5 4.9 1.2 6.8L12 17.8 5.9 21l1.2-6.8-5-4.9 6.9-1z"/></svg>
+        </span>
+      </div>
+      <p>Buen producto y original. Me gustó que revisan antes de vender, se nota el cuidado.</p>
+      <div class="mg-resena__fecha">Hace 1 mes</div>
+    </div>
+  </div>
+</section>
+
+<!-- footer -->
+<footer>
+  <div class="mg-foot">
+    <div>
+      <p><b style="color:var(--negro)">MAGANDHI</b> · Lo que encuentras aquí, está escogido.</p>
+      <p style="margin-top:6px">magandhi.com · contacto@magandhi.com</p>
+    </div>
+    <div>
+      <a href="#">Cómo trabajamos</a>
+      <a href="#">Entregas</a>
+      <a href="#">Privacidad</a>
+      <a href="#">Condiciones</a>
+    </div>
+  </div>
+</footer>
+
+</body>
+</html>
