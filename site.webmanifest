@@ -1,0 +1,12 @@
+{
+  "name": "Magandhi",
+  "short_name": "Magandhi",
+  "icons": [
+    { "src": "icono-app-180.png?v=2", "sizes": "180x180", "type": "image/png" },
+    { "src": "icono-app.png?v=2", "sizes": "512x512", "type": "image/png", "purpose": "any maskable" }
+  ],
+  "theme_color": "#A6332E",
+  "background_color": "#A6332E",
+  "display": "standalone",
+  "start_url": "/"
+}
