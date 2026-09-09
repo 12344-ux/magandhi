@@ -1,0 +1,15 @@
+# Temporales de sistema
+.DS_Store
+Thumbs.db
+
+# Dependencias / entornos
+node_modules/
+__pycache__/
+*.pyc
+.venv/
+venv/
+
+# Artefactos temporales de render/verificación (no son fuente)
+*_check-*.png
+/tmp/
+media/
