@@ -139,17 +139,20 @@
   .hg-barra{
     position:fixed;left:0;right:0;bottom:0;height:var(--barra-h);z-index:50;
     background:rgba(17,17,17,.96);backdrop-filter:blur(6px);
-    display:flex;align-items:center;justify-content:center;gap:10px;
+    display:flex;align-items:center;justify-content:center;gap:14px;
     border-top:1px solid rgba(255,255,255,.08);
   }
-  .hg-barra a{
-    display:inline-flex;align-items:center;gap:8px;color:#fff;
-    font-size:13.5px;font-weight:500;opacity:.9;
-    padding:9px 18px;border-radius:10px;transition:background .15s,opacity .15s;
+  /* íconos de contacto: solo símbolos, sin texto */
+  .hg-barra a, .hg-barra span.ico{
+    display:inline-flex;align-items:center;justify-content:center;color:#fff;
+    width:42px;height:42px;border-radius:50%;
+    transition:background .15s,opacity .15s,transform .12s;
   }
-  .hg-barra a:hover{background:rgba(255,255,255,.10);opacity:1}
-  .hg-barra a svg{width:16px;height:16px}
-  .hg-barra .sep{width:1px;height:20px;background:rgba(255,255,255,.16)}
+  .hg-barra a{opacity:.9}
+  .hg-barra a:hover{background:rgba(255,255,255,.12);opacity:1;transform:translateY(-2px)}
+  .hg-barra a svg, .hg-barra span.ico svg{width:20px;height:20px}
+  /* canales aún no disponibles: atenuados y sin clic */
+  .hg-barra span.ico{opacity:.28;cursor:default}
 </style>
 </head>
 <body>
@@ -200,12 +203,24 @@
   </a>
 </section>
 
-<!-- barra fija inferior -->
-<nav class="hg-barra">
-  <a href="mailto:contacto@magandhi.com">
+<!-- barra fija inferior: solo íconos de contacto -->
+<nav class="hg-barra" aria-label="Canales de contacto">
+  <!-- Correo (activo) -->
+  <a href="mailto:contacto@magandhi.com" aria-label="Escríbenos por correo" title="Correo">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="m2 7 10 6 10-6"/></svg>
-    Contacto
   </a>
+  <!-- WhatsApp (activo) -->
+  <a href="https://wa.me/573132451188" target="_blank" rel="noopener" aria-label="Escríbenos por WhatsApp" title="WhatsApp">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M7.9 20A9 9 0 1 0 4 16.1L2 22z"/></svg>
+  </a>
+  <!-- Instagram (aún no disponible, atenuado sin clic) -->
+  <span class="ico" aria-label="Instagram (aún no disponible)" title="Instagram">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="2" width="20" height="20" rx="5"/><circle cx="12" cy="12" r="4"/><circle cx="17.5" cy="6.5" r="1"/></svg>
+  </span>
+  <!-- Facebook (aún no disponible, atenuado sin clic) -->
+  <span class="ico" aria-label="Facebook (aún no disponible)" title="Facebook">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M18 2h-3a5 5 0 0 0-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 0 1 1-1h3z"/></svg>
+  </span>
 </nav>
 
 </body>
