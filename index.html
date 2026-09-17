@@ -161,6 +161,19 @@
      acento, resalta sobre el fondo blanco del sello en cualquier categoria. */
   .hg-medalla__star{width:13px;height:13px;flex:none}
 
+  /* SELLO GEMELO para la zona blanca (solo movil): mismo sello, pero dentro del
+     texto en vez de sobre la foto. Oculto en PC (alli manda el de la foto). Chip
+     sobre fondo de acento suave para que resalte en cualquier color. */
+  .hg-sello-abajo{
+    display:none;align-items:center;gap:6px;align-self:flex-start;
+    background:var(--acento-sombra);color:var(--acento);
+    border:1px solid var(--acento-cl);border-radius:999px;
+    font-size:8.5px;font-weight:600;letter-spacing:.05em;text-transform:uppercase;
+    padding:5px 10px;margin-top:2px;
+  }
+  .hg-sello-abajo svg{width:11px;height:11px;flex:none}
+  .hg-sello-abajo .hg-medalla__star{width:10px;height:10px}
+
   /* lado del texto */
   .hg-cont{padding:22px 24px;display:flex;flex-direction:column;gap:2px;flex:1}
   .hg-kicker{
@@ -198,10 +211,13 @@
        tono boutique MAGANDHI (sin ofertas ni urgencia). Cada tarjeta muestra solo
        lo esencial para no saturar: categoria (con su color) + nombre + sello. El
        hook, el precio y el boton NO se muestran aqui (se ven al entrar al producto). */
-    .hg-vitrina{padding:0 16px}
-    .hg-grid{grid-template-columns:repeat(2,1fr);gap:14px}
+    .hg-vitrina{padding:0 12px}
+    /* gap pequeno = tarjetas "en escala" (coleccion continua, no botones de
+       categoria sueltos), pero con un respiro minimo para no perder el aire
+       boutique (no las pegamos del todo como un marketplace masivo). */
+    .hg-grid{grid-template-columns:repeat(2,1fr);gap:8px}
 
-    .hg-tarjeta{flex-direction:column;height:100%;border-radius:16px}
+    .hg-tarjeta{flex-direction:column;height:100%;border-radius:14px}
 
     .hg-foto{flex:none;height:150px}
     .hg-foto img{max-height:130px;max-width:80%}
@@ -213,13 +229,20 @@
     .hg-medalla svg{width:11px;height:11px}
     .hg-medalla__star{width:10px;height:10px}
 
-    .hg-cont{padding:13px 14px 16px;justify-content:flex-start;flex:1;min-width:0}
-    .hg-kicker{margin-bottom:7px;font-size:9px;letter-spacing:.1em}
-    .hg-nom{font-size:14.5px;line-height:1.25}
-    /* solo categoria + nombre + sello: se ocultan hook, precio y boton en movil */
-    .hg-meta,
+    .hg-cont{padding:12px 14px 15px;justify-content:flex-start;flex:1;min-width:0}
+    .hg-kicker{margin-bottom:6px;font-size:9px;letter-spacing:.1em}
+    .hg-nom{font-size:14.5px;line-height:1.25;margin:0 0 4px}
+    /* SI mostramos la meta (el dato en gris oscurito, como en PC): da vida a la
+       tarjeta y refuerza que es un PRODUCTO, no una categoria. */
+    .hg-meta{display:block;font-size:11.5px;margin:0 0 9px;color:var(--gris)}
+    /* se ocultan hook, precio y boton en movil (se ven al entrar al producto) */
     .hg-hook,
     .hg-fila{display:none}
+
+    /* SELLO 'Elegido por MAGANDHI' NO sobre la foto (ocupa mucho): en movil se
+       oculta el que va sobre la imagen y se muestra el gemelo de la zona blanca. */
+    .hg-foto .hg-medalla{display:none}
+    .hg-sello-abajo{display:inline-flex}
   }
 
   /* ---------- barra fija inferior ---------- */
@@ -268,7 +291,9 @@
       <div class="hg-foto">
         <!-- sello CON estrella: la estrella (opcional, simbolo con proposito para
              productos destacados) va DENTRO del sello. En Campanas sera un switch
-             por producto: el sello siempre aparece, la estrella solo si se activa. -->
+             por producto: el sello siempre aparece, la estrella solo si se activa.
+             POSICION: en PC va sobre la foto (absolute); en movil baja a la zona
+             blanca (ver media query) para no tapar el producto. -->
         <span class="hg-medalla hg-medalla--estrella">
           <svg class="hg-medalla__star" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="m12 2 3 6.3 6.9 1-5 4.9 1.2 6.8L12 17.8 5.9 21l1.2-6.8-5-4.9 6.9-1z"/></svg>
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m9 12 2 2 4-4"/><circle cx="12" cy="12" r="10"/></svg>
@@ -291,6 +316,11 @@
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
           </span>
         </div>
+        <span class="hg-sello-abajo hg-medalla--estrella">
+          <svg class="hg-medalla__star" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="m12 2 3 6.3 6.9 1-5 4.9 1.2 6.8L12 17.8 5.9 21l1.2-6.8-5-4.9 6.9-1z"/></svg>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m9 12 2 2 4-4"/><circle cx="12" cy="12" r="10"/></svg>
+          Elegido por MAGANDHI
+        </span>
       </div>
     </a>
 
@@ -317,6 +347,10 @@
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
           </span>
         </div>
+        <span class="hg-sello-abajo">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m9 12 2 2 4-4"/><circle cx="12" cy="12" r="10"/></svg>
+          Elegido por MAGANDHI
+        </span>
       </div>
     </a>
 
@@ -343,6 +377,10 @@
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
           </span>
         </div>
+        <span class="hg-sello-abajo">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m9 12 2 2 4-4"/><circle cx="12" cy="12" r="10"/></svg>
+          Elegido por MAGANDHI
+        </span>
       </div>
     </a>
 
@@ -369,6 +407,10 @@
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
           </span>
         </div>
+        <span class="hg-sello-abajo">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m9 12 2 2 4-4"/><circle cx="12" cy="12" r="10"/></svg>
+          Elegido por MAGANDHI
+        </span>
       </div>
     </a>
 
@@ -395,6 +437,10 @@
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
           </span>
         </div>
+        <span class="hg-sello-abajo">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m9 12 2 2 4-4"/><circle cx="12" cy="12" r="10"/></svg>
+          Elegido por MAGANDHI
+        </span>
       </div>
     </a>
 
