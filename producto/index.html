@@ -214,9 +214,11 @@
      hidden (aviso apagado), no se muestra vacio pese al display:inline-flex. */
   .mg-urgencia[hidden]{display:none}
 
-  /* AVISO "agotado": si stock_disponible es 0, chip sobrio en gris (no alarmista)
-     y el boton de compra queda deshabilitado (ver .mg-btn--primario:disabled).
-     Oculto por defecto; el script lo muestra solo si el stock es 0. */
+  /* AVISO "agotado": lo enciende el booleano catalogo_publico.agotado, derivado
+     del stock REAL de Inventario (existencias<=0); el numero exacto NUNCA se
+     expone. Chip sobrio en gris (no alarmista) y el boton de compra queda
+     deshabilitado (ver .mg-btn--primario:disabled). Oculto por defecto; el
+     script lo muestra solo si fila.agotado es true. */
   .mg-agotado{
     display:inline-flex;align-items:center;gap:7px;margin:0 0 16px;
     background:var(--hueso);color:var(--gris);
@@ -438,7 +440,8 @@
          Vacio por defecto; el script lo rellena solo si el switch esta activo. -->
     <div class="mg-urgencia" id="mg-urgencia" hidden></div>
 
-    <!-- aviso de agotado: el script lo muestra solo si stock_disponible es 0. -->
+    <!-- aviso de agotado: el script lo muestra solo si catalogo_publico.agotado
+         es true (stock real de Inventario en cero); el numero exacto no se expone. -->
     <div class="mg-agotado" id="mg-agotado" hidden>
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M4.9 4.9 19.1 19.1"/></svg>
       Agotado por ahora
@@ -653,8 +656,10 @@
        imagenes, conserva el placeholder dibujado.
      · Aviso "Solo X disponibles": switch por producto (aviso_urgencia_activo +
        aviso_urgencia_cantidad) que el dueno enciende desde Campanas.
-     · AGOTADO: si stock_disponible es 0, muestra el chip de agotado y DESHABILITA
-       el boton 'Comprar ahora'.
+     · AGOTADO: viene del booleano catalogo_publico.agotado (Inventario lo deriva
+       del stock REAL: existencias<=0). El numero exacto NUNCA se expone. Si es
+       true, muestra el chip de agotado, DESHABILITA el boton 'Comprar ahora' y
+       oculta el aviso de urgencia (el chip Agotado manda).
      · Si no hay slug/id o la fila no existe (producto despublicado / placeholder
        no publicado), muestra un aviso sobrio de no disponible sin romper la
        pagina. Las resenas quedan como ejemplo.
@@ -730,16 +735,21 @@
     el.hidden = false;
   }
 
-  // Estado AGOTADO: si stock_disponible es exactamente 0, muestra el chip de
-  // agotado y deshabilita el boton 'Comprar ahora'. Si es > 0 (o no viene el
-  // dato), comportamiento normal. El aviso de urgencia es independiente.
+  // Estado AGOTADO: viene del booleano catalogo_publico.agotado, que Inventario
+  // deriva del stock REAL (existencias<=0) del producto ligado. El numero exacto
+  // de unidades NUNCA se expone en la tienda; solo llega este true/false. Si es
+  // true, muestra el chip de agotado y deshabilita el boton 'Comprar ahora'.
+  // COHERENCIA: cuando esta agotado, ademas OCULTA el aviso de urgencia
+  // ('Solo X disponibles') para no contradecir (el chip Agotado manda). Se llama
+  // despues de pintarUrgencia, asi que aqui reforzamos el ocultado.
   function pintarAgotado(fila){
     const chip = document.getElementById('mg-agotado');
     const btn = document.getElementById('mg-comprar');
-    const stock = Number(fila.stock_disponible);
-    const agotado = Number.isFinite(stock) && stock === 0;
+    const urgencia = document.getElementById('mg-urgencia');
+    const agotado = fila.agotado === true;
     if(chip) chip.hidden = !agotado;
     if(btn) btn.disabled = agotado;
+    if(agotado && urgencia) urgencia.hidden = true;
   }
 
   // Rellena "Sobre este producto": el texto puede traer varios parrafos; se

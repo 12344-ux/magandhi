@@ -211,6 +211,22 @@
   }
   .hg-urgencia svg{width:13px;height:13px;flex:none}
 
+  /* ---------- chip de agotado (por producto) ----------
+     Lo enciende el booleano catalogo_publico.agotado, que Inventario deriva del
+     stock REAL (existencias<=0) del producto ligado. El numero exacto de unidades
+     NUNCA se expone en la tienda; solo llega este true/false. DISENO: mismo talle
+     que .hg-urgencia pero en GRIS neutro (hueso/gris/linea), sobrio y no alarmista,
+     coherente con el chip .mg-agotado de la pagina de producto. Solo se pinta si
+     fila.agotado es true. */
+  .hg-agotado{
+    display:inline-flex;align-items:center;gap:6px;align-self:flex-start;
+    background:var(--hueso);color:var(--gris);
+    border:1px solid var(--linea);border-radius:999px;
+    font-size:11px;font-weight:600;letter-spacing:.02em;
+    padding:5px 11px;margin:0 0 12px;
+  }
+  .hg-agotado svg{width:13px;height:13px;flex:none;color:var(--gris)}
+
   /* ============================================================
      MOVIL (<=760px): las tarjetas dejan de ser banner vertical y
      pasan a TARJETAS HORIZONTALES APILADAS: cuadrito de color a la
@@ -264,10 +280,12 @@
     /* SI mostramos la meta (el dato en gris oscurito, como en PC): da vida a la
        tarjeta y refuerza que es un PRODUCTO, no una categoria. */
     .hg-meta{display:block;font-size:11.5px;margin:0 0 9px;color:var(--gris)}
-    /* se ocultan hook, precio, boton y aviso de urgencia en movil (se ven al
-       entrar al producto; el escaparate movil muestra solo lo esencial) */
+    /* se ocultan hook, precio, boton, aviso de urgencia y chip de agotado en
+       movil (se ven al entrar al producto; el escaparate movil muestra solo lo
+       esencial) */
     .hg-hook,
     .hg-urgencia,
+    .hg-agotado,
     .hg-fila{display:none}
 
     /* SELLO 'Elegido por MAGANDHI' NO sobre la foto (ocupa mucho): en movil se
@@ -461,6 +479,10 @@
       (estrella ? ICONO_ESTRELLA : '') + ICONO_CHECK + ' Elegido por MAGANDHI</span>';
   }
 
+  // Icono sobrio para el chip de agotado (circulo con barra), coherente con el
+  // .mg-agotado de la pagina de producto (nada alarmista).
+  const ICONO_AGOTADO = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M4.9 4.9 19.1 19.1"/></svg>';
+
   // Aviso de urgencia: solo si el switch esta activo y hay cantidad valida (>0).
   function avisoUrgencia(fila){
     if(!fila.aviso_urgencia_activo) return '';
@@ -468,6 +490,15 @@
     if(!Number.isFinite(cant) || cant <= 0) return '';
     const texto = 'Solo ' + cant + (cant === 1 ? ' disponible' : ' disponibles');
     return '<span class="hg-urgencia">' + ICONO_CAJA + esc(texto) + '</span>';
+  }
+
+  // Chip de AGOTADO: viene del booleano catalogo_publico.agotado, que Inventario
+  // deriva del stock REAL (existencias<=0) del producto ligado. El numero exacto
+  // NUNCA se expone; solo llega este true/false. Chip sobrio en gris (no
+  // alarmista), coherente con el .mg-agotado de la pagina de producto.
+  function selloAgotado(fila){
+    if(fila.agotado !== true) return '';
+    return '<span class="hg-agotado">' + ICONO_AGOTADO + 'Agotado</span>';
   }
 
   function tarjeta(fila){
@@ -507,7 +538,11 @@
         '<h2 class="hg-nom">' + esc(fila.nombre) + '</h2>' +
         '<p class="hg-meta">' + esc(fila.detalle_presentacion || '') + '</p>' +
         '<p class="hg-hook">' + esc(fila.hook_corto || '') + '</p>' +
-        avisoUrgencia(fila) +
+        // COHERENCIA: si el producto esta agotado, mostramos SOLO el chip
+        // 'Agotado' y ocultamos el aviso 'Solo X disponibles' (evita el mensaje
+        // contradictorio 'Solo 3 disponibles' + 'Agotado'; el chip Agotado manda).
+        // Si no esta agotado, se pinta el aviso de urgencia normal (manual).
+        (fila.agotado === true ? selloAgotado(fila) : avisoUrgencia(fila)) +
         '<div class="hg-fila">' +
           '<span class="hg-precio"><b>' + esc(formatearPrecio(fila.precio_venta)) + '</b><small>COP</small></span>' +
           '<span class="hg-ir">Ver producto' + ICONO_FLECHA + '</span>' +

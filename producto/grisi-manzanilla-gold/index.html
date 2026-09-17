@@ -200,6 +200,20 @@
      hidden (aviso apagado), no se muestra vacio pese al display:inline-flex. */
   .mg-urgencia[hidden]{display:none}
 
+  /* AVISO "agotado": lo enciende el booleano catalogo_publico.agotado, derivado
+     del stock REAL de Inventario (existencias<=0); el numero exacto NUNCA se
+     expone. Mismo patron sobrio en gris (no alarmista) de la pagina de producto
+     generica. Oculto por defecto; el script lo muestra solo si fila.agotado
+     es true, y ademas deshabilita el boton 'Comprar ahora'. */
+  .mg-agotado{
+    display:inline-flex;align-items:center;gap:7px;margin:0 0 16px;
+    background:var(--hueso);color:var(--gris);
+    border:1px solid var(--linea);border-radius:999px;
+    font-size:12.5px;font-weight:600;letter-spacing:.02em;padding:6px 13px;
+  }
+  .mg-agotado svg{width:15px;height:15px;flex:none;color:var(--gris)}
+  .mg-agotado[hidden]{display:none}
+
   /* AVISO "no disponible": si el producto se despublica (no esta en catalogo_publico)
      se muestra un mensaje sobrio, sin romper la pagina. */
   .mg-nodisp{
@@ -236,6 +250,12 @@
   .mg-btn--primario{background:var(--rojo);color:#fff}
   .mg-btn--primario:hover{background:var(--rojo-osc)}
   .mg-btn--primario:active{transform:translateY(1px)}
+  /* AGOTADO: cuando el script pone disabled al boton 'Comprar ahora', queda
+     apagado y sin interaccion (coherente con el chip .mg-agotado). */
+  .mg-btn--primario:disabled{
+    background:var(--gris-cl);color:#fff;cursor:not-allowed;opacity:.75;
+  }
+  .mg-btn--primario:disabled:hover{background:var(--gris-cl);transform:none}
   .mg-btn--wa{background:#fff;color:var(--tinta);border:1px solid var(--linea)}
   .mg-btn--wa:hover{border-color:var(--rojo);color:var(--rojo)}
   .mg-btn svg{width:17px;height:17px;vertical-align:-3px;margin-right:7px}
@@ -406,6 +426,13 @@
          Vacio por defecto; el script lo rellena solo si el switch esta activo. -->
     <div class="mg-urgencia" id="mg-urgencia" hidden></div>
 
+    <!-- aviso de agotado: el script lo muestra solo si catalogo_publico.agotado
+         es true (stock real de Inventario en cero); el numero exacto no se expone. -->
+    <div class="mg-agotado" id="mg-agotado" hidden>
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M4.9 4.9 19.1 19.1"/></svg>
+      Agotado por ahora
+    </div>
+
     <div class="mg-estrellas">
       <span class="s">
         <svg viewBox="0 0 24 24" fill="currentColor"><path d="m12 2 3 6.3 6.9 1-5 4.9 1.2 6.8L12 17.8 5.9 21l1.2-6.8-5-4.9 6.9-1z"/></svg>
@@ -429,7 +456,7 @@
     </div>
 
     <div class="mg-cta">
-      <button class="mg-btn mg-btn--primario">
+      <button class="mg-btn mg-btn--primario" id="mg-comprar">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="8" cy="21" r="1"/><circle cx="19" cy="21" r="1"/><path d="M2.05 2.05h2l2.66 12.42a2 2 0 0 0 2 1.58h9.78a2 2 0 0 0 1.95-1.57l1.65-7.43H5.12"/></svg>
         Comprar ahora
       </button>
@@ -694,6 +721,23 @@
     el.hidden = false;
   }
 
+  // Estado AGOTADO: viene del booleano catalogo_publico.agotado, que Inventario
+  // deriva del stock REAL (existencias<=0) del producto ligado. El numero exacto
+  // de unidades NUNCA se expone en la tienda; solo llega este true/false. Si es
+  // true, muestra el chip de agotado y deshabilita el boton 'Comprar ahora'.
+  // COHERENCIA: cuando esta agotado, ademas OCULTA el aviso de urgencia
+  // ('Solo X disponibles') para no contradecir (el chip Agotado manda). Se llama
+  // despues de pintarUrgencia, asi que aqui reforzamos el ocultado.
+  function pintarAgotado(fila){
+    const chip = document.getElementById('mg-agotado');
+    const btn = document.getElementById('mg-comprar');
+    const urgencia = document.getElementById('mg-urgencia');
+    const agotado = fila.agotado === true;
+    if(chip) chip.hidden = !agotado;
+    if(btn) btn.disabled = agotado;
+    if(agotado && urgencia) urgencia.hidden = true;
+  }
+
   // Rellena "Sobre este producto": el texto puede traer varios parrafos; se
   // parte por saltos de linea y se pinta un <p> por parrafo (escapado).
   function pintarSobre(texto){
@@ -742,6 +786,7 @@
       pintarSobre(data.sobre_este_producto);
       pintarFicha(data.ficha_tecnica);
       pintarUrgencia(data);
+      pintarAgotado(data);
     }catch(e){
       // Falla de red/consulta: se deja el contenido de respaldo (no se rompe).
       console.error('No se pudo cargar el producto desde Campanas:', e);
