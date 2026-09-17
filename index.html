@@ -212,12 +212,14 @@
        lo esencial para no saturar: categoria (con su color) + nombre + sello. El
        hook, el precio y el boton NO se muestran aqui (se ven al entrar al producto). */
     .hg-vitrina{padding:0 12px}
-    /* gap pequeno = tarjetas "en escala" (coleccion continua, no botones de
-       categoria sueltos), pero con un respiro minimo para no perder el aire
-       boutique (no las pegamos del todo como un marketplace masivo). */
-    .hg-grid{grid-template-columns:repeat(2,1fr);gap:8px}
+    /* gap pequeno = tarjetas "en escala", con respiro minimo (aire boutique). */
+    /* align-items:start = cada tarjeta mide segun SU contenido (no se estira a
+       la altura de su vecina). Asi las de menos texto (ej. Serum rosa) quedan
+       mas cortas y nace el ZIGZAG natural tipo Pinterest, sin forzar nada. */
+    .hg-grid{grid-template-columns:repeat(2,1fr);gap:8px;align-items:start}
 
-    .hg-tarjeta{flex-direction:column;height:100%;border-radius:14px}
+    /* height:auto (no 100%) para que la tarjeta se ajuste a su contenido. */
+    .hg-tarjeta{flex-direction:column;height:auto;border-radius:14px}
 
     .hg-foto{flex:none;height:150px}
     .hg-foto img{max-height:130px;max-width:80%}
