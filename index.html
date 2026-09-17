@@ -119,7 +119,10 @@
 
   /* panel del color de la categoria (antes rojo fijo, ahora --acento por tarjeta) */
   .hg-foto{
-    position:relative;flex:1;min-height:220px;
+    /* ALTURA FIJA (antes flex:1): asi el panel de color mide IGUAL en todas las
+       tarjetas. Con flex:1 el panel crecia para rellenar el espacio sobrante en
+       las tarjetas con menos texto (naranja/azul), quedando disparejo. */
+    position:relative;flex:none;height:230px;
     background:
       radial-gradient(120% 90% at 50% 0%, var(--acento-cl) 0%, var(--acento) 58%, var(--acento) 100%);
     display:flex;align-items:center;justify-content:center;overflow:hidden;
@@ -162,7 +165,7 @@
   .hg-estrella svg{width:19px;height:19px}
 
   /* lado del texto */
-  .hg-cont{padding:22px 24px;display:flex;flex-direction:column;gap:2px}
+  .hg-cont{padding:22px 24px;display:flex;flex-direction:column;gap:2px;flex:1}
   .hg-kicker{
     font-size:10.5px;font-weight:600;letter-spacing:.14em;text-transform:uppercase;
     color:var(--acento);margin-bottom:9px;display:inline-flex;align-items:center;gap:7px;
@@ -198,7 +201,7 @@
     .hg-tarjeta{flex-direction:row;align-items:stretch;height:auto}
 
     .hg-foto{
-      flex:none;width:118px;min-height:0;
+      flex:none;width:118px;height:auto;min-height:0;
     }
     .hg-foto img{max-height:96px;max-width:82%}
     .hg-foto__ph{width:72px;height:72px;border-radius:16px}
