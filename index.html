@@ -441,7 +441,6 @@
 
   // Icono neutral para el kicker de categoria (el diseno usa un simbolo pequeno;
   // aqui va uno unico y sobrio, ya que el icono no viaja en catalogo_publico).
-  const ICONO_KICKER = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2v20M2 12h20"/></svg>';
   const ICONO_CHECK = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m9 12 2 2 4-4"/><circle cx="12" cy="12" r="10"/></svg>';
   const ICONO_ESTRELLA = '<svg class="hg-medalla__star" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="m12 2 3 6.3 6.9 1-5 4.9 1.2 6.8L12 17.8 5.9 21l1.2-6.8-5-4.9 6.9-1z"/></svg>';
   const ICONO_FLECHA = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M12 5l7 7-7 7"/></svg>';
@@ -504,7 +503,7 @@
         img +
       '</div>' +
       '<div class="hg-cont">' +
-        '<span class="hg-kicker">' + ICONO_KICKER + ' ' + esc(fila.categoria_nombre || '') + '</span>' +
+        '<span class="hg-kicker">' + esc(fila.categoria_nombre || '') + '</span>' +
         '<h2 class="hg-nom">' + esc(fila.nombre) + '</h2>' +
         '<p class="hg-meta">' + esc(fila.detalle_presentacion || '') + '</p>' +
         '<p class="hg-hook">' + esc(fila.hook_corto || '') + '</p>' +
