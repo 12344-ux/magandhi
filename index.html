@@ -194,6 +194,23 @@
   }
   .hg-ir svg{width:16px;height:16px}
 
+  /* ---------- aviso de urgencia (opcional, por producto) ----------
+     "Solo X disponibles". Es un SWITCH por producto que el dueno enciende
+     desde Campanas (aviso_urgencia_activo) definiendo el numero a mostrar
+     (aviso_urgencia_cantidad). Tiene sentido conectado al inventario: se
+     prende en el momento adecuado (por ejemplo cuando queden pocas unidades).
+     DISENO: chip sobrio en el color de la categoria (nada de rojo de oferta ni
+     urgencia agresiva), coherente con el alma boutique. Solo se pinta si el
+     switch esta activo Y hay una cantidad valida (>0). */
+  .hg-urgencia{
+    display:inline-flex;align-items:center;gap:6px;align-self:flex-start;
+    background:var(--acento-sombra);color:var(--acento);
+    border:1px solid var(--acento-cl);border-radius:999px;
+    font-size:11px;font-weight:600;letter-spacing:.02em;
+    padding:5px 11px;margin:0 0 12px;
+  }
+  .hg-urgencia svg{width:13px;height:13px;flex:none}
+
   /* ============================================================
      MOVIL (<=760px): las tarjetas dejan de ser banner vertical y
      pasan a TARJETAS HORIZONTALES APILADAS: cuadrito de color a la
@@ -247,8 +264,10 @@
     /* SI mostramos la meta (el dato en gris oscurito, como en PC): da vida a la
        tarjeta y refuerza que es un PRODUCTO, no una categoria. */
     .hg-meta{display:block;font-size:11.5px;margin:0 0 9px;color:var(--gris)}
-    /* se ocultan hook, precio y boton en movil (se ven al entrar al producto) */
+    /* se ocultan hook, precio, boton y aviso de urgencia en movil (se ven al
+       entrar al producto; el escaparate movil muestra solo lo esencial) */
     .hg-hook,
+    .hg-urgencia,
     .hg-fila{display:none}
 
     /* SELLO 'Elegido por MAGANDHI' NO sobre la foto (ocupa mucho): en movil se
@@ -295,9 +314,15 @@
 
 <!-- vitrina: grid de productos (color = categoria) -->
 <section class="hg-vitrina">
-  <div class="hg-grid">
+  <!-- GRID DINAMICO: las tarjetas se pintan desde Supabase (vista catalogo_publico)
+       manteniendo EXACTO el marcado/estilos aprobados. El render (mismo marcado,
+       clases y variables de color que las tarjetas originales) vive en el
+       <script type=module> del final de la pagina. Si no hay datos o falla la
+       consulta, el grid queda vacio sin romper la pagina. -->
+  <div class="hg-grid" id="hg-grid" aria-live="polite"></div>
 
-    <!-- 1 · PRODUCTO ESTRELLA · Grisi Manzanilla Gold · cuidado del cabello · DORADO de firma -->
+  <template id="hg-plantilla-referencia">
+
     <a class="hg-tarjeta" href="producto/grisi-manzanilla-gold/"
        style="--acento:#C9962E;--acento-cl:#E7C56B;--acento-sombra:rgba(201,150,46,.18)">
       <div class="hg-foto">
@@ -456,10 +481,140 @@
       </div>
     </a>
 
-  </div>
+  </template>
 
-  <!-- nota: los 4 productos sin pagina son de EJEMPLO (se ajustan desde Campanas) -->
+  <!-- nota: la vitrina se llena desde Campanas; los productos sin pagina propia
+       enlazan a "#" (el dueno los ajusta desde el software Campanas) -->
 </section>
+
+<!-- ============================================================
+     RENDER DINAMICO DE LA VITRINA (desde Campanas / Supabase)
+     ------------------------------------------------------------
+     · Lee SOLO la vista publica catalogo_publico (productos publicados y
+       campos publicos). Nunca toca tablas internas ni etiquetas.
+     · Reproduce EXACTO el marcado/clases de las tarjetas aprobadas: mismo
+       sistema color=categoria (variables inline --acento/--acento-cl/
+       --acento-sombra), sello condicional, estrella condicional, sello-abajo
+       (movil), placeholder cuando no hay imagen.
+     · Aviso de urgencia "Solo X disponibles": switch por producto que el dueno
+       enciende desde Campanas (aviso_urgencia_activo + aviso_urgencia_cantidad).
+     · Si la consulta falla o no hay datos, degrada sobrio sin romper la pagina.
+     ============================================================ -->
+<script type="module">
+  import { supabase } from './supabase-config.js';
+
+  // Escapa texto que venga de datos antes de inyectarlo como HTML (este repo no
+  // tiene un core compartido, asi que el helper vive aqui).
+  function esc(v){
+    if(v === null || v === undefined) return '';
+    return String(v)
+      .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
+      .replace(/"/g,'&quot;').replace(/'/g,'&#39;');
+  }
+
+  // Formatea el precio como en el diseno aprobado: "$ 24.900" (miles con punto).
+  function formatearPrecio(valor){
+    const n = Number(valor);
+    if(!Number.isFinite(n)) return '';
+    return '$ ' + Math.round(n).toLocaleString('es-CO');
+  }
+
+  // Unico producto con pagina real hoy. Los demas enlazan a "#" (comportamiento
+  // actual) hasta que tengan su propia pagina.
+  const PAGINAS = {
+    'Shampoo Manzanilla GRISI Gold': 'producto/grisi-manzanilla-gold/'
+  };
+
+  // Icono neutral para el kicker de categoria (el diseno usa un simbolo pequeno;
+  // aqui va uno unico y sobrio, ya que el icono no viaja en catalogo_publico).
+  const ICONO_KICKER = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2v20M2 12h20"/></svg>';
+  const ICONO_CHECK = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m9 12 2 2 4-4"/><circle cx="12" cy="12" r="10"/></svg>';
+  const ICONO_ESTRELLA = '<svg class="hg-medalla__star" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="m12 2 3 6.3 6.9 1-5 4.9 1.2 6.8L12 17.8 5.9 21l1.2-6.8-5-4.9 6.9-1z"/></svg>';
+  const ICONO_FLECHA = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M12 5l7 7-7 7"/></svg>';
+  const ICONO_CAJA = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M20 7 12 3 4 7v10l8 4 8-4z"/><path d="m4 7 8 4 8-4"/><path d="M12 11v10"/></svg>';
+  // Placeholder dibujado para productos sin foto real (como en el diseno actual).
+  const ICONO_PH = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="9" cy="9" r="2"/><path d="m21 15-3.09-3.09a2 2 0 0 0-2.82 0L6 21"/></svg>';
+
+  // Sello "Elegido por MAGANDHI" (con estrella opcional). Reproduce el marcado
+  // aprobado: sobre la foto en PC, gemelo en la zona blanca para movil.
+  function selloFoto(estrella){
+    const clase = estrella ? 'hg-medalla hg-medalla--estrella' : 'hg-medalla';
+    return '<span class="' + clase + '">' +
+      (estrella ? ICONO_ESTRELLA : '') + ICONO_CHECK + ' Elegido por MAGANDHI</span>';
+  }
+  function selloAbajo(estrella){
+    const clase = estrella ? 'hg-sello-abajo hg-medalla--estrella' : 'hg-sello-abajo';
+    return '<span class="' + clase + '">' +
+      (estrella ? ICONO_ESTRELLA : '') + ICONO_CHECK + ' Elegido por MAGANDHI</span>';
+  }
+
+  // Aviso de urgencia: solo si el switch esta activo y hay cantidad valida (>0).
+  function avisoUrgencia(fila){
+    if(!fila.aviso_urgencia_activo) return '';
+    const cant = Number(fila.aviso_urgencia_cantidad);
+    if(!Number.isFinite(cant) || cant <= 0) return '';
+    const texto = 'Solo ' + cant + (cant === 1 ? ' disponible' : ' disponibles');
+    return '<span class="hg-urgencia">' + ICONO_CAJA + esc(texto) + '</span>';
+  }
+
+  function tarjeta(fila){
+    const href = PAGINAS[fila.nombre] || '#';
+    const acento  = fila.color_fuerte  || '#B23A2E';
+    const acentoCl = fila.color_claro  || '#D98A80';
+    const acentoSb = fila.color_sombra || 'rgba(178,58,46,.15)';
+    const estilo = '--acento:' + esc(acento) + ';--acento-cl:' + esc(acentoCl) +
+                   ';--acento-sombra:' + esc(acentoSb);
+
+    // Zona de la foto: imagen real si el producto la trae; si no, placeholder.
+    const img = fila.imagen_banner_path
+      ? '<img src="' + esc(fila.imagen_banner_path) + '" alt="' + esc(fila.nombre) + '">'
+      : '<span class="hg-foto__ph" aria-hidden="true">' + ICONO_PH + '</span>';
+
+    return '' +
+    '<a class="hg-tarjeta" href="' + esc(href) + '" style="' + estilo + '">' +
+      '<div class="hg-foto">' +
+        (fila.sello_elegido ? selloFoto(fila.estrella) : '') +
+        img +
+      '</div>' +
+      '<div class="hg-cont">' +
+        '<span class="hg-kicker">' + ICONO_KICKER + ' ' + esc(fila.categoria_nombre || '') + '</span>' +
+        '<h2 class="hg-nom">' + esc(fila.nombre) + '</h2>' +
+        '<p class="hg-meta">' + esc(fila.detalle_presentacion || '') + '</p>' +
+        '<p class="hg-hook">' + esc(fila.hook_corto || '') + '</p>' +
+        avisoUrgencia(fila) +
+        '<div class="hg-fila">' +
+          '<span class="hg-precio"><b>' + esc(formatearPrecio(fila.precio_venta)) + '</b><small>COP</small></span>' +
+          '<span class="hg-ir">Ver producto' + ICONO_FLECHA + '</span>' +
+        '</div>' +
+        (fila.sello_elegido ? selloAbajo(fila.estrella) : '') +
+      '</div>' +
+    '</a>';
+  }
+
+  async function pintarVitrina(){
+    const grid = document.getElementById('hg-grid');
+    if(!grid) return;
+    try{
+      const { data, error } = await supabase
+        .from('catalogo_publico')
+        .select('*')
+        .order('orden', { ascending: true });
+      if(error) throw error;
+      if(!data || data.length === 0){
+        // Sin datos: degradar sobrio, sin romper la pagina.
+        grid.innerHTML = '';
+        return;
+      }
+      grid.innerHTML = data.map(tarjeta).join('');
+    }catch(e){
+      // Falla de red/consulta: no romper el home; dejar la vitrina vacia.
+      console.error('No se pudo cargar la vitrina desde Campanas:', e);
+      grid.innerHTML = '';
+    }
+  }
+
+  pintarVitrina();
+</script>
 
 <!-- barra fija inferior: solo iconos de contacto -->
 <nav class="hg-barra" aria-label="Canales de contacto">
