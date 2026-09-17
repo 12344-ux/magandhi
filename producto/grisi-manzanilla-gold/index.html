@@ -81,6 +81,20 @@
   .mg-nav a{text-decoration:none;color:var(--tinta);opacity:.8}
   .mg-nav a:hover{opacity:1;color:var(--rojo)}
   @media(max-width:720px){.mg-nav{display:none}}
+  /* BARRA DE CONFIANZA COMPACTA EN MOVIL (opcion B): en vez de apilarse en 3
+     lineas altas (flex-wrap ocupaba media pantalla), queda en UNA franja
+     delgada: fuente y gap menores, sin envolver, con scroll horizontal suave si
+     no cabe. Los 3 mensajes de confianza SIGUEN visibles (son senales de venta). */
+  @media(max-width:720px){
+    .mg-barra{
+      flex-wrap:nowrap;justify-content:flex-start;gap:16px;
+      font-size:10.5px;letter-spacing:.2px;padding:8px 14px;
+      overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:none;
+    }
+    .mg-barra::-webkit-scrollbar{display:none}
+    .mg-barra span,.mg-barra-btn{white-space:nowrap;flex:none}
+    .mg-barra svg{width:13px;height:13px}
+  }
 
   /* ---------- migas ---------- */
   .mg-migas{max-width:1120px;margin:0 auto;padding:8px 24px 0;font-size:12.5px;color:var(--gris-cl)}
@@ -97,9 +111,17 @@
   /* galería con el ACENTO del producto */
   .mg-galeria{position:relative}
   .mg-foto{
-    position:relative;background:var(--blanco);border-radius:18px;overflow:hidden;
+    position:relative;border-radius:18px;overflow:hidden;
     border:1px solid var(--linea);
-    /* margen/acento del producto: filo superior de color */
+    /* BANO DE COLOR del acento (antes blanco plano): un gradiente radial suave
+       da la calidez/brillo del acento (como el panel del home) SIN saturar, para
+       que la foto real del producto siga resaltando cuando se suba. */
+    background:
+      radial-gradient(120% 95% at 50% 0%,
+        var(--acento-sombra) 0%,
+        rgba(255,255,255,.72) 55%,
+        var(--blanco) 100%),
+      var(--blanco);
     box-shadow:0 18px 40px rgba(17,17,17,.06);
     aspect-ratio:1/1;display:flex;align-items:center;justify-content:center;
   }
@@ -190,7 +212,9 @@
   .mg-prom span{font-size:13px;color:var(--gris)}
   .mg-grid-r{display:grid;grid-template-columns:repeat(2,1fr);gap:16px}
   @media(max-width:720px){.mg-grid-r{grid-template-columns:1fr}}
-  .mg-resena{background:var(--blanco);border:1px solid var(--linea);border-radius:14px;padding:18px 20px;
+  /* contorno de la tarjeta de resena = color de la CATEGORIA del producto
+     (via --acento-cl), como pidio el dueno. Las estrellas NO cambian (ver abajo). */
+  .mg-resena{background:var(--blanco);border:1px solid var(--acento-cl);border-radius:14px;padding:18px 20px;
     transition:transform .12s ease, box-shadow .12s ease, border-color .12s ease}
   /* eleva al pasar el cursor, como las tarjetas del back-office Impulse */
   .mg-resena:hover{transform:translateY(-3px);box-shadow:0 10px 26px rgba(17,17,17,.09);border-color:var(--acento-cl)}
