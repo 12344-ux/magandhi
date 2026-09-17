@@ -106,11 +106,7 @@
   .hg-tarjeta{
     display:flex;flex-direction:column;position:relative;
     border-radius:20px;overflow:hidden;
-    /* CONTORNO TERRACOTA DE MARCA (experimento): unifica todas las tarjetas con
-       el rojo-terracota de MAGANDHI (el del 'descubrelo'), SIN tocar el color
-       de fondo de cada foto (que sigue siendo el de su categoria). Se prueba
-       para ver si unifica sin restarle significado al sistema color=categoria. */
-    background:var(--blanco);border:1.5px solid var(--red-500);
+    background:var(--blanco);border:1px solid var(--acento-sombra);
     box-shadow:0 14px 36px rgba(17,17,17,.07);
     transition:transform .22s ease,box-shadow .22s ease,border-color .22s ease;
     cursor:pointer;height:100%;
@@ -118,7 +114,7 @@
   .hg-tarjeta:hover{
     transform:translateY(-6px);
     box-shadow:0 26px 58px var(--acento-sombra);
-    border-color:var(--red-700);   /* hover: terracota mas intenso (experimento) */
+    border-color:var(--acento-cl);
   }
   .hg-tarjeta:hover .hg-foto img{transform:scale(1.045)}
   .hg-tarjeta:hover .hg-ir{gap:12px}
@@ -220,10 +216,25 @@
     /* align-items:start = cada tarjeta mide segun SU contenido (no se estira a
        la altura de su vecina). Asi las de menos texto (ej. Serum rosa) quedan
        mas cortas y nace el ZIGZAG natural tipo Pinterest, sin forzar nada. */
-    .hg-grid{grid-template-columns:repeat(2,1fr);gap:8px;align-items:start}
+    /* MASONRY REAL con multicolumna CSS (no Grid): 2 columnas verticales
+       INDEPENDIENTES donde las tarjetas se apilan una tras otra. Cada tarjeta
+       mide segun su contenido, asi que el desfase (zigzag tipo Pinterest) nace
+       solo y se PROPAGA a todas -- sin huecos grandes ni filas rigidas. Al
+       agregar productos, se acomodan solos. (CSS Grid arma filas alineadas: por
+       eso antes solo se desfasaba la primera fila y quedaba el hueco.) */
+    .hg-grid{
+      display:block;column-count:2;column-gap:8px;
+      grid-template-columns:none;
+    }
 
-    /* height:auto (no 100%) para que la tarjeta se ajuste a su contenido. */
-    .hg-tarjeta{flex-direction:column;height:auto;border-radius:14px}
+    /* height:auto = la tarjeta se ajusta a su contenido; break-inside:avoid =
+       no se parte entre columnas; margin-bottom = separacion vertical (en
+       multicolumna no aplica gap entre elementos apilados). */
+    .hg-tarjeta{
+      flex-direction:column;height:auto;border-radius:14px;
+      break-inside:avoid;-webkit-column-break-inside:avoid;
+      margin-bottom:8px;
+    }
 
     .hg-foto{flex:none;height:150px}
     .hg-foto img{max-height:130px;max-width:80%}
