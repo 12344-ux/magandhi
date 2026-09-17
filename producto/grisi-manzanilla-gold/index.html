@@ -220,12 +220,10 @@
 
   /* ---------- footer ---------- */
   footer{margin-top:70px;border-top:1px solid var(--linea);background:#fff}
-  .mg-foot{max-width:1120px;margin:0 auto;padding:34px 24px;display:flex;gap:24px;flex-wrap:wrap}
+  .mg-foot{max-width:1120px;margin:0 auto;padding:34px 24px;display:flex;justify-content:space-between;align-items:center;gap:24px;flex-wrap:wrap}
   .mg-foot p{font-size:12.5px;color:var(--gris-cl);margin:0}
   .mg-foot a{color:var(--gris);text-decoration:none;font-size:12.5px;margin-right:16px}
   .mg-foot a:hover{color:var(--rojo)}
-  /* linea de marca alineada con los links (misma columna, debajo de ellos) */
-  .mg-foot-marca{margin-top:14px !important}
 
   /* ---------- modal Wompi ---------- */
   .mg-modal{
@@ -502,11 +500,13 @@
 <footer>
   <div class="mg-foot">
     <div>
+      <p><b style="color:var(--negro)">MAGANDHI</b> · magandhi.com</p>
+    </div>
+    <div>
       <a href="#">Cómo trabajamos</a>
       <a href="#">Entregas</a>
       <a href="#">Privacidad</a>
       <a href="#">Condiciones</a>
-      <p class="mg-foot-marca"><b style="color:var(--negro)">MAGANDHI</b> · magandhi.com</p>
     </div>
   </div>
 </footer>
