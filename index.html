@@ -364,14 +364,21 @@
     return '$ ' + Math.round(n).toLocaleString('es-CO');
   }
 
-  // Mapa de paginas propias por ID de producto (uuid). El ID es la clave ESTABLE:
-  // el nombre puede cambiar desde el panel de Campanas, el id no. Asi el enlace
-  // del home no se rompe si el dueno renombra el producto.
-  // Hoy solo el Grisi tiene pagina real (id fijo del seed); los demas -> "#".
-  const ID_GRISI = '00000000-0000-0000-0000-0000000c0001';
-  const PAGINAS = {
-    [ID_GRISI]: 'producto/grisi-manzanilla-gold/'
-  };
+  // ENLACE DE CADA TARJETA A SU PAGINA DE PRODUCTO.
+  // Ahora existe UNA plantilla generica (producto/index.html) que se llena sola
+  // leyendo catalogo_publico por el ?slug= o ?id= de la URL. Por eso TODAS las
+  // tarjetas (incluido el Grisi) enlazan a la generica: 'producto/?slug=<slug>'
+  // si la fila trae slug, si no 'producto/?id=<uuid>'. Ninguna queda en '#'.
+  // DECISION: apuntar tambien el Grisi a la generica es lo mas simple y coherente
+  // (una sola pagina que mantener); su carpeta antigua
+  // (producto/grisi-manzanilla-gold/) se conserva como compatibilidad para que su
+  // URL actual NO de 404. El id (uuid) es la clave ESTABLE de respaldo: el nombre
+  // puede cambiar desde el panel de Campanas, el id no.
+  function hrefProducto(fila){
+    if(fila.slug) return 'producto/?slug=' + encodeURIComponent(fila.slug);
+    if(fila.id)   return 'producto/?id=' + encodeURIComponent(fila.id);
+    return '#';
+  }
 
   // Icono neutral para el kicker de categoria (el diseno usa un simbolo pequeno;
   // aqui va uno unico y sobrio, ya que el icono no viaja en catalogo_publico).
@@ -406,7 +413,7 @@
   }
 
   function tarjeta(fila){
-    const href = PAGINAS[fila.id] || '#';
+    const href = hrefProducto(fila);
     const acento  = fila.color_fuerte  || '#B23A2E';
     const acentoCl = fila.color_claro  || '#D98A80';
     const acentoSb = fila.color_sombra || 'rgba(178,58,46,.15)';

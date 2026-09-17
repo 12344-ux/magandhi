@@ -1,0 +1,899 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Producto · MAGANDHI</title>
+<meta name="description" content="Producto escogido y revisado por el equipo de MAGANDHI.">
+<!-- Se MANTIENE noindex: el titulo, precio, descripcion y ficha vienen EN VIVO
+     de Campanas (catalogo_publico) segun el ?slug= o ?id= de la URL, pero las
+     resenas siguen siendo de EJEMPLO (igual que en la pagina del Grisi).
+     Indexar resenas inventadas seria incoherente con "nada inventado". QUITAR el
+     noindex cuando las resenas sean reales. -->
+<meta name="robots" content="noindex, nofollow">
+<link rel="icon" type="image/png" href="../favicon.png">
+<meta name="theme-color" content="#D32F2F">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+<!--
+  MAGANDHI · Pagina de producto GENERICA. Mismo diseno boutique aprobado del
+  Grisi (magandhi/producto/grisi-manzanilla-gold/index.html), pero se llena SOLA
+  para CUALQUIER producto leyendo la vista catalogo_publico por el ?slug= o ?id=
+  de la URL (magandhi.com/producto/?slug=... o magandhi.com/producto/?id=...).
+  DATOS: titulo, subtitulo, precio, descripcion, "Por que esta en MAGANDHI",
+  "Sobre este producto", la ficha y la GALERIA se rellenan EN VIVO desde Campanas
+  (ver el script del final). Las resenas siguen siendo de ejemplo, por eso se
+  mantiene el noindex (ver arriba): se quitara cuando las resenas sean reales.
+  · Esta pagina vive en magandhi/producto/ (UN nivel bajo la raiz): los assets se
+    referencian con '../' (la del Grisi usa '../../' por estar dos niveles) y el
+    import es '../supabase-config.js'.
+  · CSS autocontenido. Prefijo de clases mg- para no colisionar.
+  · Sistema de marca: rojo #D32F2F (acento/estructura), negro #111, hueso #FAF7F5, Poppins.
+  · ACENTO DE PRODUCTO: variable --acento (por defecto DORADO); el script la
+    cambia por el color de la CATEGORIA de la fila. Sin tocar el resto del sistema.
+  · Objetivo de percepcion: "una tienda que llego", no "una tienda empezando".
+  · Voz de marca: MAGANDHI / "el equipo". Nunca una persona individual.
+-->
+<style>
+  *{box-sizing:border-box}
+  :root{
+    --rojo:#D32F2F;
+    --rojo-osc:#B02525;
+    --terracota:#A6332E;
+    --negro:#111111;
+    --tinta:#1C1C1C;
+    --blanco:#FFFFFF;
+    --hueso:#FAF7F5;
+    --gris:#6B6B6B;
+    --gris-cl:#9A9A9A;
+    --linea:rgba(17,17,17,.10);
+
+    /* ---- ACENTO DEL PRODUCTO (dorado por defecto; el script lo ajusta) ---- */
+    --acento:#C9962E;
+    --acento-cl:#E7C56B;
+    --acento-sombra:rgba(201,150,46,.16);
+  }
+  html,body{margin:0;padding:0}
+  body{
+    background:var(--hueso);color:var(--tinta);
+    font-family:'Poppins',system-ui,-apple-system,'Segoe UI',Roboto,sans-serif;
+    line-height:1.65;-webkit-font-smoothing:antialiased;
+  }
+  a{color:inherit}
+
+  /* ---------- barra de confianza ---------- */
+  .mg-barra{
+    background:var(--negro);color:#fff;font-size:12.5px;letter-spacing:.3px;
+    display:flex;justify-content:center;gap:30px;padding:9px 16px;flex-wrap:wrap;
+  }
+  .mg-barra span{display:inline-flex;align-items:center;gap:7px;opacity:.92}
+  .mg-barra svg{width:15px;height:15px;flex:none}
+  /* el 3er item es un boton (abre el modal de Wompi): se ve igual que los span */
+  .mg-barra-btn{
+    display:inline-flex;align-items:center;gap:7px;opacity:.92;
+    font-family:inherit;font-size:inherit;letter-spacing:inherit;color:#fff;
+    background:none;border:0;cursor:pointer;padding:0;
+    border-bottom:1px dotted rgba(255,255,255,.5);transition:opacity .15s;
+  }
+  .mg-barra-btn:hover{opacity:1;border-bottom-color:#fff}
+
+  /* ---------- header ---------- */
+  header{
+    display:flex;align-items:center;justify-content:space-between;
+    max-width:1120px;margin:0 auto;padding:18px 24px;gap:16px;
+  }
+  .mg-marca{display:flex;align-items:center;gap:11px;text-decoration:none}
+  .mg-marca img{width:38px;height:38px;display:block}
+  /* boton VOLVER claro y visible (PC y movil): forma directa de regresar a la
+     tienda, mas evidente que el logo o las migas. */
+  .mg-head-left{display:flex;align-items:center;gap:14px}
+  .mg-volver{
+    display:inline-flex;align-items:center;gap:7px;flex:none;
+    font-size:13.5px;font-weight:600;color:var(--tinta);text-decoration:none;
+    background:var(--blanco);border:1px solid var(--linea);border-radius:11px;
+    padding:9px 15px;transition:border-color .15s,color .15s,transform .08s;
+  }
+  .mg-volver:hover{border-color:var(--rojo);color:var(--rojo);transform:translateX(-2px)}
+  .mg-volver svg{width:16px;height:16px}
+  @media(max-width:720px){
+    /* en movil: boton compacto (solo flecha + 'Volver'), el logo pasa a segundo plano */
+    .mg-volver span{display:none}
+    .mg-volver{padding:9px 12px}
+  }
+  .mg-word{font-weight:600;font-size:20px;letter-spacing:.16em;color:var(--negro);line-height:1}
+  .mg-word i{color:var(--terracota);font-style:normal}
+  .mg-nav{display:flex;gap:24px;font-size:14px;font-weight:500}
+  .mg-nav a{text-decoration:none;color:var(--tinta);opacity:.8}
+  .mg-nav a:hover{opacity:1;color:var(--rojo)}
+  @media(max-width:720px){.mg-nav{display:none}}
+  /* BARRA DE CONFIANZA COMPACTA EN MOVIL (opcion B): en vez de apilarse en 3
+     lineas altas (flex-wrap ocupaba media pantalla), queda en UNA franja
+     delgada: fuente y gap menores, sin envolver, con scroll horizontal suave si
+     no cabe. Los 3 mensajes de confianza SIGUEN visibles (son senales de venta). */
+  @media(max-width:720px){
+    .mg-barra{
+      flex-wrap:nowrap;justify-content:flex-start;gap:16px;
+      font-size:10.5px;letter-spacing:.2px;padding:8px 14px;
+      overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:none;
+    }
+    .mg-barra::-webkit-scrollbar{display:none}
+    .mg-barra span,.mg-barra-btn{white-space:nowrap;flex:none}
+    .mg-barra svg{width:13px;height:13px}
+  }
+
+  /* ---------- migas ---------- */
+  .mg-migas{max-width:1120px;margin:0 auto;padding:8px 24px 0;font-size:12.5px;color:var(--gris-cl)}
+  .mg-migas a{text-decoration:none}
+  .mg-migas a:hover{color:var(--rojo)}
+
+  /* ---------- ficha de producto ---------- */
+  .mg-ficha{
+    max-width:1120px;margin:14px auto 0;padding:0 24px;
+    display:grid;grid-template-columns:1fr 1fr;gap:48px;align-items:start;
+  }
+  @media(max-width:860px){.mg-ficha{grid-template-columns:1fr;gap:28px}}
+
+  /* galería con el ACENTO del producto */
+  .mg-galeria{position:relative}
+  .mg-foto{
+    position:relative;border-radius:18px;overflow:hidden;
+    border:1px solid var(--linea);
+    /* BANO DE COLOR del acento (antes blanco plano): un gradiente radial suave
+       da la calidez/brillo del acento (como el panel del home) SIN saturar, para
+       que la foto real del producto siga resaltando cuando se suba. */
+    background:
+      radial-gradient(120% 95% at 50% 0%,
+        var(--acento-sombra) 0%,
+        rgba(255,255,255,.72) 55%,
+        var(--blanco) 100%),
+      var(--blanco);
+    box-shadow:0 18px 40px rgba(17,17,17,.06);
+    aspect-ratio:1/1;display:flex;align-items:center;justify-content:center;
+  }
+  .mg-foto::before{
+    content:"";position:absolute;inset:0;border-radius:18px;pointer-events:none;
+    border:1.5px solid var(--acento-cl);
+    box-shadow:inset 0 0 0 4px var(--acento-sombra);
+  }
+  /* imagen real de la galeria (foto principal): cubre el marco cuadrado sin
+     deformarse; queda sobre el bano de color del acento. */
+  .mg-foto__img{
+    position:relative;z-index:1;width:100%;height:100%;
+    object-fit:contain;display:block;padding:18px;
+  }
+  .mg-foto__ph{
+    color:var(--gris-cl);font-size:13px;text-align:center;padding:24px;
+    display:flex;flex-direction:column;align-items:center;gap:10px;
+  }
+  .mg-foto__ph svg{width:46px;height:46px;color:var(--acento)}
+  .mg-tiras{display:flex;gap:10px;margin-top:12px;flex-wrap:wrap}
+  .mg-tira{
+    width:64px;height:64px;border-radius:11px;background:var(--blanco);
+    border:1px solid var(--linea);flex:none;display:flex;align-items:center;justify-content:center;
+    color:var(--gris-cl);overflow:hidden;cursor:pointer;padding:0;
+  }
+  .mg-tira.activa{border-color:var(--acento);box-shadow:0 0 0 2px var(--acento-sombra)}
+  .mg-tira svg{width:22px;height:22px}
+  /* miniatura con imagen real: llena el cuadrito */
+  .mg-tira img{width:100%;height:100%;object-fit:cover;display:block}
+
+  /* info */
+  .mg-info{padding-top:4px}
+  .mg-sello{
+    display:inline-flex;align-items:center;gap:7px;
+    font-size:11.5px;font-weight:600;letter-spacing:.12em;text-transform:uppercase;
+    color:var(--acento);background:var(--acento-sombra);
+    border:1px solid var(--acento-cl);border-radius:999px;padding:5px 13px;
+  }
+  .mg-sello svg{width:14px;height:14px}
+  /* El atributo HTML `hidden` debe ganar sobre el display:inline-flex de autor
+     (la regla [hidden] del user-agent no prevalece por si sola). Mismo patron
+     robusto que .mg-nodisp: cuando pintarSello() pone el.hidden=true, el sello
+     se oculta de verdad y no hay flash antes de que corra el JS. */
+  .mg-sello[hidden]{display:none}
+  .mg-titulo{font-size:clamp(24px,3.6vw,32px);font-weight:600;line-height:1.2;margin:16px 0 4px;letter-spacing:-.3px}
+  .mg-sub{font-size:14.5px;color:var(--gris);margin:0 0 18px}
+  .mg-precio{display:flex;align-items:baseline;gap:10px;margin:0 0 6px}
+  .mg-precio b{font-size:28px;font-weight:600;color:var(--negro)}
+  .mg-precio small{font-size:13px;color:var(--gris-cl)}
+
+  /* AVISO DE URGENCIA "Solo X disponibles": switch por producto (lo enciende el
+     dueno desde Campanas con su numero). Chip sobrio en el color del acento del
+     producto, sin rojo de oferta ni urgencia agresiva: coherente con el alma
+     boutique. Oculto por defecto; el script lo muestra solo si el switch esta on. */
+  .mg-urgencia{
+    display:inline-flex;align-items:center;gap:7px;margin:0 0 16px;
+    background:var(--acento-sombra);color:var(--acento);
+    border:1px solid var(--acento-cl);border-radius:999px;
+    font-size:12.5px;font-weight:600;letter-spacing:.02em;padding:6px 13px;
+  }
+  .mg-urgencia svg{width:15px;height:15px;flex:none}
+  /* Cinturon de seguridad coherente con el sello: si el chip conserva el atributo
+     hidden (aviso apagado), no se muestra vacio pese al display:inline-flex. */
+  .mg-urgencia[hidden]{display:none}
+
+  /* AVISO "agotado": si stock_disponible es 0, chip sobrio en gris (no alarmista)
+     y el boton de compra queda deshabilitado (ver .mg-btn--primario:disabled).
+     Oculto por defecto; el script lo muestra solo si el stock es 0. */
+  .mg-agotado{
+    display:inline-flex;align-items:center;gap:7px;margin:0 0 16px;
+    background:var(--hueso);color:var(--gris);
+    border:1px solid var(--linea);border-radius:999px;
+    font-size:12.5px;font-weight:600;letter-spacing:.02em;padding:6px 13px;
+  }
+  .mg-agotado svg{width:15px;height:15px;flex:none;color:var(--gris)}
+  .mg-agotado[hidden]{display:none}
+
+  /* AVISO "no disponible": si el producto se despublica (no esta en catalogo_publico)
+     o la URL no trae slug/id valido, se muestra un mensaje sobrio, sin romper la pagina. */
+  .mg-nodisp{
+    display:none;align-items:center;gap:8px;margin:0 0 16px;
+    background:var(--hueso);color:var(--gris);
+    border:1px solid var(--linea);border-radius:12px;
+    font-size:13.5px;padding:10px 14px;
+  }
+  .mg-nodisp[data-visible="true"]{display:inline-flex}
+  .mg-nodisp svg{width:16px;height:16px;flex:none;color:var(--acento)}
+
+  .mg-estrellas{display:flex;align-items:center;gap:8px;font-size:13px;color:var(--gris);margin:0 0 22px}
+  .mg-estrellas .s{display:inline-flex;color:var(--acento)}
+  .mg-estrellas .s svg{width:16px;height:16px}
+  .mg-estrellas a{color:var(--rojo);text-decoration:none}
+  .mg-estrellas a:hover{text-decoration:underline}
+
+  .mg-desc{font-size:15px;color:#333;margin:0 0 22px;max-width:520px}
+
+  /* bloque de curaduría: el diferenciador */
+  .mg-curaduria{
+    background:var(--blanco);border:1px solid var(--linea);border-left:3px solid var(--acento);
+    border-radius:12px;padding:16px 18px;margin:0 0 24px;
+  }
+  .mg-curaduria h3{display:flex;align-items:center;gap:8px;font-size:13.5px;font-weight:600;margin:0 0 8px;letter-spacing:.02em}
+  .mg-curaduria h3 svg{width:17px;height:17px;color:var(--rojo)}
+  .mg-curaduria p{font-size:13.5px;color:var(--gris);margin:0}
+
+  .mg-cta{display:flex;gap:12px;flex-wrap:wrap;margin:0 0 16px}
+  .mg-btn{
+    font-family:inherit;font-size:15px;font-weight:600;cursor:pointer;border-radius:12px;
+    padding:14px 26px;border:0;transition:background .15s,transform .08s,box-shadow .15s;
+  }
+  .mg-btn--primario{background:var(--rojo);color:#fff}
+  .mg-btn--primario:hover{background:var(--rojo-osc)}
+  .mg-btn--primario:active{transform:translateY(1px)}
+  /* AGOTADO: cuando el script pone disabled al boton 'Comprar ahora', queda
+     apagado y sin interaccion (coherente con el chip .mg-agotado). */
+  .mg-btn--primario:disabled{
+    background:var(--gris-cl);color:#fff;cursor:not-allowed;opacity:.75;
+  }
+  .mg-btn--primario:disabled:hover{background:var(--gris-cl);transform:none}
+  .mg-btn--wa{background:#fff;color:var(--tinta);border:1px solid var(--linea)}
+  .mg-btn--wa:hover{border-color:var(--rojo);color:var(--rojo)}
+  .mg-btn svg{width:17px;height:17px;vertical-align:-3px;margin-right:7px}
+
+  .mg-entrega{font-size:13px;color:var(--gris);display:flex;align-items:center;gap:8px}
+  .mg-entrega svg{width:16px;height:16px;color:var(--acento)}
+
+  /* ---------- detalle largo ---------- */
+  .mg-detalle{max-width:1120px;margin:56px auto 0;padding:0 24px;display:grid;grid-template-columns:1.3fr 1fr;gap:40px}
+  @media(max-width:860px){.mg-detalle{grid-template-columns:1fr;gap:24px}}
+  .mg-detalle h2{font-size:19px;font-weight:600;margin:0 0 14px}
+  .mg-detalle p{font-size:14.5px;color:#333;margin:0 0 14px}
+  .mg-tabla{width:100%;border-collapse:collapse;font-size:14px}
+  .mg-tabla td{padding:11px 4px;border-bottom:1px solid var(--linea)}
+  .mg-tabla td:first-child{color:var(--gris);width:44%}
+  .mg-tabla td:last-child{font-weight:500}
+
+  /* ---------- reseñas ---------- */
+  .mg-resenas{max-width:1120px;margin:56px auto 0;padding:0 24px}
+  .mg-resenas__cab{display:flex;align-items:flex-end;justify-content:space-between;gap:16px;flex-wrap:wrap;margin-bottom:20px}
+  .mg-resenas h2{font-size:22px;font-weight:600;margin:0}
+  .mg-prom{display:flex;align-items:center;gap:14px}
+  .mg-prom b{font-size:34px;font-weight:600;line-height:1}
+  .mg-prom .s{display:inline-flex;color:var(--acento)}
+  .mg-prom .s svg{width:18px;height:18px}
+  .mg-prom span{font-size:13px;color:var(--gris)}
+  .mg-grid-r{display:grid;grid-template-columns:repeat(2,1fr);gap:16px}
+  @media(max-width:720px){.mg-grid-r{grid-template-columns:1fr}}
+  /* contorno de la tarjeta de resena = color de la CATEGORIA del producto
+     (via --acento-cl), como pidio el dueno. Las estrellas NO cambian (ver abajo). */
+  .mg-resena{background:var(--blanco);border:1px solid var(--acento-cl);border-radius:14px;padding:18px 20px;
+    transition:transform .12s ease, box-shadow .12s ease, border-color .12s ease}
+  /* eleva al pasar el cursor, como las tarjetas del back-office Impulse */
+  .mg-resena:hover{transform:translateY(-3px);box-shadow:0 10px 26px rgba(17,17,17,.09);border-color:var(--acento-cl)}
+  .mg-resena__top{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px}
+  .mg-resena__pers{display:flex;align-items:center;gap:11px}
+  .mg-avatar{width:38px;height:38px;border-radius:50%;background:var(--acento-sombra);color:var(--acento);
+    display:flex;align-items:center;justify-content:center;font-weight:600;font-size:15px}
+  .mg-resena__nom{font-size:14px;font-weight:600;line-height:1.1}
+  .mg-resena__ver{font-size:11.5px;color:#1B7A46;display:flex;align-items:center;gap:4px}
+  .mg-resena__ver svg{width:13px;height:13px}
+  .mg-resena .s{display:inline-flex;color:var(--acento)}
+  .mg-resena .s svg{width:14px;height:14px}
+  .mg-resena p{font-size:14px;color:#333;margin:8px 0 0}
+  .mg-resena__fecha{font-size:12px;color:var(--gris-cl);margin-top:10px}
+  .mg-resena--vacia{border-style:dashed;text-align:center;color:var(--gris);font-size:14px;display:flex;flex-direction:column;gap:10px;align-items:center;justify-content:center;padding:30px}
+  .mg-resena--vacia svg{width:28px;height:28px;color:var(--acento)}
+  /* boton 'ver todas las opiniones' bajo el grid de resenas */
+  .mg-vertodas{display:flex;justify-content:center;margin-top:24px}
+  .mg-vertodas a{
+    display:inline-flex;align-items:center;gap:8px;
+    font-size:14px;font-weight:600;color:var(--tinta);text-decoration:none;
+    background:#fff;border:1px solid var(--linea);border-radius:12px;padding:12px 24px;
+    transition:border-color .15s,color .15s,transform .08s;
+  }
+  .mg-vertodas a:hover{border-color:var(--acento);color:var(--acento);transform:translateY(-1px)}
+  .mg-vertodas svg{width:16px;height:16px}
+
+  /* ---------- footer ---------- */
+  footer{margin-top:70px;border-top:1px solid var(--linea);background:#fff}
+  .mg-foot{max-width:1120px;margin:0 auto;padding:34px 24px;display:flex;justify-content:space-between;align-items:center;gap:20px 24px;flex-wrap:wrap}
+  .mg-foot-marca{font-size:12.5px;color:var(--gris-cl);margin:0}
+  .mg-foot-links{display:flex;align-items:center;gap:20px;flex-wrap:wrap}
+  .mg-foot-links a{color:var(--gris);text-decoration:none;font-size:12.5px}
+  .mg-foot-links a:hover{color:var(--rojo)}
+
+  /* ---------- modal Wompi ---------- */
+  .mg-modal{
+    position:fixed;inset:0;z-index:100;display:none;
+    align-items:center;justify-content:center;padding:20px;
+    background:rgba(17,17,17,.55);backdrop-filter:blur(2px);
+  }
+  .mg-modal[aria-hidden="false"]{display:flex}
+  .mg-modal__caja{
+    background:#fff;border-radius:18px;max-width:460px;width:100%;
+    padding:28px 28px 24px;position:relative;
+    box-shadow:0 24px 60px rgba(17,17,17,.22);
+    animation:mg-sube .18s ease-out;
+  }
+  @keyframes mg-sube{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
+  .mg-modal__x{
+    position:absolute;top:14px;right:14px;width:34px;height:34px;border-radius:9px;
+    border:1px solid var(--linea);background:#fff;color:var(--gris);cursor:pointer;
+    display:flex;align-items:center;justify-content:center;transition:background .15s,color .15s;
+  }
+  .mg-modal__x:hover{background:var(--hueso);color:var(--rojo)}
+  .mg-modal__x svg{width:18px;height:18px}
+  .mg-modal__ico{
+    width:46px;height:46px;border-radius:12px;background:var(--acento-sombra);
+    color:var(--acento);display:flex;align-items:center;justify-content:center;margin-bottom:14px;
+  }
+  .mg-modal__ico svg{width:24px;height:24px}
+  .mg-modal h2{font-size:19px;font-weight:600;margin:0 0 10px}
+  .mg-modal p{font-size:14px;color:#333;margin:0 0 12px}
+  .mg-modal p:last-child{margin-bottom:0}
+</style>
+</head>
+<body>
+
+<!-- barra de confianza -->
+<div class="mg-barra">
+  <span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z"/></svg>Cada producto revisado por el equipo</span>
+  <span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="1" y="3" width="15" height="13" rx="1"/><path d="M16 8h4l3 3v5h-7z"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></svg>Envíos nacionales</span>
+  <button type="button" class="mg-barra-btn" id="mg-abrir-wompi" aria-haspopup="dialog" aria-controls="mg-modal-wompi"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="5" width="20" height="14" rx="2"/><path d="M2 10h20"/></svg>Pagos seguros con Wompi</button>
+</div>
+
+<!-- header -->
+<header>
+  <div class="mg-head-left">
+    <a class="mg-volver" href="../index.html" aria-label="Volver a la tienda">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
+      <span>Volver a la tienda</span>
+    </a>
+    <a class="mg-marca" href="../index.html">
+      <img src="../logo-mark-terracota.png" alt="MAGANDHI">
+      <span class="mg-word">MAG<i>A</i>NDHI</span>
+    </a>
+  </div>
+  <nav class="mg-nav">
+    <a href="#">Productos</a>
+    <a href="#">Cómo trabajamos</a>
+    <a href="#">Contacto</a>
+  </nav>
+</header>
+
+<!-- migas -->
+<div class="mg-migas"><a href="../index.html">Inicio</a> › <span id="mg-miga-cat">Productos</span> › <span id="mg-miga-nom">Producto</span></div>
+
+<!-- ficha -->
+<section class="mg-ficha">
+  <!-- galería -->
+  <div class="mg-galeria">
+    <div class="mg-foto" id="mg-foto">
+      <div class="mg-foto__ph">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="9" cy="9" r="2"/><path d="m21 15-3.09-3.09a2 2 0 0 0-2.82 0L6 21"/></svg>
+        Aquí va la foto real del producto<br><small>(la sube el equipo)</small>
+      </div>
+    </div>
+    <div class="mg-tiras" id="mg-tiras">
+      <div class="mg-tira activa"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="3" width="18" height="18" rx="2"/></svg></div>
+      <div class="mg-tira"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="3" width="18" height="18" rx="2"/></svg></div>
+      <div class="mg-tira"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="3" width="18" height="18" rx="2"/></svg></div>
+    </div>
+  </div>
+
+  <!-- info -->
+  <div class="mg-info">
+    <!-- aviso sobrio si el producto esta despublicado o la URL no es valida -->
+    <div class="mg-nodisp" id="mg-nodisp">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 8v4"/><path d="M12 16h.01"/></svg>
+      Este producto no está disponible por ahora.
+    </div>
+    <!-- El sello "Escogido por MAGANDHI" se MUESTRA u OCULTA segun sello_elegido
+         de la fila (coherente con el home). La estrella opcional (segun fila.estrella)
+         la inserta el script al inicio del sello. Marcado/clases mg- INTACTOS;
+         solo alterna visibilidad y la estrella segun el dato. -->
+    <span class="mg-sello" id="mg-sello" hidden>
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m9 12 2 2 4-4"/><circle cx="12" cy="12" r="10"/></svg>
+      Escogido por MAGANDHI
+    </span>
+    <h1 class="mg-titulo" id="mg-titulo">Producto</h1>
+    <p class="mg-sub" id="mg-sub">Cargando información del producto…</p>
+
+    <div class="mg-precio"><b id="mg-precio">—</b><small>COP</small></div>
+
+    <!-- aviso de urgencia "Solo X disponibles": switch por producto que el dueno
+         enciende desde Campanas (aviso_urgencia_activo + aviso_urgencia_cantidad).
+         Vacio por defecto; el script lo rellena solo si el switch esta activo. -->
+    <div class="mg-urgencia" id="mg-urgencia" hidden></div>
+
+    <!-- aviso de agotado: el script lo muestra solo si stock_disponible es 0. -->
+    <div class="mg-agotado" id="mg-agotado" hidden>
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M4.9 4.9 19.1 19.1"/></svg>
+      Agotado por ahora
+    </div>
+
+    <div class="mg-estrellas">
+      <span class="s">
+        <svg viewBox="0 0 24 24" fill="currentColor"><path d="m12 2 3 6.3 6.9 1-5 4.9 1.2 6.8L12 17.8 5.9 21l1.2-6.8-5-4.9 6.9-1z"/></svg>
+        <svg viewBox="0 0 24 24" fill="currentColor"><path d="m12 2 3 6.3 6.9 1-5 4.9 1.2 6.8L12 17.8 5.9 21l1.2-6.8-5-4.9 6.9-1z"/></svg>
+        <svg viewBox="0 0 24 24" fill="currentColor"><path d="m12 2 3 6.3 6.9 1-5 4.9 1.2 6.8L12 17.8 5.9 21l1.2-6.8-5-4.9 6.9-1z"/></svg>
+        <svg viewBox="0 0 24 24" fill="currentColor"><path d="m12 2 3 6.3 6.9 1-5 4.9 1.2 6.8L12 17.8 5.9 21l1.2-6.8-5-4.9 6.9-1z"/></svg>
+        <svg viewBox="0 0 24 24" fill="currentColor"><path d="m12 2 3 6.3 6.9 1-5 4.9 1.2 6.8L12 17.8 5.9 21l1.2-6.8-5-4.9 6.9-1z"/></svg>
+      </span>
+      4.8 · <a href="#resenas">12 opiniones</a>
+    </div>
+
+    <p class="mg-desc" id="mg-desc">
+      Producto escogido y revisado por el equipo de MAGANDHI antes de ofrecerlo.
+    </p>
+
+    <div class="mg-curaduria">
+      <h3><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z"/></svg> Por qué está en MAGANDHI</h3>
+      <p id="mg-curaduria">El equipo revisó este producto antes de ofrecerlo: verificamos que sea original, que esté
+      dentro de su fecha y que la presentación llegue en buen estado. Si algo no cumple, no entra.</p>
+    </div>
+
+    <div class="mg-cta">
+      <button class="mg-btn mg-btn--primario" id="mg-comprar">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="8" cy="21" r="1"/><circle cx="19" cy="21" r="1"/><path d="M2.05 2.05h2l2.66 12.42a2 2 0 0 0 2 1.58h9.78a2 2 0 0 0 1.95-1.57l1.65-7.43H5.12"/></svg>
+        Comprar ahora
+      </button>
+      <button class="mg-btn mg-btn--wa">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M7.9 20A9 9 0 1 0 4 16.1L2 22z"/></svg>
+        Preguntar por WhatsApp
+      </button>
+    </div>
+  </div>
+</section>
+
+<!-- detalle -->
+<section class="mg-detalle">
+  <div>
+    <h2>Sobre este producto</h2>
+    <div id="mg-sobre">
+      <p>MAGANDHI describe el producto tal como es: te contamos qué contiene y para qué tipo de uso
+      está pensado, sin prometer resultados que no podamos sostener. La información de ingredientes y
+      modo de uso viene del fabricante y está impresa en el envase.</p>
+    </div>
+  </div>
+  <div>
+    <h2>Ficha</h2>
+    <table class="mg-tabla" id="mg-ficha">
+      <tr><td>Disponibilidad</td><td>Entrega local</td></tr>
+    </table>
+  </div>
+</section>
+
+<!-- reseñas -->
+<section class="mg-resenas" id="resenas">
+  <div class="mg-resenas__cab">
+    <h2>Opiniones de quienes compraron</h2>
+    <div class="mg-prom">
+      <b>4.8</b>
+      <div>
+        <span class="s">
+          <svg viewBox="0 0 24 24" fill="currentColor"><path d="m12 2 3 6.3 6.9 1-5 4.9 1.2 6.8L12 17.8 5.9 21l1.2-6.8-5-4.9 6.9-1z"/></svg>
+          <svg viewBox="0 0 24 24" fill="currentColor"><path d="m12 2 3 6.3 6.9 1-5 4.9 1.2 6.8L12 17.8 5.9 21l1.2-6.8-5-4.9 6.9-1z"/></svg>
+          <svg viewBox="0 0 24 24" fill="currentColor"><path d="m12 2 3 6.3 6.9 1-5 4.9 1.2 6.8L12 17.8 5.9 21l1.2-6.8-5-4.9 6.9-1z"/></svg>
+          <svg viewBox="0 0 24 24" fill="currentColor"><path d="m12 2 3 6.3 6.9 1-5 4.9 1.2 6.8L12 17.8 5.9 21l1.2-6.8-5-4.9 6.9-1z"/></svg>
+          <svg viewBox="0 0 24 24" fill="currentColor"><path d="m12 2 3 6.3 6.9 1-5 4.9 1.2 6.8L12 17.8 5.9 21l1.2-6.8-5-4.9 6.9-1z"/></svg>
+        </span>
+        <span>basado en 12 opiniones verificadas</span>
+      </div>
+    </div>
+  </div>
+  <div class="mg-grid-r">
+    <div class="mg-resena">
+      <div class="mg-resena__top">
+        <div class="mg-resena__pers">
+          <div class="mg-avatar">L</div>
+          <div>
+            <div class="mg-resena__nom">Laura M.</div>
+            <div class="mg-resena__ver"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="m9 12 2 2 4-4"/></svg> Compra verificada</div>
+          </div>
+        </div>
+        <span class="s">
+          <svg viewBox="0 0 24 24" fill="currentColor"><path d="m12 2 3 6.3 6.9 1-5 4.9 1.2 6.8L12 17.8 5.9 21l1.2-6.8-5-4.9 6.9-1z"/></svg>
+          <svg viewBox="0 0 24 24" fill="currentColor"><path d="m12 2 3 6.3 6.9 1-5 4.9 1.2 6.8L12 17.8 5.9 21l1.2-6.8-5-4.9 6.9-1z"/></svg>
+          <svg viewBox="0 0 24 24" fill="currentColor"><path d="m12 2 3 6.3 6.9 1-5 4.9 1.2 6.8L12 17.8 5.9 21l1.2-6.8-5-4.9 6.9-1z"/></svg>
+          <svg viewBox="0 0 24 24" fill="currentColor"><path d="m12 2 3 6.3 6.9 1-5 4.9 1.2 6.8L12 17.8 5.9 21l1.2-6.8-5-4.9 6.9-1z"/></svg>
+          <svg viewBox="0 0 24 24" fill="currentColor"><path d="m12 2 3 6.3 6.9 1-5 4.9 1.2 6.8L12 17.8 5.9 21l1.2-6.8-5-4.9 6.9-1z"/></svg>
+        </span>
+      </div>
+      <p>Llegó bien empacado y en el día que acordamos. El trato por WhatsApp fue muy cercano.</p>
+      <div class="mg-resena__fecha">Hace 2 semanas</div>
+    </div>
+    <div class="mg-resena">
+      <div class="mg-resena__top">
+        <div class="mg-resena__pers">
+          <div class="mg-avatar">J</div>
+          <div>
+            <div class="mg-resena__nom">Julián R.</div>
+            <div class="mg-resena__ver"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="m9 12 2 2 4-4"/></svg> Compra verificada</div>
+          </div>
+        </div>
+        <span class="s">
+          <svg viewBox="0 0 24 24" fill="currentColor"><path d="m12 2 3 6.3 6.9 1-5 4.9 1.2 6.8L12 17.8 5.9 21l1.2-6.8-5-4.9 6.9-1z"/></svg>
+          <svg viewBox="0 0 24 24" fill="currentColor"><path d="m12 2 3 6.3 6.9 1-5 4.9 1.2 6.8L12 17.8 5.9 21l1.2-6.8-5-4.9 6.9-1z"/></svg>
+          <svg viewBox="0 0 24 24" fill="currentColor"><path d="m12 2 3 6.3 6.9 1-5 4.9 1.2 6.8L12 17.8 5.9 21l1.2-6.8-5-4.9 6.9-1z"/></svg>
+          <svg viewBox="0 0 24 24" fill="currentColor"><path d="m12 2 3 6.3 6.9 1-5 4.9 1.2 6.8L12 17.8 5.9 21l1.2-6.8-5-4.9 6.9-1z"/></svg>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m12 2 3 6.3 6.9 1-5 4.9 1.2 6.8L12 17.8 5.9 21l1.2-6.8-5-4.9 6.9-1z"/></svg>
+        </span>
+      </div>
+      <p>Buen producto y original. Me gustó que revisan antes de vender, se nota el cuidado.</p>
+      <div class="mg-resena__fecha">Hace 1 mes</div>
+    </div>
+    <div class="mg-resena">
+      <div class="mg-resena__top">
+        <div class="mg-resena__pers">
+          <div class="mg-avatar">C</div>
+          <div>
+            <div class="mg-resena__nom">Carolina P.</div>
+            <div class="mg-resena__ver"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="m9 12 2 2 4-4"/></svg> Compra verificada</div>
+          </div>
+        </div>
+        <span class="s">
+          <svg viewBox="0 0 24 24" fill="currentColor"><path d="m12 2 3 6.3 6.9 1-5 4.9 1.2 6.8L12 17.8 5.9 21l1.2-6.8-5-4.9 6.9-1z"/></svg>
+          <svg viewBox="0 0 24 24" fill="currentColor"><path d="m12 2 3 6.3 6.9 1-5 4.9 1.2 6.8L12 17.8 5.9 21l1.2-6.8-5-4.9 6.9-1z"/></svg>
+          <svg viewBox="0 0 24 24" fill="currentColor"><path d="m12 2 3 6.3 6.9 1-5 4.9 1.2 6.8L12 17.8 5.9 21l1.2-6.8-5-4.9 6.9-1z"/></svg>
+          <svg viewBox="0 0 24 24" fill="currentColor"><path d="m12 2 3 6.3 6.9 1-5 4.9 1.2 6.8L12 17.8 5.9 21l1.2-6.8-5-4.9 6.9-1z"/></svg>
+          <svg viewBox="0 0 24 24" fill="currentColor"><path d="m12 2 3 6.3 6.9 1-5 4.9 1.2 6.8L12 17.8 5.9 21l1.2-6.8-5-4.9 6.9-1z"/></svg>
+        </span>
+      </div>
+      <p>Muy buena atención y el envío llegó a tiempo. Repetiré la compra sin duda.</p>
+      <div class="mg-resena__fecha">Hace 1 mes</div>
+    </div>
+    <div class="mg-resena">
+      <div class="mg-resena__top">
+        <div class="mg-resena__pers">
+          <div class="mg-avatar">A</div>
+          <div>
+            <div class="mg-resena__nom">Andrés V.</div>
+            <div class="mg-resena__ver"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="m9 12 2 2 4-4"/></svg> Compra verificada</div>
+          </div>
+        </div>
+        <span class="s">
+          <svg viewBox="0 0 24 24" fill="currentColor"><path d="m12 2 3 6.3 6.9 1-5 4.9 1.2 6.8L12 17.8 5.9 21l1.2-6.8-5-4.9 6.9-1z"/></svg>
+          <svg viewBox="0 0 24 24" fill="currentColor"><path d="m12 2 3 6.3 6.9 1-5 4.9 1.2 6.8L12 17.8 5.9 21l1.2-6.8-5-4.9 6.9-1z"/></svg>
+          <svg viewBox="0 0 24 24" fill="currentColor"><path d="m12 2 3 6.3 6.9 1-5 4.9 1.2 6.8L12 17.8 5.9 21l1.2-6.8-5-4.9 6.9-1z"/></svg>
+          <svg viewBox="0 0 24 24" fill="currentColor"><path d="m12 2 3 6.3 6.9 1-5 4.9 1.2 6.8L12 17.8 5.9 21l1.2-6.8-5-4.9 6.9-1z"/></svg>
+          <svg viewBox="0 0 24 24" fill="currentColor"><path d="m12 2 3 6.3 6.9 1-5 4.9 1.2 6.8L12 17.8 5.9 21l1.2-6.8-5-4.9 6.9-1z"/></svg>
+        </span>
+      </div>
+      <p>Producto tal cual lo describen. Se agradece la honestidad en la ficha.</p>
+      <div class="mg-resena__fecha">Hace 2 meses</div>
+    </div>
+  </div>
+  <!-- limite de 4 en la pagina; el resto en la vista completa de opiniones -->
+  <div class="mg-vertodas">
+    <a href="#">
+      Ver todas las opiniones
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
+    </a>
+  </div>
+</section>
+
+<!-- modal: por qué Wompi (el texto final lo define el equipo) -->
+<div class="mg-modal" id="mg-modal-wompi" role="dialog" aria-modal="true" aria-labelledby="mg-modal-wompi-tit" aria-hidden="true">
+  <div class="mg-modal__caja">
+    <button type="button" class="mg-modal__x" id="mg-cerrar-wompi" aria-label="Cerrar">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18M6 6l12 12"/></svg>
+    </button>
+    <div class="mg-modal__ico">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="5" width="20" height="14" rx="2"/><path d="M2 10h20"/></svg>
+    </div>
+    <h2 id="mg-modal-wompi-tit">Pagos seguros con Wompi</h2>
+    <p><!-- TEXTO PROVISIONAL: el dueño lo reemplazará -->
+      Wompi es la pasarela de pagos de Bancolombia. Tus pagos se procesan en su
+      plataforma, con el respaldo de una de las entidades financieras más
+      grandes del país.</p>
+    <p>Elegimos Wompi para que comprar en MAGANDHI sea seguro y transparente:
+      los datos de tu pago los maneja directamente la pasarela, no nosotros.</p>
+  </div>
+</div>
+
+<!-- footer -->
+<footer>
+  <div class="mg-foot">
+    <p class="mg-foot-marca"><b style="color:var(--negro)">MAGANDHI</b> · magandhi.com</p>
+    <nav class="mg-foot-links">
+      <a href="#">Cómo trabajamos</a>
+      <a href="#">Entregas</a>
+      <a href="#">Privacidad</a>
+      <a href="#">Condiciones</a>
+    </nav>
+  </div>
+</footer>
+
+<!-- ============================================================
+     DATOS EN VIVO DESDE CAMPANAS (Supabase / vista catalogo_publico)
+     ------------------------------------------------------------
+     · Plantilla GENERICA: lee el ?slug= (preferido) o ?id= de la URL y consulta
+       la fila publica de ESE producto en catalogo_publico. Nunca toca tablas
+       internas ni etiquetas.
+     · Rellena titulo, subtitulo, precio, descripcion, "Por que esta en MAGANDHI",
+       "Sobre este producto", la ficha y la GALERIA, aplicando el acento de la
+       categoria.
+     · GALERIA: resuelve las URLs publicas de las imagenes del bucket 'campanas'
+       con supabase.storage.from('campanas').getPublicUrl(path). Foto principal =
+       primer elemento del arreglo imagenes (o imagen_banner_path); miniaturas =
+       el resto en orden; clic en una miniatura cambia la principal. Si no hay
+       imagenes, conserva el placeholder dibujado.
+     · Aviso "Solo X disponibles": switch por producto (aviso_urgencia_activo +
+       aviso_urgencia_cantidad) que el dueno enciende desde Campanas.
+     · AGOTADO: si stock_disponible es 0, muestra el chip de agotado y DESHABILITA
+       el boton 'Comprar ahora'.
+     · Si no hay slug/id o la fila no existe (producto despublicado / placeholder
+       no publicado), muestra un aviso sobrio de no disponible sin romper la
+       pagina. Las resenas quedan como ejemplo.
+     ============================================================ -->
+<script type="module">
+  import { supabase } from '../supabase-config.js';
+
+  // Nombre del bucket publico de Campanas donde viven las imagenes de producto.
+  const BUCKET_CAMPANAS = 'campanas';
+
+  function esc(v){
+    if(v === null || v === undefined) return '';
+    return String(v)
+      .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
+      .replace(/"/g,'&quot;').replace(/'/g,'&#39;');
+  }
+
+  function formatearPrecio(valor){
+    const n = Number(valor);
+    if(!Number.isFinite(n)) return '';
+    return '$ ' + Math.round(n).toLocaleString('es-CO');
+  }
+
+  function set(id, texto){
+    const el = document.getElementById(id);
+    if(el) el.textContent = texto;
+  }
+
+  // Aplica el acento de la categoria (colores de la fila) sobre la pagina, sin
+  // tocar el resto del sistema (las variables --acento gobiernan galeria, sello,
+  // curaduria, etc.).
+  function aplicarAcento(fila){
+    const raiz = document.documentElement.style;
+    if(fila.color_fuerte)  raiz.setProperty('--acento', fila.color_fuerte);
+    if(fila.color_claro)   raiz.setProperty('--acento-cl', fila.color_claro);
+    if(fila.color_sombra)  raiz.setProperty('--acento-sombra', fila.color_sombra);
+  }
+
+  // Estrella opcional dentro del sello (SVG de estrella rellena; hereda el color
+  // del sello via .mg-sello svg). Reproduce el simbolo del home sin tocar clases.
+  const ICONO_ESTRELLA = '<svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="m12 2 3 6.3 6.9 1-5 4.9 1.2 6.8L12 17.8 5.9 21l1.2-6.8-5-4.9 6.9-1z"/></svg>';
+
+  // Muestra u oculta el sello "Escogido por MAGANDHI" segun sello_elegido, y
+  // antepone la estrella si estrella=true. Si el dueno apaga el sello en Campanas,
+  // la pagina de producto deja de mostrarlo (igual que el home).
+  function pintarSello(fila){
+    const el = document.getElementById('mg-sello');
+    if(!el) return;
+    if(!fila.sello_elegido){
+      el.hidden = true;
+      return;
+    }
+    // Estrella dentro del sello solo si el dato lo pide (y no estaba ya).
+    if(fila.estrella && !el.querySelector('svg[fill="currentColor"]')){
+      el.insertAdjacentHTML('afterbegin', ICONO_ESTRELLA);
+    }
+    el.hidden = false;
+  }
+
+  function pintarUrgencia(fila){
+    const el = document.getElementById('mg-urgencia');
+    if(!el) return;
+    const activo = !!fila.aviso_urgencia_activo;
+    const cant = Number(fila.aviso_urgencia_cantidad);
+    if(!activo || !Number.isFinite(cant) || cant <= 0){
+      el.hidden = true;
+      return;
+    }
+    const texto = 'Solo ' + cant + (cant === 1 ? ' disponible' : ' disponibles');
+    el.innerHTML =
+      '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M20 7 12 3 4 7v10l8 4 8-4z"/><path d="m4 7 8 4 8-4"/><path d="M12 11v10"/></svg>' +
+      esc(texto);
+    el.hidden = false;
+  }
+
+  // Estado AGOTADO: si stock_disponible es exactamente 0, muestra el chip de
+  // agotado y deshabilita el boton 'Comprar ahora'. Si es > 0 (o no viene el
+  // dato), comportamiento normal. El aviso de urgencia es independiente.
+  function pintarAgotado(fila){
+    const chip = document.getElementById('mg-agotado');
+    const btn = document.getElementById('mg-comprar');
+    const stock = Number(fila.stock_disponible);
+    const agotado = Number.isFinite(stock) && stock === 0;
+    if(chip) chip.hidden = !agotado;
+    if(btn) btn.disabled = agotado;
+  }
+
+  // Rellena "Sobre este producto": el texto puede traer varios parrafos; se
+  // parte por saltos de linea y se pinta un <p> por parrafo (escapado).
+  function pintarSobre(texto){
+    const cont = document.getElementById('mg-sobre');
+    if(!cont || !texto) return;
+    const parrafos = String(texto).split(/\n+/).map(function(t){ return t.trim(); })
+      .filter(function(t){ return t.length > 0; });
+    if(parrafos.length === 0) return;
+    cont.innerHTML = parrafos.map(function(p){ return '<p>' + esc(p) + '</p>'; }).join('');
+  }
+
+  // Rellena la ficha (jsonb arreglo de {clave, valor}) como filas de la tabla.
+  function pintarFicha(ficha){
+    const tabla = document.getElementById('mg-ficha');
+    if(!tabla || !Array.isArray(ficha) || ficha.length === 0) return;
+    tabla.innerHTML = ficha.map(function(par){
+      return '<tr><td>' + esc(par && par.clave) + '</td><td>' + esc(par && par.valor) + '</td></tr>';
+    }).join('');
+  }
+
+  // Resuelve la URL publica de un path del bucket 'campanas'. Si el path ya es una
+  // URL absoluta (http...), se devuelve tal cual (compatibilidad).
+  function urlPublica(path){
+    if(!path) return '';
+    if(/^https?:\/\//i.test(path)) return path;
+    const { data } = supabase.storage.from(BUCKET_CAMPANAS).getPublicUrl(path);
+    return (data && data.publicUrl) || '';
+  }
+
+  // GALERIA real: arma la lista ordenada de imagenes (primero el arreglo
+  // 'imagenes'; si no hay, usa 'imagen_banner_path'), pinta la foto principal y
+  // las miniaturas, y permite cambiar la principal al hacer clic en una miniatura.
+  // Si no hay ninguna imagen, conserva el placeholder dibujado.
+  function pintarGaleria(fila){
+    const foto = document.getElementById('mg-foto');
+    const tiras = document.getElementById('mg-tiras');
+    if(!foto) return;
+
+    // Reune los paths en orden: el arreglo 'imagenes' manda; si viene vacio o no
+    // existe, se recurre al banner. Se filtran vacios.
+    let paths = [];
+    if(Array.isArray(fila.imagenes)) paths = fila.imagenes.slice();
+    if(paths.length === 0 && fila.imagen_banner_path) paths = [fila.imagen_banner_path];
+    const urls = paths.map(urlPublica).filter(function(u){ return !!u; });
+
+    // Sin imagenes: se conserva el placeholder dibujado que ya esta en el HTML.
+    if(urls.length === 0) return;
+
+    const alt = fila.nombre || 'Producto';
+
+    // Foto principal = primer elemento.
+    function mostrarPrincipal(url){
+      foto.innerHTML = '<img class="mg-foto__img" src="' + esc(url) + '" alt="' + esc(alt) + '">';
+    }
+    mostrarPrincipal(urls[0]);
+
+    // Miniaturas = TODAS las imagenes en orden (para poder volver a la primera).
+    // Clic en una miniatura cambia la foto principal y marca la activa.
+    if(tiras){
+      tiras.innerHTML = urls.map(function(url, i){
+        const activa = i === 0 ? ' activa' : '';
+        return '<button type="button" class="mg-tira' + activa + '" data-url="' + esc(url) + '">' +
+          '<img src="' + esc(url) + '" alt="' + esc(alt) + ' ' + (i + 1) + '"></button>';
+      }).join('');
+      tiras.addEventListener('click', function(e){
+        const btn = e.target.closest('.mg-tira');
+        if(!btn) return;
+        const url = btn.getAttribute('data-url');
+        if(!url) return;
+        mostrarPrincipal(url);
+        tiras.querySelectorAll('.mg-tira').forEach(function(t){ t.classList.remove('activa'); });
+        btn.classList.add('activa');
+      });
+    }
+  }
+
+  function mostrarNoDisponible(){
+    const el = document.getElementById('mg-nodisp');
+    if(el) el.setAttribute('data-visible', 'true');
+    // Sin producto valido no hay compra posible: apaga el boton.
+    const btn = document.getElementById('mg-comprar');
+    if(btn) btn.disabled = true;
+    set('mg-sub', '');
+  }
+
+  async function cargarProducto(){
+    // Lee el parametro de la URL: preferir ?slug=, si no ?id=.
+    const params = new URLSearchParams(window.location.search);
+    const slug = (params.get('slug') || '').trim();
+    const id = (params.get('id') || '').trim();
+
+    if(!slug && !id){
+      // URL sin parametro: aviso sobrio, sin romper la pagina.
+      mostrarNoDisponible();
+      return;
+    }
+
+    try{
+      let consulta = supabase.from('catalogo_publico').select('*');
+      // El slug es la clave publica preferida; el id (uuid) es el respaldo.
+      consulta = slug ? consulta.eq('slug', slug) : consulta.eq('id', id);
+      const { data, error } = await consulta.maybeSingle();
+      if(error) throw error;
+      if(!data){
+        // Producto despublicado / inexistente: aviso sobrio, sin romper la pagina.
+        mostrarNoDisponible();
+        return;
+      }
+
+      aplicarAcento(data);
+      pintarSello(data);
+      set('mg-titulo', data.nombre || '');
+      document.title = (data.nombre ? data.nombre + ' · MAGANDHI' : 'Producto · MAGANDHI');
+      set('mg-miga-nom', data.nombre || 'Producto');
+      if(data.categoria_nombre) set('mg-miga-cat', data.categoria_nombre);
+      if(data.caracteristica_adicional) set('mg-sub', data.caracteristica_adicional);
+      else set('mg-sub', '');
+      set('mg-precio', formatearPrecio(data.precio_venta));
+      if(data.hook_largo) set('mg-desc', data.hook_largo);
+      if(data.por_que_magandhi) set('mg-curaduria', data.por_que_magandhi);
+      pintarSobre(data.sobre_este_producto);
+      pintarFicha(data.ficha_tecnica);
+      pintarGaleria(data);
+      pintarUrgencia(data);
+      pintarAgotado(data);
+    }catch(e){
+      // Falla de red/consulta: se deja el contenido de respaldo (no se rompe).
+      console.error('No se pudo cargar el producto desde Campanas:', e);
+    }
+  }
+
+  cargarProducto();
+</script>
+
+<script>
+  // Modal "Pagos seguros con Wompi": abrir desde la barra, cerrar con X, clic
+  // afuera o Escape. Sin dependencias; accesible (aria-hidden + foco).
+  (function(){
+    var abrir  = document.getElementById('mg-abrir-wompi');
+    var modal  = document.getElementById('mg-modal-wompi');
+    var cerrar = document.getElementById('mg-cerrar-wompi');
+    if(!abrir || !modal || !cerrar) return;
+    function mostrar(){ modal.setAttribute('aria-hidden','false'); cerrar.focus(); }
+    function ocultar(){ modal.setAttribute('aria-hidden','true'); abrir.focus(); }
+    abrir.addEventListener('click', mostrar);
+    cerrar.addEventListener('click', ocultar);
+    modal.addEventListener('click', function(e){ if(e.target === modal) ocultar(); });
+    document.addEventListener('keydown', function(e){
+      if(e.key === 'Escape' && modal.getAttribute('aria-hidden') === 'false') ocultar();
+    });
+  })();
+</script>
+
+</body>
+</html>
