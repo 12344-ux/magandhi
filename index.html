@@ -193,30 +193,33 @@
      mismas tarjetas, solo cambia el layout por breakpoint.
      ============================================================ */
   @media(max-width:760px){
-    .hg-grid{grid-template-columns:1fr;gap:14px}
+    /* ESCAPARATE 2 COLUMNAS (exclusivo movil): tarjetas verticales compactas, de
+       a DOS por fila, que se "cortan" abajo = sensacion de "sigue bajando". En
+       tono boutique MAGANDHI (sin ofertas ni urgencia). Cada tarjeta muestra solo
+       lo esencial para no saturar: categoria (con su color) + nombre + sello. El
+       hook, el precio y el boton NO se muestran aqui (se ven al entrar al producto). */
+    .hg-vitrina{padding:0 16px}
+    .hg-grid{grid-template-columns:repeat(2,1fr);gap:14px}
 
-    .hg-tarjeta{flex-direction:row;align-items:stretch;height:auto}
+    .hg-tarjeta{flex-direction:column;height:100%;border-radius:16px}
 
-    .hg-foto{
-      flex:none;width:118px;height:auto;min-height:0;
-    }
-    .hg-foto img{max-height:96px;max-width:82%}
-    .hg-foto__ph{width:72px;height:72px;border-radius:16px}
-    .hg-foto__ph svg{width:34px;height:34px}
+    .hg-foto{flex:none;height:150px}
+    .hg-foto img{max-height:130px;max-width:80%}
+    .hg-foto__ph{width:84px;height:84px;border-radius:18px}
+    .hg-foto__ph svg{width:38px;height:38px}
     .hg-medalla{
-      top:8px;left:8px;padding:4px 8px;font-size:8.5px;gap:5px;
+      top:9px;left:9px;padding:4px 9px;font-size:8px;gap:5px;letter-spacing:.04em;
     }
     .hg-medalla svg{width:11px;height:11px}
     .hg-medalla__star{width:10px;height:10px}
 
-    .hg-cont{padding:16px 18px;justify-content:center;flex:1;min-width:0}
-    .hg-nom{font-size:16px}
-    .hg-kicker{margin-bottom:6px;font-size:9.5px}
-    .hg-hook{font-size:12.5px;margin:0 0 10px}
-    .hg-fila{gap:10px}
-    .hg-precio b{font-size:17px}
-    /* en movil el "Ver" es compacto (flecha + texto corto) */
-    .hg-ir{padding:8px 14px;font-size:12.5px}
+    .hg-cont{padding:13px 14px 16px;justify-content:flex-start;flex:1;min-width:0}
+    .hg-kicker{margin-bottom:7px;font-size:9px;letter-spacing:.1em}
+    .hg-nom{font-size:14.5px;line-height:1.25}
+    /* solo categoria + nombre + sello: se ocultan hook, precio y boton en movil */
+    .hg-meta,
+    .hg-hook,
+    .hg-fila{display:none}
   }
 
   /* ---------- barra fija inferior ---------- */
