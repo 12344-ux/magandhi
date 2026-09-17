@@ -75,6 +75,22 @@
   }
   .mg-marca{display:flex;align-items:center;gap:11px;text-decoration:none}
   .mg-marca img{width:38px;height:38px;display:block}
+  /* boton VOLVER claro y visible (PC y movil): forma directa de regresar a la
+     tienda, mas evidente que el logo o las migas. */
+  .mg-head-left{display:flex;align-items:center;gap:14px}
+  .mg-volver{
+    display:inline-flex;align-items:center;gap:7px;flex:none;
+    font-size:13.5px;font-weight:600;color:var(--tinta);text-decoration:none;
+    background:var(--blanco);border:1px solid var(--linea);border-radius:11px;
+    padding:9px 15px;transition:border-color .15s,color .15s,transform .08s;
+  }
+  .mg-volver:hover{border-color:var(--rojo);color:var(--rojo);transform:translateX(-2px)}
+  .mg-volver svg{width:16px;height:16px}
+  @media(max-width:720px){
+    /* en movil: boton compacto (solo flecha + 'Volver'), el logo pasa a segundo plano */
+    .mg-volver span{display:none}
+    .mg-volver{padding:9px 12px}
+  }
   .mg-word{font-weight:600;font-size:20px;letter-spacing:.16em;color:var(--negro);line-height:1}
   .mg-word i{color:var(--terracota);font-style:normal}
   .mg-nav{display:flex;gap:24px;font-size:14px;font-weight:500}
@@ -292,10 +308,16 @@
 
 <!-- header -->
 <header>
-  <a class="mg-marca" href="../../index.html">
-    <img src="../../logo-mark-terracota.png" alt="MAGANDHI">
-    <span class="mg-word">MAG<i>A</i>NDHI</span>
-  </a>
+  <div class="mg-head-left">
+    <a class="mg-volver" href="../../index.html" aria-label="Volver a la tienda">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
+      <span>Volver a la tienda</span>
+    </a>
+    <a class="mg-marca" href="../../index.html">
+      <img src="../../logo-mark-terracota.png" alt="MAGANDHI">
+      <span class="mg-word">MAG<i>A</i>NDHI</span>
+    </a>
+  </div>
   <nav class="mg-nav">
     <a href="#">Productos</a>
     <a href="#">Cómo trabajamos</a>
