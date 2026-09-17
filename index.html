@@ -348,6 +348,9 @@
 <script type="module">
   import { supabase } from './supabase-config.js';
 
+  // Nombre del bucket publico de Campanas donde viven las imagenes de producto.
+  const BUCKET_CAMPANAS = 'campanas';
+
   // Escapa texto que venga de datos antes de inyectarlo como HTML (este repo no
   // tiene un core compartido, asi que el helper vive aqui).
   function esc(v){
@@ -355,6 +358,54 @@
     return String(v)
       .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
       .replace(/"/g,'&quot;').replace(/'/g,'&#39;');
+  }
+
+  // Resuelve la URL publica de un path del bucket 'campanas'. Si el path ya es
+  // una URL absoluta (http...), se devuelve tal cual (compatibilidad con datos
+  // viejos que hubieran guardado una URL en vez de un key).
+  function urlPublica(path){
+    if(!path) return '';
+    if(/^https?:\/\//i.test(path)) return path;
+    const { data } = supabase.storage.from(BUCKET_CAMPANAS).getPublicUrl(path);
+    return (data && data.publicUrl) || '';
+  }
+
+  // Deriva el path de la version LIVIANA ('-sm') a partir del path GRANDE, segun
+  // la convencion de subida del panel de Campanas: la galeria sube dos objetos
+  // por imagen con la MISMA base, la grande como '<base>.<ext>' y la liviana
+  // como '<base>-sm.<ext>'. Asi el grid del home puede pedir la liviana SIN
+  // cambiar el esquema ni la vista (que solo trae el path grande en 'imagenes').
+  // Si el path ya es una URL absoluta o no tiene extension reconocible, no se
+  // toca (no hay liviana derivable). El fallback a la grande se hace en el
+  // <img onerror> por si la liviana no existiese en Storage.
+  function pathLiviana(pathGrande){
+    if(!pathGrande || /^https?:\/\//i.test(pathGrande)) return '';
+    const punto = pathGrande.lastIndexOf('.');
+    if(punto <= 0) return '';
+    const base = pathGrande.slice(0, punto);
+    const ext  = pathGrande.slice(punto + 1);
+    if(base.endsWith('-sm')) return pathGrande; // ya es liviana
+    return base + '-sm.' + ext;
+  }
+
+  // Devuelve { liviana, grande } de URLs publicas para la FOTO del grid. Prefiere
+  // la primera imagen de la galeria (arreglo 'imagenes', que tiene version -sm);
+  // si no hay galeria, cae al banner (imagen_banner_path, que NO tiene -sm, asi
+  // que su liviana = grande). El grid pide la liviana y cae a la grande via
+  // onerror. Objetivo del dueno: calidad en la pagina de producto (usa la
+  // grande) SIN penalizar la carga del grid/miniaturas (usan la liviana).
+  function fotosGrid(fila){
+    let grandePath = '';
+    if(Array.isArray(fila.imagenes) && fila.imagenes.length && fila.imagenes[0]){
+      grandePath = fila.imagenes[0];
+    } else if(fila.imagen_banner_path){
+      grandePath = fila.imagen_banner_path;
+    }
+    if(!grandePath) return { liviana: '', grande: '' };
+    const grande = urlPublica(grandePath);
+    const svPath = pathLiviana(grandePath);
+    const liviana = svPath ? urlPublica(svPath) : grande;
+    return { liviana: liviana || grande, grande };
   }
 
   // Formatea el precio como en el diseno aprobado: "$ 24.900" (miles con punto).
@@ -421,9 +472,22 @@
                    ';--acento-sombra:' + esc(acentoSb);
 
     // Zona de la foto: imagen real si el producto la trae; si no, placeholder.
-    const img = fila.imagen_banner_path
-      ? '<img src="' + esc(fila.imagen_banner_path) + '" alt="' + esc(fila.nombre) + '">'
-      : '<span class="hg-foto__ph" aria-hidden="true">' + ICONO_PH + '</span>';
+    // Se pide la version LIVIANA (-sm) para no penalizar la carga del grid; si
+    // esa liviana no existe en Storage, el onerror cae a la version grande (y si
+    // la grande tampoco existe, un segundo onerror muestra el placeholder). La
+    // pagina de producto en cambio usa la grande (calidad boutique).
+    const foto = fotosGrid(fila);
+    const phMarkup = '<span class="hg-foto__ph" aria-hidden="true">' + ICONO_PH + '</span>';
+    let img;
+    if(foto.liviana){
+      const fbGrande = (foto.grande && foto.grande !== foto.liviana)
+        ? "this.onerror=null;this.src='" + foto.grande.replace(/'/g, "\\'") + "'"
+        : "this.onerror=null;this.remove()";
+      img = '<img src="' + esc(foto.liviana) + '" alt="' + esc(fila.nombre) + '" ' +
+        'loading="lazy" onerror="' + esc(fbGrande) + '">';
+    } else {
+      img = phMarkup;
+    }
 
     return '' +
     '<a class="hg-tarjeta" href="' + esc(href) + '" style="' + estilo + '">' +

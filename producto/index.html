@@ -771,6 +771,28 @@
     return (data && data.publicUrl) || '';
   }
 
+  // Deriva el path de la version LIVIANA ('-sm') a partir del path GRANDE, segun
+  // la convencion de subida del panel de Campanas: la galeria sube dos objetos
+  // por imagen con la MISMA base, la grande como '<base>.<ext>' y la liviana
+  // como '<base>-sm.<ext>'. Se usa SOLO para las miniaturas (mg-tiras): la foto
+  // principal usa la grande (calidad boutique). Sin cambios de esquema ni vista.
+  function pathLiviana(pathGrande){
+    if(!pathGrande || /^https?:\/\//i.test(pathGrande)) return '';
+    const punto = pathGrande.lastIndexOf('.');
+    if(punto <= 0) return '';
+    const base = pathGrande.slice(0, punto);
+    const ext  = pathGrande.slice(punto + 1);
+    if(base.endsWith('-sm')) return pathGrande; // ya es liviana
+    return base + '-sm.' + ext;
+  }
+
+  // URL publica de la version LIVIANA de un path grande, con fallback a la propia
+  // grande si no hay liviana derivable.
+  function urlLiviana(pathGrande){
+    const sv = pathLiviana(pathGrande);
+    return sv ? (urlPublica(sv) || urlPublica(pathGrande)) : urlPublica(pathGrande);
+  }
+
   // GALERIA real: arma la lista ordenada de imagenes (primero el arreglo
   // 'imagenes'; si no hay, usa 'imagen_banner_path'), pinta la foto principal y
   // las miniaturas, y permite cambiar la principal al hacer clic en una miniatura.
@@ -785,26 +807,39 @@
     let paths = [];
     if(Array.isArray(fila.imagenes)) paths = fila.imagenes.slice();
     if(paths.length === 0 && fila.imagen_banner_path) paths = [fila.imagen_banner_path];
-    const urls = paths.map(urlPublica).filter(function(u){ return !!u; });
+    paths = paths.filter(function(p){ return !!p; });
+
+    // La foto PRINCIPAL usa la version GRANDE (calidad boutique); las MINIATURAS
+    // usan la version LIVIANA (-sm) para no penalizar la carga. Se guardan ambas
+    // por imagen: 'grande' para pintar la principal al hacer clic, 'liviana' para
+    // la miniatura (con fallback a la grande via onerror).
+    const fotos = paths.map(function(p){
+      return { grande: urlPublica(p), liviana: urlLiviana(p) };
+    }).filter(function(f){ return !!f.grande; });
 
     // Sin imagenes: se conserva el placeholder dibujado que ya esta en el HTML.
-    if(urls.length === 0) return;
+    if(fotos.length === 0) return;
 
     const alt = fila.nombre || 'Producto';
 
-    // Foto principal = primer elemento.
+    // Foto principal = primer elemento, siempre la GRANDE.
     function mostrarPrincipal(url){
       foto.innerHTML = '<img class="mg-foto__img" src="' + esc(url) + '" alt="' + esc(alt) + '">';
     }
-    mostrarPrincipal(urls[0]);
+    mostrarPrincipal(fotos[0].grande);
 
     // Miniaturas = TODAS las imagenes en orden (para poder volver a la primera).
-    // Clic en una miniatura cambia la foto principal y marca la activa.
+    // La miniatura carga la LIVIANA (con fallback a la grande via onerror), y al
+    // hacer clic muestra la GRANDE como principal y marca la activa.
     if(tiras){
-      tiras.innerHTML = urls.map(function(url, i){
+      tiras.innerHTML = fotos.map(function(f, i){
         const activa = i === 0 ? ' activa' : '';
-        return '<button type="button" class="mg-tira' + activa + '" data-url="' + esc(url) + '">' +
-          '<img src="' + esc(url) + '" alt="' + esc(alt) + ' ' + (i + 1) + '"></button>';
+        const fb = (f.grande && f.grande !== f.liviana)
+          ? "this.onerror=null;this.src='" + f.grande.replace(/'/g, "\\'") + "'"
+          : '';
+        return '<button type="button" class="mg-tira' + activa + '" data-url="' + esc(f.grande) + '">' +
+          '<img src="' + esc(f.liviana) + '" alt="' + esc(alt) + ' ' + (i + 1) + '"' +
+          (fb ? ' onerror="' + esc(fb) + '"' : '') + '></button>';
       }).join('');
       tiras.addEventListener('click', function(e){
         const btn = e.target.closest('.mg-tira');
@@ -868,8 +903,12 @@
       pintarUrgencia(data);
       pintarAgotado(data);
     }catch(e){
-      // Falla de red/consulta: se deja el contenido de respaldo (no se rompe).
+      // Falla de red/consulta: no se pudo confirmar el producto ni su stock, asi
+      // que se muestra el aviso sobrio de no disponible y se DESHABILITA la
+      // compra (mostrarNoDisponible apaga el boton 'Comprar ahora'). Cerrar el
+      // caso asi evita ofrecer comprar un producto que no pudimos cargar.
       console.error('No se pudo cargar el producto desde Campanas:', e);
+      mostrarNoDisponible();
     }
   }
 
