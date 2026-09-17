@@ -24,17 +24,36 @@
 <link rel="stylesheet" href="marca.css?v=1">
 
 <!--
-  MAGANDHI · portada / hero de la tienda.
+  MAGANDHI · portada / home de la tienda.
   · CSS autocontenido, prefijo hg-. Sin dependencias salvo la fuente.
-  · Sistema de marca: rojo #D32F2F, negro #111, hueso #FAF7F5, Poppins.
-  · Idea de diseño: el rojo manda pero ENMARCADO (panel/vitrina), no a pantalla
-    completa (a pantalla completa lee como "outlet"). El producto respira = lujo.
-  · Fase 1: UN solo producto destacado, "Elegido por MAGANDHI". El vacío es intencional.
-  · Barra fija inferior: solo Contacto (centrado).
+  · Sistema de marca: paleta en marca.css. Negro #111, hueso/crema, Poppins.
+
+  · COLOR = CATEGORIA (semantico, no decorativo). Cada producto pertenece a UNA
+    categoria y cada categoria tiene UN color fijo de la familia MAGANDHI. El
+    color NO distingue producto, distingue categoria. Como el home es un grid de
+    pocas tarjetas de misma temperatura/saturacion, se lee "coleccion curada",
+    nunca arcoiris. Cada tarjeta lleva el color de su categoria via variables
+    inline (--acento / --acento-cl / --acento-sombra) sobre .hg-tarjeta.
+    Esta es la base visual del futuro software "Campanas" (back-office).
+
+  · PALETA DE CATEGORIAS (aprobada por el dueno, misma familia calida):
+      Belleza femenina (rosa terroso)      #B5657A / #D99FAE / rgba(181,101,122,.16)
+      Belleza masculina (grafito calido)   #3A3A3A / #7A7A7A / rgba(58,58,58,.14)
+      Cuidado personal/general (topo)      #6E6A66 / #A8A29C / rgba(110,106,102,.15)
+      Hogar/limpieza (azul petroleo)       #3E6B78 / #7FA6B0 / rgba(62,107,120,.15)
+      Alimentos/naturales (terracota)      #C0682E / #E3A576 / rgba(192,104,46,.16)
+      Destacado/clasico (rojo-terracota)   #B23A2E / #D98A80 / rgba(178,58,46,.15)
+    El GRISI Gold conserva su DORADO de firma (#C9962E) para cuidado del cabello.
+
+  · Fase actual: GRID de 5 productos. El primero (Grisi) es "producto estrella"
+    y lleva una estrella (.hg-estrella) ADICIONAL a la medalla "Elegido por MAGANDHI".
+    Solo el Grisi tiene pagina real; los otros 4 son productos de EJEMPLO/inventados
+    (el dueno los ajustara desde el software Campanas) y enlazan a "#".
+  · Barra fija inferior: solo iconos de contacto (centrado).
 -->
 <style>
   *{box-sizing:border-box}
-  /* La paleta vive en marca.css (fuente única). Aquí solo lo específico del hero. */
+  /* La paleta vive en marca.css (fuente unica). Aqui solo lo especifico del home. */
   :root{ --barra-h:60px; }
   html,body{margin:0;padding:0}
   body{
@@ -55,7 +74,7 @@
   /* wordmark: todo negro, centrado y AJUSTADO (letter-spacing menor = letras juntas) */
   .hg-word{
     font-weight:600;font-size:26px;letter-spacing:.16em;color:var(--negro);
-    line-height:1;text-indent:.16em; /* compensa el spacing del último caracter para centrar óptico */
+    line-height:1;text-indent:.16em; /* compensa el spacing del ultimo caracter para centrar optico */
   }
   .hg-tag{font-size:10.5px;letter-spacing:.26em;text-transform:uppercase;color:var(--gris-cl);text-indent:.26em}
 
@@ -66,74 +85,152 @@
   }
   .hg-intro h1 em{font-style:normal;color:var(--rojo)}
 
-  /* ---------- vitrina del producto (el hero) ---------- */
+  /* ---------- vitrina: grid de productos ---------- */
   .hg-vitrina{
-    max-width:980px;margin:38px auto 0;padding:0 24px;
+    max-width:1100px;margin:34px auto 0;padding:0 24px;
   }
+  .hg-grid{
+    display:grid;grid-template-columns:repeat(3,1fr);gap:22px;
+  }
+  /* la tarjeta estrella (primera) ocupa mas espacio y queda destacada */
+  .hg-grid > .hg-tarjeta:first-child{grid-column:span 2;grid-row:span 2}
+  @media(max-width:980px){
+    .hg-grid{grid-template-columns:repeat(2,1fr)}
+    .hg-grid > .hg-tarjeta:first-child{grid-column:span 2;grid-row:auto}
+  }
+
+  /* ---------- tarjeta de producto ---------- */
+  /* Cada tarjeta define su color de categoria via --acento(-cl/-sombra) inline. */
   .hg-tarjeta{
-    display:block;position:relative;border-radius:22px;overflow:hidden;
-    background:var(--blanco);border:1px solid var(--linea);
-    box-shadow:0 18px 46px rgba(17,17,17,.08);
-    transition:transform .22s ease,box-shadow .22s ease;
-    cursor:pointer;
+    display:flex;flex-direction:column;position:relative;
+    border-radius:20px;overflow:hidden;
+    background:var(--blanco);border:1px solid var(--acento-sombra);
+    box-shadow:0 14px 36px rgba(17,17,17,.07);
+    transition:transform .22s ease,box-shadow .22s ease,border-color .22s ease;
+    cursor:pointer;height:100%;
   }
-  .hg-tarjeta:hover{transform:translateY(-6px);box-shadow:0 30px 66px rgba(158,32,32,.20)}
+  .hg-tarjeta:hover{
+    transform:translateY(-6px);
+    box-shadow:0 26px 58px var(--acento-sombra);
+    border-color:var(--acento-cl);
+  }
   .hg-tarjeta:hover .hg-foto img{transform:scale(1.045)}
-  .hg-tarjeta:hover .hg-ir{background:var(--rojo-osc);gap:12px}
+  .hg-tarjeta:hover .hg-ir{gap:12px}
 
-  .hg-grid{display:grid;grid-template-columns:1.05fr 1fr;min-height:440px}
-  @media(max-width:760px){.hg-grid{grid-template-columns:1fr}}
-
-  /* panel rojo (fondo protagonista, ENMARCADO por la tarjeta) */
+  /* panel del color de la categoria (antes rojo fijo, ahora --acento por tarjeta) */
   .hg-foto{
-    position:relative;
+    position:relative;flex:1;min-height:220px;
     background:
-      radial-gradient(120% 90% at 50% 0%, var(--rojo) 0%, var(--rojo-osc) 62%, var(--rojo-prof) 100%);
+      radial-gradient(120% 90% at 50% 0%, var(--acento-cl) 0%, var(--acento) 58%, var(--acento) 100%);
     display:flex;align-items:center;justify-content:center;overflow:hidden;
   }
-  .hg-foto::after{ /* halo suave detrás del producto */
+  .hg-foto::after{ /* halo suave detras del producto */
     content:"";position:absolute;width:78%;height:78%;border-radius:50%;
-    background:radial-gradient(circle, rgba(255,255,255,.16) 0%, rgba(255,255,255,0) 68%);
+    background:radial-gradient(circle, rgba(255,255,255,.18) 0%, rgba(255,255,255,0) 68%);
   }
   .hg-foto img{
-    position:relative;max-height:400px;max-width:80%;object-fit:contain;
-    filter:drop-shadow(0 22px 30px rgba(0,0,0,.28));
+    position:relative;max-height:230px;max-width:78%;object-fit:contain;
+    filter:drop-shadow(0 20px 28px rgba(0,0,0,.26));
     transition:transform .35s ease;z-index:1;
   }
-  .hg-medalla{
-    position:absolute;top:16px;left:16px;z-index:2;
-    display:inline-flex;align-items:center;gap:7px;
-    background:rgba(255,255,255,.94);color:var(--rojo);
-    font-size:11px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;
-    border-radius:999px;padding:6px 13px;box-shadow:0 4px 12px rgba(0,0,0,.15);
+  /* placeholder dibujado (icono) para productos sin foto real */
+  .hg-foto__ph{
+    position:relative;z-index:1;display:flex;align-items:center;justify-content:center;
+    width:120px;height:120px;border-radius:24px;
+    background:rgba(255,255,255,.16);border:1px solid rgba(255,255,255,.34);
+    color:#fff;
   }
-  .hg-medalla svg{width:14px;height:14px}
+  .hg-foto__ph svg{width:52px;height:52px;opacity:.95}
+
+  .hg-medalla{
+    position:absolute;top:14px;left:14px;z-index:2;
+    display:inline-flex;align-items:center;gap:7px;
+    background:rgba(255,255,255,.94);color:var(--acento);
+    font-size:10.5px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;
+    border-radius:999px;padding:6px 12px;box-shadow:0 4px 12px rgba(0,0,0,.15);
+  }
+  .hg-medalla svg{width:13px;height:13px}
+
+  /* estrella "producto estrella" (adicional a la medalla), esquina superior derecha */
+  .hg-estrella{
+    position:absolute;top:14px;right:14px;z-index:2;
+    display:inline-flex;align-items:center;justify-content:center;
+    width:34px;height:34px;border-radius:50%;
+    background:rgba(255,255,255,.94);color:var(--acento);
+    box-shadow:0 4px 12px rgba(0,0,0,.16);
+  }
+  .hg-estrella svg{width:19px;height:19px}
 
   /* lado del texto */
-  .hg-cont{padding:38px 40px;display:flex;flex-direction:column;justify-content:center}
-  @media(max-width:760px){.hg-cont{padding:30px 26px}}
+  .hg-cont{padding:22px 24px;display:flex;flex-direction:column;gap:2px}
+  .hg-grid > .hg-tarjeta:first-child .hg-cont{padding:30px 32px}
   .hg-kicker{
-    font-size:11px;font-weight:600;letter-spacing:.16em;text-transform:uppercase;
-    color:var(--acento);margin-bottom:12px;display:inline-flex;align-items:center;gap:7px;
+    font-size:10.5px;font-weight:600;letter-spacing:.14em;text-transform:uppercase;
+    color:var(--acento);margin-bottom:9px;display:inline-flex;align-items:center;gap:7px;
   }
-  .hg-kicker svg{width:15px;height:15px}
-  .hg-nom{font-size:clamp(22px,3vw,28px);font-weight:600;line-height:1.18;margin:0 0 4px;letter-spacing:-.3px}
-  .hg-meta{font-size:13.5px;color:var(--gris-cl);margin:0 0 16px}
-  .hg-hook{font-size:15px;color:#3a3a3a;margin:0 0 22px;max-width:380px}
-  .hg-fila{display:flex;align-items:center;gap:16px;flex-wrap:wrap}
-  .hg-precio b{font-size:24px;font-weight:600;color:var(--negro)}
-  .hg-precio small{font-size:12px;color:var(--gris-cl);margin-left:5px}
+  .hg-kicker svg{width:14px;height:14px}
+  .hg-nom{font-size:clamp(17px,2vw,21px);font-weight:600;line-height:1.2;margin:0 0 3px;letter-spacing:-.3px}
+  .hg-grid > .hg-tarjeta:first-child .hg-nom{font-size:clamp(21px,3vw,28px)}
+  .hg-meta{font-size:12.5px;color:var(--gris-cl);margin:0 0 12px}
+  .hg-hook{font-size:13.5px;color:#3a3a3a;margin:0 0 16px}
+  .hg-grid > .hg-tarjeta:first-child .hg-hook{font-size:15px;max-width:420px}
+  .hg-fila{display:flex;align-items:center;gap:14px;flex-wrap:wrap;margin-top:auto}
+  .hg-precio b{font-size:19px;font-weight:600;color:var(--negro)}
+  .hg-grid > .hg-tarjeta:first-child .hg-precio b{font-size:24px}
+  .hg-precio small{font-size:11.5px;color:var(--gris-cl);margin-left:5px}
   .hg-ir{
     display:inline-flex;align-items:center;gap:8px;
-    background:var(--rojo);color:#fff;font-size:14.5px;font-weight:600;
-    border-radius:12px;padding:12px 22px;transition:background .18s,gap .18s;
+    background:var(--acento);color:#fff;font-size:13.5px;font-weight:600;
+    border-radius:11px;padding:10px 18px;transition:background .18s,gap .18s;
   }
-  .hg-ir svg{width:17px;height:17px}
+  .hg-grid > .hg-tarjeta:first-child .hg-ir{font-size:14.5px;padding:12px 22px}
+  .hg-ir svg{width:16px;height:16px}
 
   /* nota bajo la vitrina */
-  .hg-pie{max-width:980px;margin:20px auto 0;padding:0 24px;text-align:center}
+  .hg-pie{max-width:1100px;margin:22px auto 0;padding:0 24px;text-align:center}
   .hg-pie p{font-size:12.5px;color:var(--gris-cl);display:inline-flex;align-items:center;gap:7px}
-  .hg-pie svg{width:14px;height:14px;color:var(--acento)}
+  .hg-pie svg{width:14px;height:14px;color:var(--rojo)}
+
+  /* ============================================================
+     MOVIL (<=760px): las tarjetas dejan de ser banner vertical y
+     pasan a TARJETAS HORIZONTALES APILADAS: cuadrito de color a la
+     IZQUIERDA (panel + icono/foto) y TEXTO a la DERECHA. Mismo grid,
+     mismas tarjetas, solo cambia el layout por breakpoint.
+     ============================================================ */
+  @media(max-width:760px){
+    .hg-grid{grid-template-columns:1fr;gap:14px}
+    .hg-grid > .hg-tarjeta:first-child{grid-column:auto}
+
+    .hg-tarjeta{flex-direction:row;align-items:stretch;height:auto}
+    .hg-grid > .hg-tarjeta:first-child .hg-cont{padding:16px 18px}
+
+    .hg-foto{
+      flex:none;width:118px;min-height:0;
+    }
+    .hg-foto img{max-height:96px;max-width:82%}
+    .hg-foto__ph{width:72px;height:72px;border-radius:16px}
+    .hg-foto__ph svg{width:34px;height:34px}
+    .hg-medalla{
+      top:8px;left:8px;padding:4px 8px;font-size:8.5px;gap:5px;
+    }
+    .hg-medalla svg{width:11px;height:11px}
+    /* en movil la estrella va sobre la esquina superior de la tarjeta (no del panel) */
+    .hg-estrella{top:10px;right:10px;width:28px;height:28px;background:rgba(255,255,255,.96)}
+    .hg-estrella svg{width:16px;height:16px}
+
+    .hg-cont{padding:16px 18px;justify-content:center;flex:1;min-width:0}
+    .hg-grid > .hg-tarjeta:first-child .hg-nom,
+    .hg-nom{font-size:16px}
+    .hg-kicker{margin-bottom:6px;font-size:9.5px}
+    .hg-grid > .hg-tarjeta:first-child .hg-hook,
+    .hg-hook{font-size:12.5px;margin:0 0 10px}
+    .hg-fila{gap:10px}
+    .hg-grid > .hg-tarjeta:first-child .hg-precio b,
+    .hg-precio b{font-size:17px}
+    /* en movil el "Ver" es compacto (flecha + texto corto) */
+    .hg-grid > .hg-tarjeta:first-child .hg-ir,
+    .hg-ir{padding:8px 14px;font-size:12.5px}
+  }
 
   /* ---------- barra fija inferior ---------- */
   .hg-barra{
@@ -142,7 +239,7 @@
     display:flex;align-items:center;justify-content:center;gap:14px;
     border-top:1px solid rgba(255,255,255,.08);
   }
-  /* íconos de contacto: solo símbolos, sin texto */
+  /* iconos de contacto: solo simbolos, sin texto */
   .hg-barra a, .hg-barra span.ico{
     display:inline-flex;align-items:center;justify-content:center;color:#fff;
     width:42px;height:42px;border-radius:50%;
@@ -151,7 +248,7 @@
   .hg-barra a{opacity:.9}
   .hg-barra a:hover{background:rgba(255,255,255,.12);opacity:1;transform:translateY(-2px)}
   .hg-barra a svg, .hg-barra span.ico svg{width:20px;height:20px}
-  /* canales aún no disponibles: atenuados y sin clic */
+  /* canales aun no disponibles: atenuados y sin clic */
   .hg-barra span.ico{opacity:.28;cursor:default}
 </style>
 </head>
@@ -171,19 +268,24 @@
   <h1>Ahora, <em>descúbrelo</em>.</h1>
 </div>
 
-<!-- vitrina: el producto elegido -->
+<!-- vitrina: grid de productos (color = categoria) -->
 <section class="hg-vitrina">
-  <a class="hg-tarjeta" href="producto/grisi-manzanilla-gold/">
-    <div class="hg-grid">
-      <!-- panel rojo con la foto -->
+  <div class="hg-grid">
+
+    <!-- 1 · PRODUCTO ESTRELLA · Grisi Manzanilla Gold · cuidado del cabello · DORADO de firma -->
+    <a class="hg-tarjeta" href="producto/grisi-manzanilla-gold/"
+       style="--acento:#C9962E;--acento-cl:#E7C56B;--acento-sombra:rgba(201,150,46,.18)">
       <div class="hg-foto">
         <span class="hg-medalla">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m9 12 2 2 4-4"/><circle cx="12" cy="12" r="10"/></svg>
           Elegido por MAGANDHI
         </span>
+        <!-- estrella = producto estrella (adicional a la medalla) -->
+        <span class="hg-estrella" title="Producto estrella" aria-label="Producto estrella">
+          <svg viewBox="0 0 24 24" fill="currentColor"><path d="m12 2 3 6.3 6.9 1-5 4.9 1.2 6.8L12 17.8 5.9 21l1.2-6.8-5-4.9 6.9-1z"/></svg>
+        </span>
         <img src="productos/grisi-manzanilla-gold.png" alt="Shampoo Manzanilla GRISI Gold">
       </div>
-      <!-- texto -->
       <div class="hg-cont">
         <span class="hg-kicker">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2v20M2 12h20"/></svg>
@@ -193,17 +295,131 @@
         <p class="hg-meta">Con extracto de cúrcuma · 400 mL</p>
         <p class="hg-hook">Un clásico del cuidado con manzanilla. Lo revisamos uno a uno: original, en fecha y en buen estado. Si no cumple, no entra.</p>
         <div class="hg-fila">
+          <span class="hg-precio"><b>$ 24.900</b><small>COP</small></span>
           <span class="hg-ir">
             Ver producto
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
           </span>
         </div>
       </div>
-    </div>
-  </a>
+    </a>
+
+    <!-- 2 · EJEMPLO (inventado) · Serum Facial Rosa Mosqueta · belleza femenina · ROSA -->
+    <a class="hg-tarjeta" href="#"
+       style="--acento:#B5657A;--acento-cl:#D99FAE;--acento-sombra:rgba(181,101,122,.16)">
+      <div class="hg-foto">
+        <span class="hg-foto__ph" aria-hidden="true">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2v4"/><path d="M9 6h6"/><rect x="7" y="6" width="10" height="16" rx="3"/><path d="M10 12h4"/></svg>
+        </span>
+      </div>
+      <div class="hg-cont">
+        <span class="hg-kicker">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 21c-4-2.5-7-5.5-7-9a7 7 0 0 1 14 0c0 3.5-3 6.5-7 9z"/></svg>
+          Belleza femenina
+        </span>
+        <h2 class="hg-nom">Sérum Facial de Rosa Mosqueta</h2>
+        <p class="hg-meta">Aceite botánico · 30 mL</p>
+        <p class="hg-hook">Aceite de rosa mosqueta para rutina facial nocturna. Te contamos qué contiene, sin promesas de milagros.</p>
+        <div class="hg-fila">
+          <span class="hg-precio"><b>$ 32.900</b><small>COP</small></span>
+          <span class="hg-ir">
+            Ver producto
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+          </span>
+        </div>
+      </div>
+    </a>
+
+    <!-- 3 · EJEMPLO (inventado) · Bálsamo para Barba Cedro · belleza masculina · GRAFITO -->
+    <a class="hg-tarjeta" href="#"
+       style="--acento:#3A3A3A;--acento-cl:#7A7A7A;--acento-sombra:rgba(58,58,58,.14)">
+      <div class="hg-foto">
+        <span class="hg-foto__ph" aria-hidden="true">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M4 8c0-2 2-4 4-4h8c2 0 4 2 4 4v1a3 3 0 0 1-3 3c-1 5-4 8-5 8s-4-3-5-8a3 3 0 0 1-3-3z"/></svg>
+        </span>
+      </div>
+      <div class="hg-cont">
+        <span class="hg-kicker">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M6 21v-2a6 6 0 0 1 12 0v2"/></svg>
+          Belleza masculina
+        </span>
+        <h2 class="hg-nom">Bálsamo para Barba de Cedro</h2>
+        <p class="hg-meta">Con aceite de argán · 60 mL</p>
+        <p class="hg-hook">Bálsamo para dar forma y suavidad a la barba. Aroma de cedro; lo revisamos antes de ofrecerlo.</p>
+        <div class="hg-fila">
+          <span class="hg-precio"><b>$ 28.500</b><small>COP</small></span>
+          <span class="hg-ir">
+            Ver producto
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+          </span>
+        </div>
+      </div>
+    </a>
+
+    <!-- 4 · EJEMPLO (inventado) · Jabón de Coco para el Hogar · hogar/limpieza · AZUL PETROLEO -->
+    <a class="hg-tarjeta" href="#"
+       style="--acento:#3E6B78;--acento-cl:#7FA6B0;--acento-sombra:rgba(62,107,120,.15)">
+      <div class="hg-foto">
+        <span class="hg-foto__ph" aria-hidden="true">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="9" width="16" height="11" rx="3"/><path d="M8 9V7a4 4 0 0 1 8 0v2"/><path d="M9 14h6"/></svg>
+        </span>
+      </div>
+      <div class="hg-cont">
+        <span class="hg-kicker">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 21V10l9-7 9 7v11z"/><path d="M9 21v-6h6v6"/></svg>
+          Hogar y limpieza
+        </span>
+        <h2 class="hg-nom">Jabón de Coco para el Hogar</h2>
+        <p class="hg-meta">Multiusos concentrado · 500 g</p>
+        <p class="hg-hook">Jabón de coco para lavado y limpieza del hogar. Rinde y huele a limpio; nada de promesas de más.</p>
+        <div class="hg-fila">
+          <span class="hg-precio"><b>$ 15.900</b><small>COP</small></span>
+          <span class="hg-ir">
+            Ver producto
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+          </span>
+        </div>
+      </div>
+    </a>
+
+    <!-- 5 · EJEMPLO (inventado) · Miel de Café Artesanal · alimentos/naturales · TERRACOTA -->
+    <a class="hg-tarjeta" href="#"
+       style="--acento:#C0682E;--acento-cl:#E3A576;--acento-sombra:rgba(192,104,46,.16)">
+      <div class="hg-foto">
+        <span class="hg-foto__ph" aria-hidden="true">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M8 2h8l-1 4H9z"/><path d="M9 6c-1 3-2 5-2 9a5 5 0 0 0 10 0c0-4-1-6-2-9"/><path d="M9 15h6"/></svg>
+        </span>
+      </div>
+      <div class="hg-cont">
+        <span class="hg-kicker">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2a7 7 0 0 0-7 7c0 5 7 13 7 13s7-8 7-13a7 7 0 0 0-7-7z"/><path d="M12 6v6"/></svg>
+          Alimentos naturales
+        </span>
+        <h2 class="hg-nom">Miel de Café Artesanal</h2>
+        <p class="hg-meta">Origen colombiano · 250 g</p>
+        <p class="hg-hook">Miel con notas de café de finca colombiana. Producto natural, envasado tal como se cosecha.</p>
+        <div class="hg-fila">
+          <span class="hg-precio"><b>$ 21.000</b><small>COP</small></span>
+          <span class="hg-ir">
+            Ver producto
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+          </span>
+        </div>
+      </div>
+    </a>
+
+  </div>
+
+  <!-- nota: los 4 productos sin pagina son de EJEMPLO (se ajustan desde Campanas) -->
+  <div class="hg-pie">
+    <p>
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z"/></svg>
+      Cada producto lo revisa el equipo antes de ofrecerlo.
+    </p>
+  </div>
 </section>
 
-<!-- barra fija inferior: solo íconos de contacto -->
+<!-- barra fija inferior: solo iconos de contacto -->
 <nav class="hg-barra" aria-label="Canales de contacto">
   <!-- Correo (activo) -->
   <a href="mailto:contacto@magandhi.com" aria-label="Escríbenos por correo" title="Correo">
