@@ -396,15 +396,23 @@
   // grande) SIN penalizar la carga del grid/miniaturas (usan la liviana).
   function fotosGrid(fila){
     let grandePath = '';
+    let esGaleria = false; // true = primer elemento de 'imagenes' (tiene -sm); false = banner (sin -sm)
     if(Array.isArray(fila.imagenes) && fila.imagenes.length && fila.imagenes[0]){
       grandePath = fila.imagenes[0];
+      esGaleria = true;
     } else if(fila.imagen_banner_path){
       grandePath = fila.imagen_banner_path;
     }
     if(!grandePath) return { liviana: '', grande: '' };
     const grande = urlPublica(grandePath);
-    const svPath = pathLiviana(grandePath);
-    const liviana = svPath ? urlPublica(svPath) : grande;
+    // Solo la galeria sube una version '-sm'; el banner se sube con una sola key
+    // sin sufijo. Por eso solo derivamos la liviana '-sm' cuando el origen es la
+    // galeria; para el banner liviana = grande (no pedir una liviana inexistente).
+    let liviana = grande;
+    if(esGaleria){
+      const svPath = pathLiviana(grandePath);
+      if(svPath) liviana = urlPublica(svPath) || grande;
+    }
     return { liviana: liviana || grande, grande };
   }
 
