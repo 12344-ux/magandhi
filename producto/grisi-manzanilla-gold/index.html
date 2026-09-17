@@ -5,6 +5,10 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Shampoo Manzanilla Grisi Gold · MAGANDHI</title>
 <meta name="description" content="Shampoo de manzanilla con extracto de cúrcuma, marca Grisi. Escogido y revisado por el equipo de MAGANDHI.">
+<!-- Se MANTIENE noindex: el titulo, precio, descripcion y ficha ya vienen EN VIVO
+     de Campanas (catalogo_publico), pero las resenas siguen siendo de EJEMPLO.
+     Indexar resenas inventadas seria incoherente con "nada inventado". QUITAR el
+     noindex cuando las resenas sean reales. -->
 <meta name="robots" content="noindex, nofollow">
 <link rel="icon" type="image/png" href="../../favicon.png">
 <meta name="theme-color" content="#D32F2F">
@@ -14,10 +18,11 @@
 
 <!--
   MAGANDHI · Página de producto (Grisi Manzanilla Gold). Diseño aprobado.
-  NOTA: aún NO conecta datos (precio, reseñas y foto son de ejemplo). Por eso
-  se mantiene <meta robots noindex> hasta que el software Campañas conecte los
-  datos reales — sería incoherente con "nada inventado" indexar reseñas de
-  ejemplo. Al conectar datos reales: quitar el noindex.
+  DATOS: el título, subtítulo, precio, descripción, "Por qué está en MAGANDHI",
+  "Sobre este producto" y la ficha se rellenan EN VIVO desde Campañas
+  (vista catalogo_publico de Supabase, ver el script del final). Las reseñas y
+  la foto siguen siendo de ejemplo, por eso se mantiene el noindex (ver arriba):
+  se quitará cuando las reseñas sean reales.
   · CSS autocontenido. Prefijo de clases mg- para no colisionar.
   · Sistema de marca: rojo #D32F2F (acento/estructura), negro #111, hueso #FAF7F5, Poppins.
   · ACENTO DE PRODUCTO: variable --acento (aquí DORADO para el Grisi Gold). Cambia por
@@ -169,11 +174,42 @@
     border:1px solid var(--acento-cl);border-radius:999px;padding:5px 13px;
   }
   .mg-sello svg{width:14px;height:14px}
+  /* El atributo HTML `hidden` debe ganar sobre el display:inline-flex de autor
+     (la regla [hidden] del user-agent no prevalece por si sola). Mismo patron
+     robusto que .mg-nodisp: cuando pintarSello() pone el.hidden=true, el sello
+     se oculta de verdad y no hay flash antes de que corra el JS. */
+  .mg-sello[hidden]{display:none}
   .mg-titulo{font-size:clamp(24px,3.6vw,32px);font-weight:600;line-height:1.2;margin:16px 0 4px;letter-spacing:-.3px}
   .mg-sub{font-size:14.5px;color:var(--gris);margin:0 0 18px}
   .mg-precio{display:flex;align-items:baseline;gap:10px;margin:0 0 6px}
   .mg-precio b{font-size:28px;font-weight:600;color:var(--negro)}
   .mg-precio small{font-size:13px;color:var(--gris-cl)}
+
+  /* AVISO DE URGENCIA "Solo X disponibles": switch por producto (lo enciende el
+     dueno desde Campanas con su numero). Chip sobrio en el color del acento del
+     producto, sin rojo de oferta ni urgencia agresiva: coherente con el alma
+     boutique. Oculto por defecto; el script lo muestra solo si el switch esta on. */
+  .mg-urgencia{
+    display:inline-flex;align-items:center;gap:7px;margin:0 0 16px;
+    background:var(--acento-sombra);color:var(--acento);
+    border:1px solid var(--acento-cl);border-radius:999px;
+    font-size:12.5px;font-weight:600;letter-spacing:.02em;padding:6px 13px;
+  }
+  .mg-urgencia svg{width:15px;height:15px;flex:none}
+  /* Cinturon de seguridad coherente con el sello: si el chip conserva el atributo
+     hidden (aviso apagado), no se muestra vacio pese al display:inline-flex. */
+  .mg-urgencia[hidden]{display:none}
+
+  /* AVISO "no disponible": si el producto se despublica (no esta en catalogo_publico)
+     se muestra un mensaje sobrio, sin romper la pagina. */
+  .mg-nodisp{
+    display:none;align-items:center;gap:8px;margin:0 0 16px;
+    background:var(--hueso);color:var(--gris);
+    border:1px solid var(--linea);border-radius:12px;
+    font-size:13.5px;padding:10px 14px;
+  }
+  .mg-nodisp[data-visible="true"]{display:inline-flex}
+  .mg-nodisp svg{width:16px;height:16px;flex:none;color:var(--acento)}
 
   .mg-estrellas{display:flex;align-items:center;gap:8px;font-size:13px;color:var(--gris);margin:0 0 22px}
   .mg-estrellas .s{display:inline-flex;color:var(--acento)}
@@ -347,14 +383,28 @@
 
   <!-- info -->
   <div class="mg-info">
-    <span class="mg-sello">
+    <!-- aviso sobrio si el producto esta despublicado (no viene de catalogo_publico) -->
+    <div class="mg-nodisp" id="mg-nodisp">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 8v4"/><path d="M12 16h.01"/></svg>
+      Este producto no está disponible por ahora.
+    </div>
+    <!-- El sello "Escogido por MAGANDHI" se MUESTRA u OCULTA segun sello_elegido
+         de la fila (coherente con el home). La estrella opcional (segun fila.estrella)
+         la inserta el script al inicio del sello. Marcado/clases mg- INTACTOS;
+         solo alterna visibilidad y la estrella segun el dato. -->
+    <span class="mg-sello" id="mg-sello" hidden>
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m9 12 2 2 4-4"/><circle cx="12" cy="12" r="10"/></svg>
       Escogido por MAGANDHI
     </span>
-    <h1 class="mg-titulo">Shampoo Manzanilla Grisi Gold</h1>
-    <p class="mg-sub">Con extracto de cúrcuma · 400 mL · Marca Grisi</p>
+    <h1 class="mg-titulo" id="mg-titulo">Shampoo Manzanilla Grisi Gold</h1>
+    <p class="mg-sub" id="mg-sub">Con extracto de cúrcuma · 400 mL · Marca Grisi</p>
 
-    <div class="mg-precio"><b>$ 24.900</b><small>COP</small></div>
+    <div class="mg-precio"><b id="mg-precio">$ 24.900</b><small>COP</small></div>
+
+    <!-- aviso de urgencia "Solo X disponibles": switch por producto que el dueno
+         enciende desde Campanas (aviso_urgencia_activo + aviso_urgencia_cantidad).
+         Vacio por defecto; el script lo rellena solo si el switch esta activo. -->
+    <div class="mg-urgencia" id="mg-urgencia" hidden></div>
 
     <div class="mg-estrellas">
       <span class="s">
@@ -367,14 +417,14 @@
       4.8 · <a href="#resenas">12 opiniones</a>
     </div>
 
-    <p class="mg-desc">
+    <p class="mg-desc" id="mg-desc">
       Shampoo de manzanilla con extracto de cúrcuma de la marca Grisi, presentación de 400 mL.
       Pensado para quienes buscan un shampoo de uso diario con ingredientes de origen botánico.
     </p>
 
     <div class="mg-curaduria">
       <h3><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z"/></svg> Por qué está en MAGANDHI</h3>
-      <p>El equipo revisó este producto antes de ofrecerlo: verificamos que sea original, que esté
+      <p id="mg-curaduria">El equipo revisó este producto antes de ofrecerlo: verificamos que sea original, que esté
       dentro de su fecha y que la presentación llegue en buen estado. Si algo no cumple, no entra.</p>
     </div>
 
@@ -395,16 +445,18 @@
 <section class="mg-detalle">
   <div>
     <h2>Sobre este producto</h2>
-    <p>La manzanilla es un ingrediente tradicional en el cuidado del cabello. Este shampoo de la
-    línea Gold de Grisi combina manzanilla con extracto de cúrcuma en una presentación de 400 mL
-    para uso diario.</p>
-    <p>MAGANDHI describe el producto tal como es: te contamos qué contiene y para qué tipo de uso
-    está pensado, sin prometer resultados que no podamos sostener. La información de ingredientes y
-    modo de uso viene del fabricante y está impresa en el envase.</p>
+    <div id="mg-sobre">
+      <p>La manzanilla es un ingrediente tradicional en el cuidado del cabello. Este shampoo de la
+      línea Gold de Grisi combina manzanilla con extracto de cúrcuma en una presentación de 400 mL
+      para uso diario.</p>
+      <p>MAGANDHI describe el producto tal como es: te contamos qué contiene y para qué tipo de uso
+      está pensado, sin prometer resultados que no podamos sostener. La información de ingredientes y
+      modo de uso viene del fabricante y está impresa en el envase.</p>
+    </div>
   </div>
   <div>
     <h2>Ficha</h2>
-    <table class="mg-tabla">
+    <table class="mg-tabla" id="mg-ficha">
       <tr><td>Marca</td><td>Grisi</td></tr>
       <tr><td>Línea</td><td>Manzanilla Gold</td></tr>
       <tr><td>Contenido</td><td>400 mL</td></tr>
@@ -555,6 +607,149 @@
     </nav>
   </div>
 </footer>
+
+<!-- ============================================================
+     DATOS EN VIVO DESDE CAMPANAS (Supabase / vista catalogo_publico)
+     ------------------------------------------------------------
+     · Lee SOLO la fila publica de este producto (por nombre exacto). Nunca toca
+       tablas internas ni etiquetas.
+     · Rellena titulo, subtitulo, precio, descripcion, "Por que esta en MAGANDHI",
+       "Sobre este producto" y la ficha, aplicando el acento de la categoria.
+     · Aviso "Solo X disponibles": switch por producto (aviso_urgencia_activo +
+       aviso_urgencia_cantidad) que el dueno enciende desde Campanas.
+     · Si la fila no existe (producto despublicado), muestra un aviso sobrio de
+       no disponible sin romper la pagina. Las resenas quedan como ejemplo.
+     ============================================================ -->
+<script type="module">
+  import { supabase } from '../../supabase-config.js';
+
+  // ID FIJO del producto en Campanas (uuid del seed). Es la clave ESTABLE de la
+  // consulta: el NOMBRE puede cambiar desde el panel de Campanas, el id no. Antes
+  // se buscaba por nombre literal y renombrarlo dejaba la pagina en "no
+  // disponible"; por eso ahora se consulta por id.
+  const ID_PRODUCTO = '00000000-0000-0000-0000-0000000c0001';
+
+  function esc(v){
+    if(v === null || v === undefined) return '';
+    return String(v)
+      .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
+      .replace(/"/g,'&quot;').replace(/'/g,'&#39;');
+  }
+
+  function formatearPrecio(valor){
+    const n = Number(valor);
+    if(!Number.isFinite(n)) return '';
+    return '$ ' + Math.round(n).toLocaleString('es-CO');
+  }
+
+  function set(id, texto){
+    const el = document.getElementById(id);
+    if(el) el.textContent = texto;
+  }
+
+  // Aplica el acento de la categoria (colores de la fila) sobre la pagina, sin
+  // tocar el resto del sistema (las variables --acento gobiernan galeria, sello,
+  // curaduria, etc.).
+  function aplicarAcento(fila){
+    const raiz = document.documentElement.style;
+    if(fila.color_fuerte)  raiz.setProperty('--acento', fila.color_fuerte);
+    if(fila.color_claro)   raiz.setProperty('--acento-cl', fila.color_claro);
+    if(fila.color_sombra)  raiz.setProperty('--acento-sombra', fila.color_sombra);
+  }
+
+  // Estrella opcional dentro del sello (SVG de estrella rellena; hereda el color
+  // del sello via .mg-sello svg). Reproduce el simbolo del home sin tocar clases.
+  const ICONO_ESTRELLA = '<svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="m12 2 3 6.3 6.9 1-5 4.9 1.2 6.8L12 17.8 5.9 21l1.2-6.8-5-4.9 6.9-1z"/></svg>';
+
+  // Muestra u oculta el sello "Escogido por MAGANDHI" segun sello_elegido, y
+  // antepone la estrella si estrella=true. Si el dueno apaga el sello en Campanas,
+  // la pagina de producto deja de mostrarlo (igual que el home).
+  function pintarSello(fila){
+    const el = document.getElementById('mg-sello');
+    if(!el) return;
+    if(!fila.sello_elegido){
+      el.hidden = true;
+      return;
+    }
+    // Estrella dentro del sello solo si el dato lo pide (y no estaba ya).
+    if(fila.estrella && !el.querySelector('svg[fill="currentColor"]')){
+      el.insertAdjacentHTML('afterbegin', ICONO_ESTRELLA);
+    }
+    el.hidden = false;
+  }
+
+  function pintarUrgencia(fila){
+    const el = document.getElementById('mg-urgencia');
+    if(!el) return;
+    const activo = !!fila.aviso_urgencia_activo;
+    const cant = Number(fila.aviso_urgencia_cantidad);
+    if(!activo || !Number.isFinite(cant) || cant <= 0){
+      el.hidden = true;
+      return;
+    }
+    const texto = 'Solo ' + cant + (cant === 1 ? ' disponible' : ' disponibles');
+    el.innerHTML =
+      '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M20 7 12 3 4 7v10l8 4 8-4z"/><path d="m4 7 8 4 8-4"/><path d="M12 11v10"/></svg>' +
+      esc(texto);
+    el.hidden = false;
+  }
+
+  // Rellena "Sobre este producto": el texto puede traer varios parrafos; se
+  // parte por saltos de linea y se pinta un <p> por parrafo (escapado).
+  function pintarSobre(texto){
+    const cont = document.getElementById('mg-sobre');
+    if(!cont || !texto) return;
+    const parrafos = String(texto).split(/\n+/).map(function(t){ return t.trim(); })
+      .filter(function(t){ return t.length > 0; });
+    if(parrafos.length === 0) return;
+    cont.innerHTML = parrafos.map(function(p){ return '<p>' + esc(p) + '</p>'; }).join('');
+  }
+
+  // Rellena la ficha (jsonb arreglo de {clave, valor}) como filas de la tabla.
+  function pintarFicha(ficha){
+    const tabla = document.getElementById('mg-ficha');
+    if(!tabla || !Array.isArray(ficha) || ficha.length === 0) return;
+    tabla.innerHTML = ficha.map(function(par){
+      return '<tr><td>' + esc(par && par.clave) + '</td><td>' + esc(par && par.valor) + '</td></tr>';
+    }).join('');
+  }
+
+  function mostrarNoDisponible(){
+    const el = document.getElementById('mg-nodisp');
+    if(el) el.setAttribute('data-visible', 'true');
+  }
+
+  async function cargarProducto(){
+    try{
+      const { data, error } = await supabase
+        .from('catalogo_publico')
+        .select('*')
+        .eq('id', ID_PRODUCTO)
+        .maybeSingle();
+      if(error) throw error;
+      if(!data){
+        // Producto despublicado: aviso sobrio, sin romper la pagina.
+        mostrarNoDisponible();
+        return;
+      }
+      aplicarAcento(data);
+      pintarSello(data);
+      set('mg-titulo', data.nombre || '');
+      if(data.caracteristica_adicional) set('mg-sub', data.caracteristica_adicional);
+      set('mg-precio', formatearPrecio(data.precio_venta));
+      if(data.hook_largo) set('mg-desc', data.hook_largo);
+      if(data.por_que_magandhi) set('mg-curaduria', data.por_que_magandhi);
+      pintarSobre(data.sobre_este_producto);
+      pintarFicha(data.ficha_tecnica);
+      pintarUrgencia(data);
+    }catch(e){
+      // Falla de red/consulta: se deja el contenido de respaldo (no se rompe).
+      console.error('No se pudo cargar el producto desde Campanas:', e);
+    }
+  }
+
+  cargarProducto();
+</script>
 
 <script>
   // Modal "Pagos seguros con Wompi": abrir desde la barra, cerrar con X, clic

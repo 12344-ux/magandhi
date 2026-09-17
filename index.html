@@ -194,6 +194,23 @@
   }
   .hg-ir svg{width:16px;height:16px}
 
+  /* ---------- aviso de urgencia (opcional, por producto) ----------
+     "Solo X disponibles". Es un SWITCH por producto que el dueno enciende
+     desde Campanas (aviso_urgencia_activo) definiendo el numero a mostrar
+     (aviso_urgencia_cantidad). Tiene sentido conectado al inventario: se
+     prende en el momento adecuado (por ejemplo cuando queden pocas unidades).
+     DISENO: chip sobrio en el color de la categoria (nada de rojo de oferta ni
+     urgencia agresiva), coherente con el alma boutique. Solo se pinta si el
+     switch esta activo Y hay una cantidad valida (>0). */
+  .hg-urgencia{
+    display:inline-flex;align-items:center;gap:6px;align-self:flex-start;
+    background:var(--acento-sombra);color:var(--acento);
+    border:1px solid var(--acento-cl);border-radius:999px;
+    font-size:11px;font-weight:600;letter-spacing:.02em;
+    padding:5px 11px;margin:0 0 12px;
+  }
+  .hg-urgencia svg{width:13px;height:13px;flex:none}
+
   /* ============================================================
      MOVIL (<=760px): las tarjetas dejan de ser banner vertical y
      pasan a TARJETAS HORIZONTALES APILADAS: cuadrito de color a la
@@ -247,8 +264,10 @@
     /* SI mostramos la meta (el dato en gris oscurito, como en PC): da vida a la
        tarjeta y refuerza que es un PRODUCTO, no una categoria. */
     .hg-meta{display:block;font-size:11.5px;margin:0 0 9px;color:var(--gris)}
-    /* se ocultan hook, precio y boton en movil (se ven al entrar al producto) */
+    /* se ocultan hook, precio, boton y aviso de urgencia en movil (se ven al
+       entrar al producto; el escaparate movil muestra solo lo esencial) */
     .hg-hook,
+    .hg-urgencia,
     .hg-fila{display:none}
 
     /* SELLO 'Elegido por MAGANDHI' NO sobre la foto (ocupa mucho): en movil se
@@ -295,171 +314,155 @@
 
 <!-- vitrina: grid de productos (color = categoria) -->
 <section class="hg-vitrina">
-  <div class="hg-grid">
+  <!-- GRID DINAMICO: las tarjetas se pintan desde Supabase (vista catalogo_publico)
+       manteniendo EXACTO el marcado/estilos aprobados. El render (mismo marcado,
+       clases y variables de color que las tarjetas originales) vive en el
+       <script type=module> del final de la pagina. Si no hay datos o falla la
+       consulta, el grid queda vacio sin romper la pagina. -->
+  <div class="hg-grid" id="hg-grid" aria-live="polite"></div>
 
-    <!-- 1 · PRODUCTO ESTRELLA · Grisi Manzanilla Gold · cuidado del cabello · DORADO de firma -->
-    <a class="hg-tarjeta" href="producto/grisi-manzanilla-gold/"
-       style="--acento:#C9962E;--acento-cl:#E7C56B;--acento-sombra:rgba(201,150,46,.18)">
-      <div class="hg-foto">
-        <!-- sello CON estrella: la estrella (opcional, simbolo con proposito para
-             productos destacados) va DENTRO del sello. En Campanas sera un switch
-             por producto: el sello siempre aparece, la estrella solo si se activa.
-             POSICION: en PC va sobre la foto (absolute); en movil baja a la zona
-             blanca (ver media query) para no tapar el producto. -->
-        <span class="hg-medalla hg-medalla--estrella">
-          <svg class="hg-medalla__star" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="m12 2 3 6.3 6.9 1-5 4.9 1.2 6.8L12 17.8 5.9 21l1.2-6.8-5-4.9 6.9-1z"/></svg>
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m9 12 2 2 4-4"/><circle cx="12" cy="12" r="10"/></svg>
-          Elegido por MAGANDHI
-        </span>
-        <img src="productos/grisi-manzanilla-gold.png" alt="Shampoo Manzanilla GRISI Gold">
-      </div>
-      <div class="hg-cont">
-        <span class="hg-kicker">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2v20M2 12h20"/></svg>
-          Cuidado del cabello
-        </span>
-        <h2 class="hg-nom">Shampoo Manzanilla GRISI Gold</h2>
-        <p class="hg-meta">Con extracto de cúrcuma · 400 mL</p>
-        <p class="hg-hook">Un clásico del cuidado con manzanilla. Lo revisamos uno a uno: original, en fecha y en buen estado. Si no cumple, no entra.</p>
-        <div class="hg-fila">
-          <span class="hg-precio"><b>$ 24.900</b><small>COP</small></span>
-          <span class="hg-ir">
-            Ver producto
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
-          </span>
-        </div>
-        <span class="hg-sello-abajo hg-medalla--estrella">
-          <svg class="hg-medalla__star" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="m12 2 3 6.3 6.9 1-5 4.9 1.2 6.8L12 17.8 5.9 21l1.2-6.8-5-4.9 6.9-1z"/></svg>
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m9 12 2 2 4-4"/><circle cx="12" cy="12" r="10"/></svg>
-          Elegido por MAGANDHI
-        </span>
-      </div>
-    </a>
+  <!-- NOTA MANTENIMIENTO: aqui vivian las 5 tarjetas originales dentro de un
+       <template id="hg-plantilla-referencia"> inerte que nunca se instanciaba
+       (codigo muerto). Se elimino: el grid #hg-grid se pinta ENTERAMENTE desde
+       catalogo_publico en el <script type=module> del final de la pagina,
+       reproduciendo EXACTO las clases y variables de color aprobadas. No se
+       pierde nada visual. -->
 
-    <!-- 2 · EJEMPLO (inventado) · Serum Facial Rosa Mosqueta · belleza femenina · ROSA -->
-    <a class="hg-tarjeta" href="#"
-       style="--acento:#B5657A;--acento-cl:#D99FAE;--acento-sombra:rgba(181,101,122,.16)">
-      <div class="hg-foto">
-        <span class="hg-foto__ph" aria-hidden="true">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2v4"/><path d="M9 6h6"/><rect x="7" y="6" width="10" height="16" rx="3"/><path d="M10 12h4"/></svg>
-        </span>
-      </div>
-      <div class="hg-cont">
-        <span class="hg-kicker">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 21c-4-2.5-7-5.5-7-9a7 7 0 0 1 14 0c0 3.5-3 6.5-7 9z"/></svg>
-          Belleza femenina
-        </span>
-        <h2 class="hg-nom">Sérum Facial de Rosa Mosqueta</h2>
-        <p class="hg-meta">Aceite botánico · 30 mL</p>
-        <p class="hg-hook">Aceite de rosa mosqueta para rutina facial nocturna. Te contamos qué contiene, sin promesas de milagros.</p>
-        <div class="hg-fila">
-          <span class="hg-precio"><b>$ 32.900</b><small>COP</small></span>
-          <span class="hg-ir">
-            Ver producto
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
-          </span>
-        </div>
-        <span class="hg-sello-abajo">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m9 12 2 2 4-4"/><circle cx="12" cy="12" r="10"/></svg>
-          Elegido por MAGANDHI
-        </span>
-      </div>
-    </a>
-
-    <!-- 3 · EJEMPLO (inventado) · Bálsamo para Barba Cedro · belleza masculina · GRAFITO -->
-    <a class="hg-tarjeta" href="#"
-       style="--acento:#3A3A3A;--acento-cl:#7A7A7A;--acento-sombra:rgba(58,58,58,.14)">
-      <div class="hg-foto">
-        <span class="hg-foto__ph" aria-hidden="true">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M4 8c0-2 2-4 4-4h8c2 0 4 2 4 4v1a3 3 0 0 1-3 3c-1 5-4 8-5 8s-4-3-5-8a3 3 0 0 1-3-3z"/></svg>
-        </span>
-      </div>
-      <div class="hg-cont">
-        <span class="hg-kicker">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M6 21v-2a6 6 0 0 1 12 0v2"/></svg>
-          Belleza masculina
-        </span>
-        <h2 class="hg-nom">Bálsamo para Barba de Cedro</h2>
-        <p class="hg-meta">Con aceite de argán · 60 mL</p>
-        <p class="hg-hook">Bálsamo para dar forma y suavidad a la barba. Aroma de cedro; lo revisamos antes de ofrecerlo.</p>
-        <div class="hg-fila">
-          <span class="hg-precio"><b>$ 28.500</b><small>COP</small></span>
-          <span class="hg-ir">
-            Ver producto
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
-          </span>
-        </div>
-        <span class="hg-sello-abajo">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m9 12 2 2 4-4"/><circle cx="12" cy="12" r="10"/></svg>
-          Elegido por MAGANDHI
-        </span>
-      </div>
-    </a>
-
-    <!-- 4 · EJEMPLO (inventado) · Jabón de Coco para el Hogar · hogar/limpieza · AZUL PETROLEO -->
-    <a class="hg-tarjeta" href="#"
-       style="--acento:#3E6B78;--acento-cl:#7FA6B0;--acento-sombra:rgba(62,107,120,.15)">
-      <div class="hg-foto">
-        <span class="hg-foto__ph" aria-hidden="true">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="9" width="16" height="11" rx="3"/><path d="M8 9V7a4 4 0 0 1 8 0v2"/><path d="M9 14h6"/></svg>
-        </span>
-      </div>
-      <div class="hg-cont">
-        <span class="hg-kicker">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 21V10l9-7 9 7v11z"/><path d="M9 21v-6h6v6"/></svg>
-          Hogar y limpieza
-        </span>
-        <h2 class="hg-nom">Jabón de Coco para el Hogar</h2>
-        <p class="hg-meta">Multiusos concentrado · 500 g</p>
-        <p class="hg-hook">Jabón de coco para lavado y limpieza del hogar. Rinde y huele a limpio; nada de promesas de más.</p>
-        <div class="hg-fila">
-          <span class="hg-precio"><b>$ 15.900</b><small>COP</small></span>
-          <span class="hg-ir">
-            Ver producto
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
-          </span>
-        </div>
-        <span class="hg-sello-abajo">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m9 12 2 2 4-4"/><circle cx="12" cy="12" r="10"/></svg>
-          Elegido por MAGANDHI
-        </span>
-      </div>
-    </a>
-
-    <!-- 5 · EJEMPLO (inventado) · Miel de Café Artesanal · alimentos/naturales · TERRACOTA -->
-    <a class="hg-tarjeta" href="#"
-       style="--acento:#C0682E;--acento-cl:#E3A576;--acento-sombra:rgba(192,104,46,.16)">
-      <div class="hg-foto">
-        <span class="hg-foto__ph" aria-hidden="true">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M8 2h8l-1 4H9z"/><path d="M9 6c-1 3-2 5-2 9a5 5 0 0 0 10 0c0-4-1-6-2-9"/><path d="M9 15h6"/></svg>
-        </span>
-      </div>
-      <div class="hg-cont">
-        <span class="hg-kicker">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2a7 7 0 0 0-7 7c0 5 7 13 7 13s7-8 7-13a7 7 0 0 0-7-7z"/><path d="M12 6v6"/></svg>
-          Alimentos naturales
-        </span>
-        <h2 class="hg-nom">Miel de Café Artesanal</h2>
-        <p class="hg-meta">Origen colombiano · 250 g</p>
-        <p class="hg-hook">Miel con notas de café de finca colombiana. Producto natural, envasado tal como se cosecha.</p>
-        <div class="hg-fila">
-          <span class="hg-precio"><b>$ 21.000</b><small>COP</small></span>
-          <span class="hg-ir">
-            Ver producto
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
-          </span>
-        </div>
-        <span class="hg-sello-abajo">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m9 12 2 2 4-4"/><circle cx="12" cy="12" r="10"/></svg>
-          Elegido por MAGANDHI
-        </span>
-      </div>
-    </a>
-
-  </div>
-
-  <!-- nota: los 4 productos sin pagina son de EJEMPLO (se ajustan desde Campanas) -->
+  <!-- nota: la vitrina se llena desde Campanas; los productos sin pagina propia
+       enlazan a "#" (el dueno los ajusta desde el software Campanas) -->
 </section>
+
+<!-- ============================================================
+     RENDER DINAMICO DE LA VITRINA (desde Campanas / Supabase)
+     ------------------------------------------------------------
+     · Lee SOLO la vista publica catalogo_publico (productos publicados y
+       campos publicos). Nunca toca tablas internas ni etiquetas.
+     · Reproduce EXACTO el marcado/clases de las tarjetas aprobadas: mismo
+       sistema color=categoria (variables inline --acento/--acento-cl/
+       --acento-sombra), sello condicional, estrella condicional, sello-abajo
+       (movil), placeholder cuando no hay imagen.
+     · Aviso de urgencia "Solo X disponibles": switch por producto que el dueno
+       enciende desde Campanas (aviso_urgencia_activo + aviso_urgencia_cantidad).
+     · Si la consulta falla o no hay datos, degrada sobrio sin romper la pagina.
+     ============================================================ -->
+<script type="module">
+  import { supabase } from './supabase-config.js';
+
+  // Escapa texto que venga de datos antes de inyectarlo como HTML (este repo no
+  // tiene un core compartido, asi que el helper vive aqui).
+  function esc(v){
+    if(v === null || v === undefined) return '';
+    return String(v)
+      .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
+      .replace(/"/g,'&quot;').replace(/'/g,'&#39;');
+  }
+
+  // Formatea el precio como en el diseno aprobado: "$ 24.900" (miles con punto).
+  function formatearPrecio(valor){
+    const n = Number(valor);
+    if(!Number.isFinite(n)) return '';
+    return '$ ' + Math.round(n).toLocaleString('es-CO');
+  }
+
+  // Mapa de paginas propias por ID de producto (uuid). El ID es la clave ESTABLE:
+  // el nombre puede cambiar desde el panel de Campanas, el id no. Asi el enlace
+  // del home no se rompe si el dueno renombra el producto.
+  // Hoy solo el Grisi tiene pagina real (id fijo del seed); los demas -> "#".
+  const ID_GRISI = '00000000-0000-0000-0000-0000000c0001';
+  const PAGINAS = {
+    [ID_GRISI]: 'producto/grisi-manzanilla-gold/'
+  };
+
+  // Icono neutral para el kicker de categoria (el diseno usa un simbolo pequeno;
+  // aqui va uno unico y sobrio, ya que el icono no viaja en catalogo_publico).
+  const ICONO_KICKER = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2v20M2 12h20"/></svg>';
+  const ICONO_CHECK = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m9 12 2 2 4-4"/><circle cx="12" cy="12" r="10"/></svg>';
+  const ICONO_ESTRELLA = '<svg class="hg-medalla__star" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="m12 2 3 6.3 6.9 1-5 4.9 1.2 6.8L12 17.8 5.9 21l1.2-6.8-5-4.9 6.9-1z"/></svg>';
+  const ICONO_FLECHA = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M12 5l7 7-7 7"/></svg>';
+  const ICONO_CAJA = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M20 7 12 3 4 7v10l8 4 8-4z"/><path d="m4 7 8 4 8-4"/><path d="M12 11v10"/></svg>';
+  // Placeholder dibujado para productos sin foto real (como en el diseno actual).
+  const ICONO_PH = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="9" cy="9" r="2"/><path d="m21 15-3.09-3.09a2 2 0 0 0-2.82 0L6 21"/></svg>';
+
+  // Sello "Elegido por MAGANDHI" (con estrella opcional). Reproduce el marcado
+  // aprobado: sobre la foto en PC, gemelo en la zona blanca para movil.
+  function selloFoto(estrella){
+    const clase = estrella ? 'hg-medalla hg-medalla--estrella' : 'hg-medalla';
+    return '<span class="' + clase + '">' +
+      (estrella ? ICONO_ESTRELLA : '') + ICONO_CHECK + ' Elegido por MAGANDHI</span>';
+  }
+  function selloAbajo(estrella){
+    const clase = estrella ? 'hg-sello-abajo hg-medalla--estrella' : 'hg-sello-abajo';
+    return '<span class="' + clase + '">' +
+      (estrella ? ICONO_ESTRELLA : '') + ICONO_CHECK + ' Elegido por MAGANDHI</span>';
+  }
+
+  // Aviso de urgencia: solo si el switch esta activo y hay cantidad valida (>0).
+  function avisoUrgencia(fila){
+    if(!fila.aviso_urgencia_activo) return '';
+    const cant = Number(fila.aviso_urgencia_cantidad);
+    if(!Number.isFinite(cant) || cant <= 0) return '';
+    const texto = 'Solo ' + cant + (cant === 1 ? ' disponible' : ' disponibles');
+    return '<span class="hg-urgencia">' + ICONO_CAJA + esc(texto) + '</span>';
+  }
+
+  function tarjeta(fila){
+    const href = PAGINAS[fila.id] || '#';
+    const acento  = fila.color_fuerte  || '#B23A2E';
+    const acentoCl = fila.color_claro  || '#D98A80';
+    const acentoSb = fila.color_sombra || 'rgba(178,58,46,.15)';
+    const estilo = '--acento:' + esc(acento) + ';--acento-cl:' + esc(acentoCl) +
+                   ';--acento-sombra:' + esc(acentoSb);
+
+    // Zona de la foto: imagen real si el producto la trae; si no, placeholder.
+    const img = fila.imagen_banner_path
+      ? '<img src="' + esc(fila.imagen_banner_path) + '" alt="' + esc(fila.nombre) + '">'
+      : '<span class="hg-foto__ph" aria-hidden="true">' + ICONO_PH + '</span>';
+
+    return '' +
+    '<a class="hg-tarjeta" href="' + esc(href) + '" style="' + estilo + '">' +
+      '<div class="hg-foto">' +
+        (fila.sello_elegido ? selloFoto(fila.estrella) : '') +
+        img +
+      '</div>' +
+      '<div class="hg-cont">' +
+        '<span class="hg-kicker">' + ICONO_KICKER + ' ' + esc(fila.categoria_nombre || '') + '</span>' +
+        '<h2 class="hg-nom">' + esc(fila.nombre) + '</h2>' +
+        '<p class="hg-meta">' + esc(fila.detalle_presentacion || '') + '</p>' +
+        '<p class="hg-hook">' + esc(fila.hook_corto || '') + '</p>' +
+        avisoUrgencia(fila) +
+        '<div class="hg-fila">' +
+          '<span class="hg-precio"><b>' + esc(formatearPrecio(fila.precio_venta)) + '</b><small>COP</small></span>' +
+          '<span class="hg-ir">Ver producto' + ICONO_FLECHA + '</span>' +
+        '</div>' +
+        (fila.sello_elegido ? selloAbajo(fila.estrella) : '') +
+      '</div>' +
+    '</a>';
+  }
+
+  async function pintarVitrina(){
+    const grid = document.getElementById('hg-grid');
+    if(!grid) return;
+    try{
+      const { data, error } = await supabase
+        .from('catalogo_publico')
+        .select('*')
+        .order('orden', { ascending: true });
+      if(error) throw error;
+      if(!data || data.length === 0){
+        // Sin datos: degradar sobrio, sin romper la pagina.
+        grid.innerHTML = '';
+        return;
+      }
+      grid.innerHTML = data.map(tarjeta).join('');
+    }catch(e){
+      // Falla de red/consulta: no romper el home; dejar la vitrina vacia.
+      console.error('No se pudo cargar la vitrina desde Campanas:', e);
+      grid.innerHTML = '';
+    }
+  }
+
+  pintarVitrina();
+</script>
 
 <!-- barra fija inferior: solo iconos de contacto -->
 <nav class="hg-barra" aria-label="Canales de contacto">
