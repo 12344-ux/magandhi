@@ -380,7 +380,11 @@
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 8v4"/><path d="M12 16h.01"/></svg>
       Este producto no está disponible por ahora.
     </div>
-    <span class="mg-sello">
+    <!-- El sello "Escogido por MAGANDHI" se MUESTRA u OCULTA segun sello_elegido
+         de la fila (coherente con el home). La estrella opcional (segun fila.estrella)
+         la inserta el script al inicio del sello. Marcado/clases mg- INTACTOS;
+         solo alterna visibilidad y la estrella segun el dato. -->
+    <span class="mg-sello" id="mg-sello" hidden>
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m9 12 2 2 4-4"/><circle cx="12" cy="12" r="10"/></svg>
       Escogido por MAGANDHI
     </span>
@@ -611,8 +615,11 @@
 <script type="module">
   import { supabase } from '../../supabase-config.js';
 
-  // Nombre EXACTO del producto en Campanas (clave de la consulta).
-  const NOMBRE_PRODUCTO = 'Shampoo Manzanilla GRISI Gold';
+  // ID FIJO del producto en Campanas (uuid del seed). Es la clave ESTABLE de la
+  // consulta: el NOMBRE puede cambiar desde el panel de Campanas, el id no. Antes
+  // se buscaba por nombre literal y renombrarlo dejaba la pagina en "no
+  // disponible"; por eso ahora se consulta por id.
+  const ID_PRODUCTO = '00000000-0000-0000-0000-0000000c0001';
 
   function esc(v){
     if(v === null || v === undefined) return '';
@@ -640,6 +647,27 @@
     if(fila.color_fuerte)  raiz.setProperty('--acento', fila.color_fuerte);
     if(fila.color_claro)   raiz.setProperty('--acento-cl', fila.color_claro);
     if(fila.color_sombra)  raiz.setProperty('--acento-sombra', fila.color_sombra);
+  }
+
+  // Estrella opcional dentro del sello (SVG de estrella rellena; hereda el color
+  // del sello via .mg-sello svg). Reproduce el simbolo del home sin tocar clases.
+  const ICONO_ESTRELLA = '<svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="m12 2 3 6.3 6.9 1-5 4.9 1.2 6.8L12 17.8 5.9 21l1.2-6.8-5-4.9 6.9-1z"/></svg>';
+
+  // Muestra u oculta el sello "Escogido por MAGANDHI" segun sello_elegido, y
+  // antepone la estrella si estrella=true. Si el dueno apaga el sello en Campanas,
+  // la pagina de producto deja de mostrarlo (igual que el home).
+  function pintarSello(fila){
+    const el = document.getElementById('mg-sello');
+    if(!el) return;
+    if(!fila.sello_elegido){
+      el.hidden = true;
+      return;
+    }
+    // Estrella dentro del sello solo si el dato lo pide (y no estaba ya).
+    if(fila.estrella && !el.querySelector('svg[fill="currentColor"]')){
+      el.insertAdjacentHTML('afterbegin', ICONO_ESTRELLA);
+    }
+    el.hidden = false;
   }
 
   function pintarUrgencia(fila){
@@ -688,7 +716,7 @@
       const { data, error } = await supabase
         .from('catalogo_publico')
         .select('*')
-        .eq('nombre', NOMBRE_PRODUCTO)
+        .eq('id', ID_PRODUCTO)
         .maybeSingle();
       if(error) throw error;
       if(!data){
@@ -697,6 +725,7 @@
         return;
       }
       aplicarAcento(data);
+      pintarSello(data);
       set('mg-titulo', data.nombre || '');
       if(data.caracteristica_adicional) set('mg-sub', data.caracteristica_adicional);
       set('mg-precio', formatearPrecio(data.precio_venta));
