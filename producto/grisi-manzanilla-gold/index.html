@@ -13,7 +13,11 @@
 <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
 
 <!--
-  MAGANDHI · PROTOTIPO de página de producto (solo diseño, no conecta nada).
+  MAGANDHI · Página de producto (Grisi Manzanilla Gold). Diseño aprobado.
+  NOTA: aún NO conecta datos (precio, reseñas y foto son de ejemplo). Por eso
+  se mantiene <meta robots noindex> hasta que el software Campañas conecte los
+  datos reales — sería incoherente con "nada inventado" indexar reseñas de
+  ejemplo. Al conectar datos reales: quitar el noindex.
   · CSS autocontenido. Prefijo de clases mg- para no colisionar.
   · Sistema de marca: rojo #D32F2F (acento/estructura), negro #111, hueso #FAF7F5, Poppins.
   · ACENTO DE PRODUCTO: variable --acento (aquí DORADO para el Grisi Gold). Cambia por
@@ -26,6 +30,7 @@
   :root{
     --rojo:#D32F2F;
     --rojo-osc:#B02525;
+    --terracota:#A6332E;
     --negro:#111111;
     --tinta:#1C1C1C;
     --blanco:#FFFFFF;
@@ -54,6 +59,14 @@
   }
   .mg-barra span{display:inline-flex;align-items:center;gap:7px;opacity:.92}
   .mg-barra svg{width:15px;height:15px;flex:none}
+  /* el 3er item es un boton (abre el modal de Wompi): se ve igual que los span */
+  .mg-barra-btn{
+    display:inline-flex;align-items:center;gap:7px;opacity:.92;
+    font-family:inherit;font-size:inherit;letter-spacing:inherit;color:#fff;
+    background:none;border:0;cursor:pointer;padding:0;
+    border-bottom:1px dotted rgba(255,255,255,.5);transition:opacity .15s;
+  }
+  .mg-barra-btn:hover{opacity:1;border-bottom-color:#fff}
 
   /* ---------- header ---------- */
   header{
@@ -63,7 +76,7 @@
   .mg-marca{display:flex;align-items:center;gap:11px;text-decoration:none}
   .mg-marca img{width:38px;height:38px;display:block}
   .mg-word{font-weight:600;font-size:20px;letter-spacing:.16em;color:var(--negro);line-height:1}
-  .mg-word i{color:var(--rojo);font-style:normal}
+  .mg-word i{color:var(--terracota);font-style:normal}
   .mg-nav{display:flex;gap:24px;font-size:14px;font-weight:500}
   .mg-nav a{text-decoration:none;color:var(--tinta);opacity:.8}
   .mg-nav a:hover{opacity:1;color:var(--rojo)}
@@ -199,14 +212,35 @@
   .mg-foot a{color:var(--gris);text-decoration:none;font-size:12.5px;margin-right:16px}
   .mg-foot a:hover{color:var(--rojo)}
 
-  /* nota de prototipo */
-  .mg-nota-proto{
-    max-width:1120px;margin:20px auto 0;padding:12px 24px;
+  /* ---------- modal Wompi ---------- */
+  .mg-modal{
+    position:fixed;inset:0;z-index:100;display:none;
+    align-items:center;justify-content:center;padding:20px;
+    background:rgba(17,17,17,.55);backdrop-filter:blur(2px);
   }
-  .mg-nota-proto div{
-    background:#FFF7E6;border:1px solid #F0D89A;border-radius:10px;padding:11px 15px;
-    font-size:12.5px;color:#8A6D1E;
+  .mg-modal[aria-hidden="false"]{display:flex}
+  .mg-modal__caja{
+    background:#fff;border-radius:18px;max-width:460px;width:100%;
+    padding:28px 28px 24px;position:relative;
+    box-shadow:0 24px 60px rgba(17,17,17,.22);
+    animation:mg-sube .18s ease-out;
   }
+  @keyframes mg-sube{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
+  .mg-modal__x{
+    position:absolute;top:14px;right:14px;width:34px;height:34px;border-radius:9px;
+    border:1px solid var(--linea);background:#fff;color:var(--gris);cursor:pointer;
+    display:flex;align-items:center;justify-content:center;transition:background .15s,color .15s;
+  }
+  .mg-modal__x:hover{background:var(--hueso);color:var(--rojo)}
+  .mg-modal__x svg{width:18px;height:18px}
+  .mg-modal__ico{
+    width:46px;height:46px;border-radius:12px;background:var(--acento-sombra);
+    color:var(--acento);display:flex;align-items:center;justify-content:center;margin-bottom:14px;
+  }
+  .mg-modal__ico svg{width:24px;height:24px}
+  .mg-modal h2{font-size:19px;font-weight:600;margin:0 0 10px}
+  .mg-modal p{font-size:14px;color:#333;margin:0 0 12px}
+  .mg-modal p:last-child{margin-bottom:0}
 </style>
 </head>
 <body>
@@ -214,14 +248,14 @@
 <!-- barra de confianza -->
 <div class="mg-barra">
   <span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z"/></svg>Cada producto revisado por el equipo</span>
-  <span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M7.9 20A9 9 0 1 0 4 16.1L2 22z"/></svg>Atención por WhatsApp</span>
-  <span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="14" rx="2"/><path d="M3 10h18M7 15h4"/></svg>Entrega local</span>
+  <span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="1" y="3" width="15" height="13" rx="1"/><path d="M16 8h4l3 3v5h-7z"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></svg>Envíos nacionales</span>
+  <button type="button" class="mg-barra-btn" id="mg-abrir-wompi" aria-haspopup="dialog" aria-controls="mg-modal-wompi"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="5" width="20" height="14" rx="2"/><path d="M2 10h20"/></svg>Pagos seguros con Wompi</button>
 </div>
 
 <!-- header -->
 <header>
   <a class="mg-marca" href="../../index.html">
-    <img src="../../logo-mark.png" alt="MAGANDHI">
+    <img src="../../logo-mark-terracota.png" alt="MAGANDHI">
     <span class="mg-word">MAG<i>A</i>NDHI</span>
   </a>
   <nav class="mg-nav">
@@ -230,8 +264,6 @@
     <a href="#">Contacto</a>
   </nav>
 </header>
-
-<div class="mg-nota-proto"><div><b>Prototipo de diseño.</b> Nada aquí está conectado todavía: los precios, reseñas y la foto son de ejemplo para ver la dirección visual. Lo revisamos y ajustamos juntos.</div></div>
 
 <!-- migas -->
 <div class="mg-migas"><a href="../../index.html">Inicio</a> › <a href="#">Cuidado personal</a> › Shampoo Manzanilla Grisi Gold</div>
@@ -296,10 +328,6 @@
         Preguntar por WhatsApp
       </button>
     </div>
-    <p class="mg-entrega">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="1" y="3" width="15" height="13" rx="1"/><path d="M16 8h4l3 3v5h-7z"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></svg>
-      Entrega local · coordinamos día y hora contigo
-    </p>
   </div>
 </section>
 
@@ -389,12 +417,31 @@
   </div>
 </section>
 
+<!-- modal: por qué Wompi (el texto final lo define el equipo) -->
+<div class="mg-modal" id="mg-modal-wompi" role="dialog" aria-modal="true" aria-labelledby="mg-modal-wompi-tit" aria-hidden="true">
+  <div class="mg-modal__caja">
+    <button type="button" class="mg-modal__x" id="mg-cerrar-wompi" aria-label="Cerrar">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18M6 6l12 12"/></svg>
+    </button>
+    <div class="mg-modal__ico">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="5" width="20" height="14" rx="2"/><path d="M2 10h20"/></svg>
+    </div>
+    <h2 id="mg-modal-wompi-tit">Pagos seguros con Wompi</h2>
+    <p><!-- TEXTO PROVISIONAL: el dueño lo reemplazará -->
+      Wompi es la pasarela de pagos de Bancolombia. Tus pagos se procesan en su
+      plataforma, con el respaldo de una de las entidades financieras más
+      grandes del país.</p>
+    <p>Elegimos Wompi para que comprar en MAGANDHI sea seguro y transparente:
+      los datos de tu pago los maneja directamente la pasarela, no nosotros.</p>
+  </div>
+</div>
+
 <!-- footer -->
 <footer>
   <div class="mg-foot">
     <div>
       <p><b style="color:var(--negro)">MAGANDHI</b> · Lo que encuentras aquí, está escogido.</p>
-      <p style="margin-top:6px">magandhi.com · contacto@magandhi.com</p>
+      <p style="margin-top:6px"><b style="color:var(--negro)">MAGANDHI</b> · magandhi.com</p>
     </div>
     <div>
       <a href="#">Cómo trabajamos</a>
@@ -404,6 +451,25 @@
     </div>
   </div>
 </footer>
+
+<script>
+  // Modal "Pagos seguros con Wompi": abrir desde la barra, cerrar con X, clic
+  // afuera o Escape. Sin dependencias; accesible (aria-hidden + foco).
+  (function(){
+    var abrir  = document.getElementById('mg-abrir-wompi');
+    var modal  = document.getElementById('mg-modal-wompi');
+    var cerrar = document.getElementById('mg-cerrar-wompi');
+    if(!abrir || !modal || !cerrar) return;
+    function mostrar(){ modal.setAttribute('aria-hidden','false'); cerrar.focus(); }
+    function ocultar(){ modal.setAttribute('aria-hidden','true'); abrir.focus(); }
+    abrir.addEventListener('click', mostrar);
+    cerrar.addEventListener('click', ocultar);
+    modal.addEventListener('click', function(e){ if(e.target === modal) ocultar(); });
+    document.addEventListener('keydown', function(e){
+      if(e.key === 'Escape' && modal.getAttribute('aria-hidden') === 'false') ocultar();
+    });
+  })();
+</script>
 
 </body>
 </html>
