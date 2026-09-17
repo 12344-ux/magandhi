@@ -46,7 +46,9 @@
     El GRISI Gold conserva su DORADO de firma (#C9962E) para cuidado del cabello.
 
   · Fase actual: GRID de 5 productos. El primero (Grisi) es "producto estrella"
-    y lleva una estrella (.hg-estrella) ADICIONAL a la medalla "Elegido por MAGANDHI".
+    y lleva una estrella DENTRO del sello "Elegido por MAGANDHI" (.hg-medalla__star).
+    El sello SIEMPRE aparece; la estrella es OPCIONAL (simbolo con proposito para
+    productos destacados) -> en Campanas sera un switch por producto.
     Solo el Grisi tiene pagina real; los otros 4 son productos de EJEMPLO/inventados
     (el dueno los ajustara desde el software Campanas) y enlazan a "#".
   · Barra fija inferior: solo iconos de contacto (centrado).
@@ -154,15 +156,10 @@
   }
   .hg-medalla svg{width:13px;height:13px}
 
-  /* estrella "producto estrella" (adicional a la medalla), esquina superior derecha */
-  .hg-estrella{
-    position:absolute;top:14px;right:14px;z-index:2;
-    display:inline-flex;align-items:center;justify-content:center;
-    width:34px;height:34px;border-radius:50%;
-    background:rgba(255,255,255,.94);color:var(--acento);
-    box-shadow:0 4px 12px rgba(0,0,0,.16);
-  }
-  .hg-estrella svg{width:19px;height:19px}
+  /* estrella DENTRO del sello (producto destacado). Opcional: solo aparece si el
+     producto la lleva (en Campanas sera un switch). Va rellena en el color de
+     acento, resalta sobre el fondo blanco del sello en cualquier categoria. */
+  .hg-medalla__star{width:13px;height:13px;flex:none}
 
   /* lado del texto */
   .hg-cont{padding:22px 24px;display:flex;flex-direction:column;gap:2px;flex:1}
@@ -210,9 +207,7 @@
       top:8px;left:8px;padding:4px 8px;font-size:8.5px;gap:5px;
     }
     .hg-medalla svg{width:11px;height:11px}
-    /* en movil la estrella va sobre la esquina superior de la tarjeta (no del panel) */
-    .hg-estrella{top:10px;right:10px;width:28px;height:28px;background:rgba(255,255,255,.96)}
-    .hg-estrella svg{width:16px;height:16px}
+    .hg-medalla__star{width:10px;height:10px}
 
     .hg-cont{padding:16px 18px;justify-content:center;flex:1;min-width:0}
     .hg-nom{font-size:16px}
@@ -268,13 +263,13 @@
     <a class="hg-tarjeta" href="producto/grisi-manzanilla-gold/"
        style="--acento:#C9962E;--acento-cl:#E7C56B;--acento-sombra:rgba(201,150,46,.18)">
       <div class="hg-foto">
-        <span class="hg-medalla">
+        <!-- sello CON estrella: la estrella (opcional, simbolo con proposito para
+             productos destacados) va DENTRO del sello. En Campanas sera un switch
+             por producto: el sello siempre aparece, la estrella solo si se activa. -->
+        <span class="hg-medalla hg-medalla--estrella">
+          <svg class="hg-medalla__star" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="m12 2 3 6.3 6.9 1-5 4.9 1.2 6.8L12 17.8 5.9 21l1.2-6.8-5-4.9 6.9-1z"/></svg>
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m9 12 2 2 4-4"/><circle cx="12" cy="12" r="10"/></svg>
           Elegido por MAGANDHI
-        </span>
-        <!-- estrella = producto estrella (adicional a la medalla) -->
-        <span class="hg-estrella" title="Producto estrella" aria-label="Producto estrella">
-          <svg viewBox="0 0 24 24" fill="currentColor"><path d="m12 2 3 6.3 6.9 1-5 4.9 1.2 6.8L12 17.8 5.9 21l1.2-6.8-5-4.9 6.9-1z"/></svg>
         </span>
         <img src="productos/grisi-manzanilla-gold.png" alt="Shampoo Manzanilla GRISI Gold">
       </div>
