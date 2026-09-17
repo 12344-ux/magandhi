@@ -106,7 +106,11 @@
   .hg-tarjeta{
     display:flex;flex-direction:column;position:relative;
     border-radius:20px;overflow:hidden;
-    background:var(--blanco);border:1px solid var(--acento-sombra);
+    /* CONTORNO TERRACOTA DE MARCA (experimento): unifica todas las tarjetas con
+       el rojo-terracota de MAGANDHI (el del 'descubrelo'), SIN tocar el color
+       de fondo de cada foto (que sigue siendo el de su categoria). Se prueba
+       para ver si unifica sin restarle significado al sistema color=categoria. */
+    background:var(--blanco);border:1.5px solid var(--red-500);
     box-shadow:0 14px 36px rgba(17,17,17,.07);
     transition:transform .22s ease,box-shadow .22s ease,border-color .22s ease;
     cursor:pointer;height:100%;
@@ -114,7 +118,7 @@
   .hg-tarjeta:hover{
     transform:translateY(-6px);
     box-shadow:0 26px 58px var(--acento-sombra);
-    border-color:var(--acento-cl);
+    border-color:var(--red-700);   /* hover: terracota mas intenso (experimento) */
   }
   .hg-tarjeta:hover .hg-foto img{transform:scale(1.045)}
   .hg-tarjeta:hover .hg-ir{gap:12px}
@@ -212,12 +216,14 @@
        lo esencial para no saturar: categoria (con su color) + nombre + sello. El
        hook, el precio y el boton NO se muestran aqui (se ven al entrar al producto). */
     .hg-vitrina{padding:0 12px}
-    /* gap pequeno = tarjetas "en escala" (coleccion continua, no botones de
-       categoria sueltos), pero con un respiro minimo para no perder el aire
-       boutique (no las pegamos del todo como un marketplace masivo). */
-    .hg-grid{grid-template-columns:repeat(2,1fr);gap:8px}
+    /* gap pequeno = tarjetas "en escala", con respiro minimo (aire boutique). */
+    /* align-items:start = cada tarjeta mide segun SU contenido (no se estira a
+       la altura de su vecina). Asi las de menos texto (ej. Serum rosa) quedan
+       mas cortas y nace el ZIGZAG natural tipo Pinterest, sin forzar nada. */
+    .hg-grid{grid-template-columns:repeat(2,1fr);gap:8px;align-items:start}
 
-    .hg-tarjeta{flex-direction:column;height:100%;border-radius:14px}
+    /* height:auto (no 100%) para que la tarjeta se ajuste a su contenido. */
+    .hg-tarjeta{flex-direction:column;height:auto;border-radius:14px}
 
     .hg-foto{flex:none;height:150px}
     .hg-foto img{max-height:130px;max-width:80%}
