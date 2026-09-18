@@ -19,7 +19,13 @@
 //    desde el dashboard de Supabase.
 // ============================================================
 
-import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
+// Version EXACTA (no '@2' flotante): '@2' deja que esm.sh sirva cualquier 2.x,
+// incluida una futura que cambie comportamiento o, peor, una comprometida que
+// correria con la sesion del usuario en la tienda publica. Al fijar 2.116.0 el
+// navegador siempre carga el mismo modulo auditado. Es la MISMA version que el
+// back-office (coherencia). Para subir: cambiar el numero aqui a proposito y
+// verificar que esm.sh responde 200.
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.116.0';
 
 export const SUPABASE_URL = 'https://bxlzipwxyxdtffnuizbz.supabase.co';
 
