@@ -1275,6 +1275,9 @@
     const campos = {
       'public-key':        pago.llave_publica,
       'currency':          pago.moneda,
+      // monto_en_centavos llega del servidor como STRING (la misma cadena sobre
+      // la que se firmo). Se envia TAL CUAL, sin convertir a Number, para que lo
+      // enviado a Wompi sea identico byte a byte a lo firmado.
       'amount-in-cents':   pago.monto_en_centavos,
       'reference':         pago.referencia,
       'signature:integrity': pago.firma_integridad,
@@ -1290,10 +1293,11 @@
         campos['customer-data:phone-number-prefix'] = '+57';
       }
       if(datos.direccion) campos['shipping-address:address-line-1'] = datos.direccion;
-      if(datos.ciudad){
-        campos['shipping-address:city'] = datos.ciudad;
-        campos['shipping-address:region'] = datos.ciudad;
-      }
+      // El formulario solo pide ciudad, no departamento. NO enviamos
+      // 'shipping-address:region' con la ciudad: seria un dato incorrecto para
+      // Wompi. Se omite hasta que exista un campo de departamento real; el
+      // prellenado no afecta la firma.
+      if(datos.ciudad) campos['shipping-address:city'] = datos.ciudad;
       campos['shipping-address:country'] = 'CO';
       if(datos.telefono) campos['shipping-address:phone-number'] = datos.telefono.replace(/\D/g, '');
     }
