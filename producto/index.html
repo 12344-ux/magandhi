@@ -380,22 +380,58 @@
   .mg-form{display:grid;gap:14px;margin:0}
   /* dos columnas en PC para pares cortos; una sola en movil */
   .mg-form__fila{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+  /* GRUPOS del formulario: al crecer a mas campos, se agrupan por intencion
+     ('Tus datos' / 'Direccion de entrega' / 'Documento') para que no se sienta un
+     interrogatorio. Cada grupo tiene su propio ritmo vertical y un encabezado
+     discreto en versalitas; el conjunto se lee de un golpe. */
+  .mg-form__grupo{display:grid;gap:14px;border:0;margin:0;padding:0;min-width:0;position:relative}
+  .mg-form__grupo + .mg-form__grupo{margin-top:6px;padding-top:20px}
+  /* la linea divisoria va como pseudo-elemento absoluto y NO como border-top del
+     fieldset: un <legend> interrumpe el borde del fieldset (deja una muesca) y el
+     resultado se veria roto segun el navegador */
+  .mg-form__grupo + .mg-form__grupo::before{
+    content:"";position:absolute;top:0;left:0;right:0;height:1px;background:var(--linea);
+  }
+  .mg-form__leyenda{
+    display:flex;align-items:center;gap:8px;padding:0;margin:0 0 10px;width:100%;
+    font-size:11.5px;font-weight:600;letter-spacing:.09em;text-transform:uppercase;
+    color:var(--gris);
+  }
+  .mg-form__leyenda svg{width:14px;height:14px;flex:none;color:var(--acento)}
   .mg-campo{display:flex;flex-direction:column;gap:6px;min-width:0}
   .mg-campo--full{grid-column:1 / -1}
   .mg-campo label{font-size:12.5px;font-weight:600;color:var(--tinta);letter-spacing:.01em}
   .mg-campo label .req{color:var(--rojo);margin-left:2px}
-  .mg-campo input{
+  /* marca de campo NO obligatorio: en texto (no solo color) para que se entienda
+     tambien con lector de pantalla y sin distinguir colores */
+  .mg-campo label .opt{color:var(--gris-cl);font-weight:500;margin-left:4px}
+  /* ayuda breve bajo un campo (formato esperado / para que sirve) */
+  .mg-campo__ayuda{font-size:11.5px;color:var(--gris-cl);line-height:1.45}
+  .mg-campo input,
+  .mg-campo select{
     font-family:inherit;font-size:14.5px;color:var(--tinta);
     background:var(--blanco);border:1px solid var(--linea);border-radius:11px;
     padding:11px 13px;width:100%;transition:border-color .15s,box-shadow .15s;
   }
   .mg-campo input::placeholder{color:var(--gris-cl)}
-  .mg-campo input:focus{
+  /* el <select> replica el acabado del input y trae su propia flecha (se quita la
+     nativa para que no cambie de estilo entre navegadores) */
+  .mg-campo select{
+    appearance:none;-webkit-appearance:none;cursor:pointer;
+    padding-right:36px;
+    background-image:url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%237a7a7a' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
+    background-repeat:no-repeat;background-position:right 12px center;background-size:16px;
+  }
+  /* mientras no se elige nada, el placeholder del select se ve como placeholder */
+  .mg-campo select[data-vacio="true"]{color:var(--gris-cl)}
+  .mg-campo input:focus,
+  .mg-campo select:focus{
     outline:none;border-color:var(--acento);
     box-shadow:0 0 0 3px var(--acento-sombra);
   }
   /* estado invalido tras intentar enviar (lo marca el JS con .mg-campo--error) */
-  .mg-campo--error input{border-color:var(--rojo);box-shadow:0 0 0 3px rgba(211,47,47,.12)}
+  .mg-campo--error input,
+  .mg-campo--error select{border-color:var(--rojo);box-shadow:0 0 0 3px rgba(211,47,47,.12)}
   .mg-campo__error{font-size:11.5px;color:var(--rojo);min-height:0;display:none}
   .mg-campo--error .mg-campo__error{display:block}
   /* mensaje de error general (fallo de red / respuesta con error) */
@@ -438,6 +474,14 @@
     }
     /* en movil el formulario se apila en una sola columna */
     .mg-form__fila{grid-template-columns:1fr}
+    /* con mas campos, en movil se aprieta el ritmo lo justo para que cada grupo
+       siga distinguiendose sin que el scroll se vuelva eterno */
+    .mg-form{gap:12px}
+    .mg-form__grupo{gap:12px}
+    .mg-form__grupo + .mg-form__grupo{padding-top:15px}
+    .mg-campo input,
+    .mg-campo select{font-size:15px;padding:12px 13px}
+    .mg-campo select{padding-right:36px}
   }
 </style>
 </head>
@@ -713,52 +757,172 @@
     <div class="mg-modal__ico">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M20 8v6M23 11h-6"/><path d="M8.5 12a4 4 0 1 0 0-8 4 4 0 0 0 0 8zM2 21v-2a4 4 0 0 1 4-4h5a4 4 0 0 1 4 4v2"/></svg>
     </div>
-    <h2 id="mg-modal-datos-tit">Tus datos para la entrega</h2>
+    <h2 id="mg-modal-datos-tit">Datos de envío y facturación</h2>
     <p class="mg-form-intro">
-      Con estos datos preparamos tu pedido. El pago lo procesa Wompi de forma
-      segura; te llevamos allí al confirmar.
+      Estos datos permiten preparar el envío y emitir el comprobante de la compra.
+      El pago se realiza en la plataforma segura de Wompi; MAGANDHI no ve ni guarda
+      los datos de tu tarjeta. Los campos con asterisco
+      <span class="req">*</span> son obligatorios; los demás, opcionales.
       <span class="mg-form-prod" id="mg-form-prod" hidden></span>
     </p>
 
+    <!-- El formulario se agrupa en tres bloques ('Tus datos', 'Direccion de
+         entrega', 'Documento') para que crecer en campos no lo vuelva un
+         interrogatorio. Cada grupo es un <fieldset> con <legend>: agrupa tambien
+         para lectores de pantalla, no solo visualmente.
+         TODOS los campos de aqui mapean a un parametro OFICIAL de Wompi (ver el
+         mapeo en el script, mas abajo). A proposito NO se piden datos que Wompi
+         no transporte: esta etapa no guarda nada en la base, asi que cualquier
+         dato fuera de su objeto de transaccion se perderia. -->
     <form class="mg-form" id="mg-form-datos" novalidate>
-      <div class="mg-form__fila">
-        <div class="mg-campo mg-campo--full">
-          <label for="mg-c-nombre">Nombre completo<span class="req" aria-hidden="true">*</span></label>
-          <input type="text" id="mg-c-nombre" name="nombre" autocomplete="name"
-                 placeholder="Nombre y apellido" required>
-          <span class="mg-campo__error">Escribe tu nombre completo.</span>
+
+      <!-- Grupo 1 · quien compra -->
+      <fieldset class="mg-form__grupo">
+        <legend class="mg-form__leyenda">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+          Tus datos
+        </legend>
+        <div class="mg-form__fila">
+          <div class="mg-campo mg-campo--full">
+            <label for="mg-c-nombre">Nombre completo<span class="req" aria-hidden="true">*</span></label>
+            <input type="text" id="mg-c-nombre" name="nombre" autocomplete="name"
+                   placeholder="Nombre y apellido" required aria-required="true">
+            <span class="mg-campo__error">Escribe el nombre completo de quien recibe.</span>
+          </div>
         </div>
-      </div>
-      <div class="mg-form__fila">
-        <div class="mg-campo">
-          <label for="mg-c-correo">Correo<span class="req" aria-hidden="true">*</span></label>
-          <input type="email" id="mg-c-correo" name="correo" autocomplete="email"
-                 inputmode="email" placeholder="tucorreo@ejemplo.com" required>
-          <span class="mg-campo__error">Escribe un correo válido.</span>
+        <div class="mg-form__fila">
+          <div class="mg-campo">
+            <label for="mg-c-correo">Correo<span class="req" aria-hidden="true">*</span></label>
+            <input type="email" id="mg-c-correo" name="correo" autocomplete="email"
+                   inputmode="email" placeholder="tucorreo@ejemplo.com" required aria-required="true"
+                   aria-describedby="mg-c-correo-ayuda">
+            <span class="mg-campo__error">Escribe un correo válido.</span>
+            <span class="mg-campo__ayuda" id="mg-c-correo-ayuda">Allí llega el comprobante del pago.</span>
+          </div>
+          <div class="mg-campo">
+            <label for="mg-c-telefono">Teléfono<span class="req" aria-hidden="true">*</span></label>
+            <input type="tel" id="mg-c-telefono" name="telefono" autocomplete="tel"
+                   inputmode="tel" placeholder="Ej. 3001234567" required aria-required="true"
+                   aria-describedby="mg-c-telefono-ayuda">
+            <span class="mg-campo__error">Escribe un teléfono válido (solo números).</span>
+            <span class="mg-campo__ayuda" id="mg-c-telefono-ayuda">Para coordinar la entrega. Celular colombiano (+57).</span>
+          </div>
         </div>
-        <div class="mg-campo">
-          <label for="mg-c-telefono">Teléfono<span class="req" aria-hidden="true">*</span></label>
-          <input type="tel" id="mg-c-telefono" name="telefono" autocomplete="tel"
-                 inputmode="tel" placeholder="Ej. 3001234567" required>
-          <span class="mg-campo__error">Escribe un teléfono válido (solo números).</span>
+      </fieldset>
+
+      <!-- Grupo 2 · a donde va el pedido.
+           DEPARTAMENTO + CIUDAD + DIRECCION son obligatorios porque Wompi exige
+           region, city, address-line-1, country y phone-number cuando se envia
+           una direccion de entrega. El pais va fijo 'CO' desde el script (no se
+           pregunta: la tienda entrega en Colombia). -->
+      <fieldset class="mg-form__grupo">
+        <legend class="mg-form__leyenda">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0z"/><circle cx="12" cy="10" r="3"/></svg>
+          Dirección de entrega
+        </legend>
+        <div class="mg-form__fila">
+          <div class="mg-campo">
+            <label for="mg-c-departamento">Departamento<span class="req" aria-hidden="true">*</span></label>
+            <!-- Lista cerrada (32 departamentos + Bogotá D.C., orden alfabético):
+                 evita erratas y coincide con lo que Wompi espera en 'region'. -->
+            <select id="mg-c-departamento" name="departamento" autocomplete="address-level1"
+                    required aria-required="true" data-vacio="true">
+              <option value="" selected>Elige tu departamento</option>
+              <option value="Amazonas">Amazonas</option>
+              <option value="Antioquia">Antioquia</option>
+              <option value="Arauca">Arauca</option>
+              <option value="Atlántico">Atlántico</option>
+              <option value="Bogotá D.C.">Bogotá D.C.</option>
+              <option value="Bolívar">Bolívar</option>
+              <option value="Boyacá">Boyacá</option>
+              <option value="Caldas">Caldas</option>
+              <option value="Caquetá">Caquetá</option>
+              <option value="Casanare">Casanare</option>
+              <option value="Cauca">Cauca</option>
+              <option value="Cesar">Cesar</option>
+              <option value="Chocó">Chocó</option>
+              <option value="Córdoba">Córdoba</option>
+              <option value="Cundinamarca">Cundinamarca</option>
+              <option value="Guainía">Guainía</option>
+              <option value="Guaviare">Guaviare</option>
+              <option value="Huila">Huila</option>
+              <option value="La Guajira">La Guajira</option>
+              <option value="Magdalena">Magdalena</option>
+              <option value="Meta">Meta</option>
+              <option value="Nariño">Nariño</option>
+              <option value="Norte de Santander">Norte de Santander</option>
+              <option value="Putumayo">Putumayo</option>
+              <option value="Quindío">Quindío</option>
+              <option value="Risaralda">Risaralda</option>
+              <option value="San Andrés y Providencia">San Andrés y Providencia</option>
+              <option value="Santander">Santander</option>
+              <option value="Sucre">Sucre</option>
+              <option value="Tolima">Tolima</option>
+              <option value="Valle del Cauca">Valle del Cauca</option>
+              <option value="Vaupés">Vaupés</option>
+              <option value="Vichada">Vichada</option>
+            </select>
+            <span class="mg-campo__error">Elige tu departamento.</span>
+          </div>
+          <div class="mg-campo">
+            <label for="mg-c-ciudad">Ciudad o municipio<span class="req" aria-hidden="true">*</span></label>
+            <input type="text" id="mg-c-ciudad" name="ciudad" autocomplete="address-level2"
+                   placeholder="Ej. Tunja" required aria-required="true">
+            <span class="mg-campo__error">Escribe tu ciudad o municipio.</span>
+          </div>
         </div>
-      </div>
-      <div class="mg-form__fila">
-        <div class="mg-campo mg-campo--full">
-          <label for="mg-c-direccion">Dirección<span class="req" aria-hidden="true">*</span></label>
-          <input type="text" id="mg-c-direccion" name="direccion" autocomplete="street-address"
-                 placeholder="Calle, número, apartamento" required>
-          <span class="mg-campo__error">Escribe tu dirección.</span>
+        <div class="mg-form__fila">
+          <div class="mg-campo mg-campo--full">
+            <label for="mg-c-direccion">Dirección<span class="req" aria-hidden="true">*</span></label>
+            <input type="text" id="mg-c-direccion" name="direccion" autocomplete="street-address"
+                   placeholder="Ej. Calle 20 # 10-45" required aria-required="true">
+            <span class="mg-campo__error">Escribe tu dirección.</span>
+          </div>
         </div>
-      </div>
-      <div class="mg-form__fila">
-        <div class="mg-campo mg-campo--full">
-          <label for="mg-c-ciudad">Ciudad<span class="req" aria-hidden="true">*</span></label>
-          <input type="text" id="mg-c-ciudad" name="ciudad" autocomplete="address-level2"
-                 placeholder="Ciudad" required>
-          <span class="mg-campo__error">Escribe tu ciudad.</span>
+        <div class="mg-form__fila">
+          <div class="mg-campo mg-campo--full">
+            <label for="mg-c-detalles">Detalles de entrega<span class="opt">(opcional)</span></label>
+            <input type="text" id="mg-c-detalles" name="detalles" autocomplete="address-line2"
+                   placeholder="Apartamento, torre, barrio, indicaciones"
+                   aria-describedby="mg-c-detalles-ayuda">
+            <span class="mg-campo__ayuda" id="mg-c-detalles-ayuda">Ayuda a que el pedido llegue sin llamadas de más.</span>
+          </div>
         </div>
-      </div>
+      </fieldset>
+
+      <!-- Grupo 3 · documento, OPCIONAL.
+           Wompi solo lo acepta EN PAREJA (tipo + numero), asi que el script envia
+           los dos o ninguno. No se pide codigo postal: en Colombia casi nadie lo
+           conoce, la entrega no depende de el y Wompi lo marca opcional; pedirlo
+           solo agregaria friccion y datos erroneos. -->
+      <fieldset class="mg-form__grupo">
+        <legend class="mg-form__leyenda">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="M7 15h4M7 11h2"/><circle cx="16" cy="11" r="2"/></svg>
+          Documento
+        </legend>
+        <div class="mg-form__fila">
+          <div class="mg-campo">
+            <label for="mg-c-tipo-doc">Tipo de documento<span class="opt">(opcional)</span></label>
+            <select id="mg-c-tipo-doc" name="tipo_documento" data-vacio="true">
+              <option value="" selected>Sin especificar</option>
+              <option value="CC">Cédula de ciudadanía</option>
+              <option value="CE">Cédula de extranjería</option>
+              <option value="NIT">NIT</option>
+              <option value="PP">Pasaporte</option>
+              <option value="TI">Tarjeta de identidad</option>
+            </select>
+            <span class="mg-campo__error">Elige el tipo de documento.</span>
+          </div>
+          <div class="mg-campo">
+            <label for="mg-c-num-doc">Número de documento<span class="opt">(opcional)</span></label>
+            <input type="text" id="mg-c-num-doc" name="numero_documento" autocomplete="off"
+                   inputmode="numeric" placeholder="Solo números"
+                   aria-describedby="mg-c-num-doc-ayuda">
+            <span class="mg-campo__error">Escribe el número del documento.</span>
+            <span class="mg-campo__ayuda" id="mg-c-num-doc-ayuda">Solo si quieres el comprobante a nombre de un documento.</span>
+          </div>
+        </div>
+      </fieldset>
 
       <!-- aviso sobrio si algo falla al confirmar (red o respuesta con error) -->
       <div class="mg-form-aviso" id="mg-form-aviso" role="alert">
@@ -773,7 +937,7 @@
         </button>
         <p class="mg-form__nota">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="10" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
-          Pago procesado por Wompi
+          Pago procesado por Wompi · conexión cifrada
         </p>
       </div>
     </form>
@@ -1183,11 +1347,18 @@
       if(e.key === 'Escape' && estaAbierto()) ocultar();
     });
 
-    // Limpia el estado de error de un campo cuando el usuario lo corrige.
-    form.querySelectorAll('input').forEach(function(inp){
-      inp.addEventListener('input', function(){
-        const campo = inp.closest('.mg-campo');
+    // Limpia el estado de error de un campo cuando quien compra lo corrige.
+    // Incluye los <select> (departamento y tipo de documento), que avisan por
+    // 'change'. De paso mantiene el atributo data-vacio del select para que el
+    // texto de 'Elige...' se siga viendo como marca de posicion.
+    form.querySelectorAll('input, select').forEach(function(campoCtrl){
+      const evento = campoCtrl.tagName === 'SELECT' ? 'change' : 'input';
+      campoCtrl.addEventListener(evento, function(){
+        const campo = campoCtrl.closest('.mg-campo');
         if(campo) campo.classList.remove('mg-campo--error');
+        if(campoCtrl.tagName === 'SELECT'){
+          campoCtrl.setAttribute('data-vacio', campoCtrl.value ? 'false' : 'true');
+        }
       });
     });
 
@@ -1196,21 +1367,38 @@
       e.preventDefault();
       limpiarAviso();
 
-      const datos = {
-        nombre:    (document.getElementById('mg-c-nombre').value || '').trim(),
-        correo:    (document.getElementById('mg-c-correo').value || '').trim(),
-        telefono:  (document.getElementById('mg-c-telefono').value || '').trim(),
-        direccion: (document.getElementById('mg-c-direccion').value || '').trim(),
-        ciudad:    (document.getElementById('mg-c-ciudad').value || '').trim(),
+      const valorDe = function(id){
+        const el = document.getElementById(id);
+        return ((el && el.value) || '').trim();
       };
 
-      // Validacion basica (requeridos + formato de correo/telefono).
+      const datos = {
+        nombre:       valorDe('mg-c-nombre'),
+        correo:       valorDe('mg-c-correo'),
+        telefono:     valorDe('mg-c-telefono'),
+        departamento: valorDe('mg-c-departamento'),
+        ciudad:       valorDe('mg-c-ciudad'),
+        direccion:    valorDe('mg-c-direccion'),
+        detalles:     valorDe('mg-c-detalles'),
+        tipoDocumento:   valorDe('mg-c-tipo-doc'),
+        numeroDocumento: valorDe('mg-c-num-doc'),
+      };
+
+      // Validacion (obligatorios + formato de correo/telefono). Los campos
+      // opcionales solo se validan si tienen algo: el documento va EN PAREJA
+      // (Wompi exige tipo y numero juntos), asi que si se llena uno se pide el
+      // otro; si no se llena ninguno, ninguno estorba.
+      const documentoCompleto = !!(datos.tipoDocumento && datos.numeroDocumento);
+      const documentoVacio    = !datos.tipoDocumento && !datos.numeroDocumento;
       const errores = {
-        'mg-c-nombre':    datos.nombre.length >= 2,
-        'mg-c-correo':    correoValido(datos.correo),
-        'mg-c-telefono':  telefonoValido(datos.telefono),
-        'mg-c-direccion': datos.direccion.length >= 3,
-        'mg-c-ciudad':    datos.ciudad.length >= 2,
+        'mg-c-nombre':       datos.nombre.length >= 2,
+        'mg-c-correo':       correoValido(datos.correo),
+        'mg-c-telefono':     telefonoValido(datos.telefono),
+        'mg-c-departamento': datos.departamento.length > 0,
+        'mg-c-ciudad':       datos.ciudad.length >= 2,
+        'mg-c-direccion':    datos.direccion.length >= 3,
+        'mg-c-tipo-doc':     documentoVacio || documentoCompleto,
+        'mg-c-num-doc':      documentoVacio || (documentoCompleto && (datos.numeroDocumento.match(/\w/g) || []).length >= 5),
       };
       let primerError = null;
       Object.keys(errores).forEach(function(idCampo){
@@ -1220,7 +1408,15 @@
         if(errores[idCampo]){ campo.classList.remove('mg-campo--error'); }
         else { campo.classList.add('mg-campo--error'); if(!primerError) primerError = inp; }
       });
-      if(primerError){ primerError.focus(); return; }
+      if(primerError){
+        // Caso particular del documento a medias: se explica en una sola frase
+        // para que no parezca que el formulario se queja sin motivo.
+        if(!documentoVacio && !documentoCompleto){
+          mostrarAviso('Para incluir el documento, elige el tipo y escribe el número. También puedes dejar los dos campos vacíos.');
+        }
+        primerError.focus();
+        return;
+      }
 
       const producto = identificadorProducto();
       if(!producto){
@@ -1264,9 +1460,13 @@
 
   // Abre el Web Checkout de Wompi por REDIRECCION: se arma un <form> con los
   // parametros oficiales y se envia a checkout.wompi.co. Los valores de firma,
-  // monto, moneda, referencia y llave vienen TAL CUAL del servidor. Los datos del
-  // comprador (customer/shipping) solo prellenan y mejoran la experiencia; nunca
-  // afectan la firma.
+  // monto, moneda, referencia y llave vienen TAL CUAL del servidor y NO se
+  // recalculan aqui.
+  // Los datos de quien compra viajan como parametros oficiales de Wompi
+  // (customer-data / shipping-address): ademas de prellenar el checkout, Wompi los
+  // devuelve luego en el evento de la transaccion, que es lo que permitira
+  // registrar el pedido cuando el pago quede confirmado. Ningun dato de estos
+  // afecta la firma.
   function irAWompi(pago, datos){
     const form = document.createElement('form');
     form.method = 'GET';
@@ -1284,22 +1484,61 @@
     };
     if(pago.url_redireccion) campos['redirect-url'] = pago.url_redireccion;
 
-    // Prellenado del comprador (opcional, no afecta la firma).
+    // ----------------------------------------------------------------------
+    // MAPEO EXACTO de los campos del formulario a los parametros OFICIALES de
+    // Wompi (los nombres llevan dos puntos y guiones; un caracter mal escrito y
+    // Wompi rechaza el checkout):
+    //
+    //   Nombre completo   -> customer-data:full-name  +  shipping-address:name
+    //   Correo            -> customer-data:email
+    //   Telefono          -> customer-data:phone-number (+ :phone-number-prefix)
+    //                        y shipping-address:phone-number
+    //   Departamento      -> shipping-address:region        (OBLIGATORIO en Wompi)
+    //   Ciudad            -> shipping-address:city          (OBLIGATORIO en Wompi)
+    //   Direccion         -> shipping-address:address-line-1 (OBLIGATORIO)
+    //   Pais (fijo 'CO')  -> shipping-address:country       (OBLIGATORIO)
+    //   Detalles          -> shipping-address:address-line-2 (opcional)
+    //   Tipo + numero doc -> customer-data:legal-id-type + customer-data:legal-id
+    //
+    // Cuando se envia 'shipping-address', Wompi EXIGE address-line-1, country,
+    // city, phone-number y region. Faltar 'region' era exactamente el error
+    // «Parámetro shipping-address:region no proveído»: ahora el departamento se
+    // pide con una lista cerrada y se envia aqui.
+    //
+    // Nada de esto afecta la FIRMA: la firma cubre referencia + monto + moneda y
+    // llega ya calculada del servidor. Solo se envian campos CON VALOR (los
+    // parametros vacios tambien hacen fallar el checkout).
+    // ----------------------------------------------------------------------
     if(datos){
-      if(datos.correo)   campos['customer-data:email'] = datos.correo;
-      if(datos.nombre)   campos['customer-data:full-name'] = datos.nombre;
-      if(datos.telefono){
-        campos['customer-data:phone-number'] = datos.telefono.replace(/\D/g, '');
+      const telefonoSoloDigitos = (datos.telefono || '').replace(/\D/g, '');
+
+      // --- quien compra (prellena la vista "Ingresa tus datos" de Wompi) ---
+      if(datos.correo) campos['customer-data:email'] = datos.correo;
+      if(datos.nombre) campos['customer-data:full-name'] = datos.nombre;
+      if(telefonoSoloDigitos){
+        campos['customer-data:phone-number'] = telefonoSoloDigitos;
+        // Wompi pide el prefijo junto al telefono. La tienda vende en Colombia.
         campos['customer-data:phone-number-prefix'] = '+57';
       }
+      // Documento: OPCIONAL y EN PAREJA. Wompi exige que legal-id y
+      // legal-id-type viajen juntos, por eso se envian solo si estan los dos.
+      if(datos.tipoDocumento && datos.numeroDocumento){
+        campos['customer-data:legal-id-type'] = datos.tipoDocumento;
+        campos['customer-data:legal-id'] = datos.numeroDocumento;
+      }
+
+      // --- a donde se envia ---
       if(datos.direccion) campos['shipping-address:address-line-1'] = datos.direccion;
-      // El formulario solo pide ciudad, no departamento. NO enviamos
-      // 'shipping-address:region' con la ciudad: seria un dato incorrecto para
-      // Wompi. Se omite hasta que exista un campo de departamento real; el
-      // prellenado no afecta la firma.
-      if(datos.ciudad) campos['shipping-address:city'] = datos.ciudad;
+      if(datos.detalles)  campos['shipping-address:address-line-2'] = datos.detalles;
+      if(datos.ciudad)    campos['shipping-address:city'] = datos.ciudad;
+      // Departamento tal cual lo eligio quien compra en la lista de 32
+      // departamentos + Bogota D.C. (nunca la ciudad en este campo).
+      if(datos.departamento) campos['shipping-address:region'] = datos.departamento;
+      if(telefonoSoloDigitos) campos['shipping-address:phone-number'] = telefonoSoloDigitos;
+      if(datos.nombre) campos['shipping-address:name'] = datos.nombre;
+      // Pais en ISO 3166-1 alpha-2. Fijo: la tienda entrega en Colombia, no se
+      // pregunta para no agregar un campo que siempre tendria el mismo valor.
       campos['shipping-address:country'] = 'CO';
-      if(datos.telefono) campos['shipping-address:phone-number'] = datos.telefono.replace(/\D/g, '');
     }
 
     Object.keys(campos).forEach(function(clave){
