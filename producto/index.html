@@ -365,6 +365,80 @@
   .mg-modal h2{font-size:19px;font-weight:600;margin:0 0 10px}
   .mg-modal p{font-size:14px;color:#333;margin:0 0 12px}
   .mg-modal p:last-child{margin-bottom:0}
+
+  /* ---------- modal de datos del comprador (formulario boutique) ----------
+     Reutiliza el patron accesible del modal de Wompi (mismo overlay .mg-modal,
+     abrir/cerrar con X / clic afuera / Escape / foco). La caja es un poco mas
+     ancha para acomodar el formulario, y en movil ocupa casi toda la pantalla
+     con scroll interno para que se vea impecable en <=720px. El acabado sigue el
+     acento del producto (variables --acento) que el script fija por producto. */
+  .mg-modal__caja--form{max-width:520px;max-height:calc(100dvh - 32px);overflow-y:auto}
+  .mg-form-intro{font-size:13.5px;color:var(--gris);margin:2px 0 18px}
+  .mg-form-prod{
+    display:flex;align-items:center;gap:6px;font-weight:600;color:var(--acento);
+  }
+  .mg-form{display:grid;gap:14px;margin:0}
+  /* dos columnas en PC para pares cortos; una sola en movil */
+  .mg-form__fila{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+  .mg-campo{display:flex;flex-direction:column;gap:6px;min-width:0}
+  .mg-campo--full{grid-column:1 / -1}
+  .mg-campo label{font-size:12.5px;font-weight:600;color:var(--tinta);letter-spacing:.01em}
+  .mg-campo label .req{color:var(--rojo);margin-left:2px}
+  .mg-campo input{
+    font-family:inherit;font-size:14.5px;color:var(--tinta);
+    background:var(--blanco);border:1px solid var(--linea);border-radius:11px;
+    padding:11px 13px;width:100%;transition:border-color .15s,box-shadow .15s;
+  }
+  .mg-campo input::placeholder{color:var(--gris-cl)}
+  .mg-campo input:focus{
+    outline:none;border-color:var(--acento);
+    box-shadow:0 0 0 3px var(--acento-sombra);
+  }
+  /* estado invalido tras intentar enviar (lo marca el JS con .mg-campo--error) */
+  .mg-campo--error input{border-color:var(--rojo);box-shadow:0 0 0 3px rgba(211,47,47,.12)}
+  .mg-campo__error{font-size:11.5px;color:var(--rojo);min-height:0;display:none}
+  .mg-campo--error .mg-campo__error{display:block}
+  /* mensaje de error general (fallo de red / respuesta con error) */
+  .mg-form-aviso{
+    display:none;align-items:flex-start;gap:8px;margin:2px 0 0;
+    background:var(--hueso);color:var(--rojo-osc);
+    border:1px solid rgba(211,47,47,.28);border-radius:11px;
+    font-size:13px;padding:10px 12px;line-height:1.45;
+  }
+  .mg-form-aviso[data-visible="true"]{display:flex}
+  .mg-form-aviso svg{width:16px;height:16px;flex:none;margin-top:1px}
+  .mg-form__pie{margin-top:4px}
+  /* boton enviar: acento del producto, ancho completo, con estado de carga */
+  .mg-form__enviar{
+    width:100%;font-family:inherit;font-size:15px;font-weight:600;cursor:pointer;
+    border:0;border-radius:12px;padding:14px 22px;color:#fff;background:var(--rojo);
+    display:inline-flex;align-items:center;justify-content:center;gap:9px;
+    transition:background .15s,transform .08s,opacity .15s;
+  }
+  .mg-form__enviar:hover{background:var(--rojo-osc)}
+  .mg-form__enviar:active{transform:translateY(1px)}
+  .mg-form__enviar:disabled{background:var(--gris-cl);cursor:not-allowed;opacity:.85}
+  .mg-form__enviar svg{width:17px;height:17px}
+  /* girito de carga */
+  .mg-spin{
+    width:16px;height:16px;border:2px solid rgba(255,255,255,.45);
+    border-top-color:#fff;border-radius:50%;animation:mg-girar .7s linear infinite;flex:none;
+  }
+  @keyframes mg-girar{to{transform:rotate(360deg)}}
+  .mg-form__nota{
+    display:flex;align-items:center;gap:7px;justify-content:center;
+    font-size:11.5px;color:var(--gris);margin:12px 0 0;
+  }
+  .mg-form__nota svg{width:13px;height:13px;flex:none;color:var(--acento)}
+  @media(max-width:720px){
+    .mg-modal{padding:0;align-items:stretch}
+    .mg-modal__caja--form{
+      max-width:none;border-radius:18px 18px 0 0;margin-top:auto;
+      max-height:92dvh;padding:26px 20px 22px;
+    }
+    /* en movil el formulario se apila en una sola columna */
+    .mg-form__fila{grid-template-columns:1fr}
+  }
 </style>
 </head>
 <body>
@@ -473,7 +547,7 @@
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="8" cy="21" r="1"/><circle cx="19" cy="21" r="1"/><path d="M2.05 2.05h2l2.66 12.42a2 2 0 0 0 2 1.58h9.78a2 2 0 0 0 1.95-1.57l1.65-7.43H5.12"/></svg>
         Comprar ahora
       </button>
-      <button class="mg-btn mg-btn--wa">
+      <button class="mg-btn mg-btn--wa" id="mg-whatsapp">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M7.9 20A9 9 0 1 0 4 16.1L2 22z"/></svg>
         Preguntar por WhatsApp
       </button>
@@ -624,6 +698,85 @@
       grandes del país.</p>
     <p>Elegimos Wompi para que comprar en MAGANDHI sea seguro y transparente:
       los datos de tu pago los maneja directamente la pasarela, no nosotros.</p>
+  </div>
+</div>
+
+<!-- modal: datos del comprador (se abre al tocar 'Comprar ahora'). Al enviarlo
+     se pide la intencion de pago al servidor y se abre el pago seguro de Wompi.
+     Marcado accesible (role dialog, aria-modal); el mismo patron del modal de
+     arriba (abrir/cerrar con X, clic afuera, Escape, foco). -->
+<div class="mg-modal" id="mg-modal-datos" role="dialog" aria-modal="true" aria-labelledby="mg-modal-datos-tit" aria-hidden="true">
+  <div class="mg-modal__caja mg-modal__caja--form">
+    <button type="button" class="mg-modal__x" id="mg-cerrar-datos" aria-label="Cerrar">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18M6 6l12 12"/></svg>
+    </button>
+    <div class="mg-modal__ico">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M20 8v6M23 11h-6"/><path d="M8.5 12a4 4 0 1 0 0-8 4 4 0 0 0 0 8zM2 21v-2a4 4 0 0 1 4-4h5a4 4 0 0 1 4 4v2"/></svg>
+    </div>
+    <h2 id="mg-modal-datos-tit">Tus datos para la entrega</h2>
+    <p class="mg-form-intro">
+      Con estos datos preparamos tu pedido. El pago lo procesa Wompi de forma
+      segura; te llevamos allí al confirmar.
+      <span class="mg-form-prod" id="mg-form-prod" hidden></span>
+    </p>
+
+    <form class="mg-form" id="mg-form-datos" novalidate>
+      <div class="mg-form__fila">
+        <div class="mg-campo mg-campo--full">
+          <label for="mg-c-nombre">Nombre completo<span class="req" aria-hidden="true">*</span></label>
+          <input type="text" id="mg-c-nombre" name="nombre" autocomplete="name"
+                 placeholder="Nombre y apellido" required>
+          <span class="mg-campo__error">Escribe tu nombre completo.</span>
+        </div>
+      </div>
+      <div class="mg-form__fila">
+        <div class="mg-campo">
+          <label for="mg-c-correo">Correo<span class="req" aria-hidden="true">*</span></label>
+          <input type="email" id="mg-c-correo" name="correo" autocomplete="email"
+                 inputmode="email" placeholder="tucorreo@ejemplo.com" required>
+          <span class="mg-campo__error">Escribe un correo válido.</span>
+        </div>
+        <div class="mg-campo">
+          <label for="mg-c-telefono">Teléfono<span class="req" aria-hidden="true">*</span></label>
+          <input type="tel" id="mg-c-telefono" name="telefono" autocomplete="tel"
+                 inputmode="tel" placeholder="Ej. 3001234567" required>
+          <span class="mg-campo__error">Escribe un teléfono válido (solo números).</span>
+        </div>
+      </div>
+      <div class="mg-form__fila">
+        <div class="mg-campo mg-campo--full">
+          <label for="mg-c-direccion">Dirección<span class="req" aria-hidden="true">*</span></label>
+          <input type="text" id="mg-c-direccion" name="direccion" autocomplete="street-address"
+                 placeholder="Calle, número, apartamento" required>
+          <span class="mg-campo__error">Escribe tu dirección.</span>
+        </div>
+      </div>
+      <div class="mg-form__fila">
+        <div class="mg-campo mg-campo--full">
+          <label for="mg-c-ciudad">Ciudad<span class="req" aria-hidden="true">*</span></label>
+          <input type="text" id="mg-c-ciudad" name="ciudad" autocomplete="address-level2"
+                 placeholder="Ciudad" required>
+          <span class="mg-campo__error">Escribe tu ciudad.</span>
+        </div>
+      </div>
+
+      <!-- aviso sobrio si algo falla al confirmar (red o respuesta con error) -->
+      <div class="mg-form-aviso" id="mg-form-aviso" role="alert">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 8v4"/><path d="M12 16h.01"/></svg>
+        <span id="mg-form-aviso-txt"></span>
+      </div>
+
+      <div class="mg-form__pie">
+        <button type="submit" class="mg-form__enviar" id="mg-form-enviar">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="5" width="20" height="14" rx="2"/><path d="M2 10h20"/></svg>
+          <span id="mg-form-enviar-txt">Ir al pago seguro</span>
+        </button>
+        <p class="mg-form__nota">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="10" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+          Pago procesado por Wompi
+        </p>
+      </div>
+    </form>
   </div>
 </div>
 
@@ -871,6 +1024,12 @@
     set('mg-sub', '');
   }
 
+  // Fila del producto ya cargada (catalogo_publico). Se guarda en este scope del
+  // modulo para que los listeners de 'Comprar' y 'WhatsApp' usen el slug/id, el
+  // nombre y el estado (agotado) reales sin volver a consultar. null mientras no
+  // haya un producto valido cargado.
+  let filaProducto = null;
+
   async function cargarProducto(){
     // Lee el parametro de la URL: preferir ?slug=, si no ?id=.
     const params = new URLSearchParams(window.location.search);
@@ -894,6 +1053,9 @@
         mostrarNoDisponible();
         return;
       }
+
+      // Se guarda la fila para los botones de compra y WhatsApp.
+      filaProducto = data;
 
       aplicarAcento(data);
       pintarSello(data);
@@ -921,6 +1083,255 @@
     }
   }
 
+  // ==========================================================================
+  //  COMPRA (Comprar ahora) + WhatsApp
+  //  --------------------------------------------------------------------------
+  //  · 'Comprar ahora' abre el formulario de datos del comprador (modal). Solo
+  //    funciona si el boton NO esta deshabilitado: pintarAgotado()/
+  //    mostrarNoDisponible() lo deshabilitan cuando el producto esta agotado o
+  //    no disponible, y ahi no debe iniciarse ninguna intencion de pago.
+  //  · Al enviar el formulario se pide al servidor la intencion de pago
+  //    (Edge Function 'crear-intencion-pago'): el servidor RELEE el precio de la
+  //    base y calcula la firma; el navegador NUNCA envia precio ni recalcula la
+  //    firma. Con la respuesta se abre el pago seguro de Wompi (Web Checkout por
+  //    redireccion), usando EXACTAMENTE los valores devueltos.
+  //  · 'Preguntar por WhatsApp' abre wa.me/573132451188 con un mensaje del
+  //    producto.
+  // ==========================================================================
+
+  // Numero de WhatsApp del negocio (formato internacional, sin '+').
+  const WHATSAPP_NEGOCIO = '573132451188';
+  // URL oficial del Web Checkout de Wompi (pago por redireccion).
+  const WOMPI_CHECKOUT_URL = 'https://checkout.wompi.co/p/';
+
+  // Identificador del producto para el servidor: se prefiere el slug; si no hay,
+  // el id. Devuelve '' si no hay fila valida.
+  function identificadorProducto(){
+    if(!filaProducto) return '';
+    return (filaProducto.slug || filaProducto.id || '').toString().trim();
+  }
+
+  // Validacion basica de correo (formato) y telefono (al menos 7 digitos).
+  function correoValido(v){ return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v.trim()); }
+  function telefonoValido(v){ return (v.match(/\d/g) || []).length >= 7; }
+
+  // --- Modal de datos del comprador: apertura/cierre accesible ---------------
+  function configurarCompra(){
+    const btnComprar = document.getElementById('mg-comprar');
+    const modal      = document.getElementById('mg-modal-datos');
+    const cerrar     = document.getElementById('mg-cerrar-datos');
+    const form       = document.getElementById('mg-form-datos');
+    const enviar     = document.getElementById('mg-form-enviar');
+    const enviarTxt  = document.getElementById('mg-form-enviar-txt');
+    const aviso      = document.getElementById('mg-form-aviso');
+    const avisoTxt   = document.getElementById('mg-form-aviso-txt');
+    const chipProd   = document.getElementById('mg-form-prod');
+    if(!btnComprar || !modal || !cerrar || !form) return;
+
+    let ultimoFoco = null;
+
+    function mostrarAviso(mensaje){
+      if(!aviso || !avisoTxt) return;
+      avisoTxt.textContent = mensaje;
+      aviso.setAttribute('data-visible', 'true');
+    }
+    function limpiarAviso(){
+      if(aviso) aviso.setAttribute('data-visible', 'false');
+    }
+
+    function abrir(){
+      // Doble cinturon: si por cualquier razon el boton esta deshabilitado
+      // (agotado / no disponible), no se abre el formulario.
+      if(btnComprar.disabled) return;
+      limpiarAviso();
+      // Nombre del producto sobre el formulario, para dar contexto.
+      const nombre = filaProducto && filaProducto.nombre ? filaProducto.nombre : '';
+      if(chipProd){
+        if(nombre){ chipProd.textContent = nombre; chipProd.hidden = false; }
+        else { chipProd.textContent = ''; chipProd.hidden = true; }
+      }
+      ultimoFoco = document.activeElement;
+      modal.setAttribute('aria-hidden', 'false');
+      const primero = document.getElementById('mg-c-nombre');
+      if(primero) primero.focus();
+    }
+    function ocultar(){
+      modal.setAttribute('aria-hidden', 'true');
+      restaurarBoton();
+      if(ultimoFoco && typeof ultimoFoco.focus === 'function') ultimoFoco.focus();
+      else btnComprar.focus();
+    }
+    function estaAbierto(){ return modal.getAttribute('aria-hidden') === 'false'; }
+
+    function ponerCargando(){
+      if(enviar) enviar.disabled = true;
+      if(enviarTxt) enviarTxt.textContent = 'Procesando…';
+      const ico = enviar ? enviar.querySelector('svg') : null;
+      if(ico){ ico.outerHTML = '<span class="mg-spin" id="mg-form-spin" aria-hidden="true"></span>'; }
+    }
+    function restaurarBoton(){
+      if(enviar) enviar.disabled = false;
+      if(enviarTxt) enviarTxt.textContent = 'Ir al pago seguro';
+      const spin = document.getElementById('mg-form-spin');
+      if(spin){ spin.outerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="5" width="20" height="14" rx="2"/><path d="M2 10h20"/></svg>'; }
+    }
+
+    btnComprar.addEventListener('click', abrir);
+    cerrar.addEventListener('click', ocultar);
+    modal.addEventListener('click', function(e){ if(e.target === modal) ocultar(); });
+    document.addEventListener('keydown', function(e){
+      if(e.key === 'Escape' && estaAbierto()) ocultar();
+    });
+
+    // Limpia el estado de error de un campo cuando el usuario lo corrige.
+    form.querySelectorAll('input').forEach(function(inp){
+      inp.addEventListener('input', function(){
+        const campo = inp.closest('.mg-campo');
+        if(campo) campo.classList.remove('mg-campo--error');
+      });
+    });
+
+    // --- Envio: validar, pedir intencion de pago y abrir Wompi ---------------
+    form.addEventListener('submit', async function(e){
+      e.preventDefault();
+      limpiarAviso();
+
+      const datos = {
+        nombre:    (document.getElementById('mg-c-nombre').value || '').trim(),
+        correo:    (document.getElementById('mg-c-correo').value || '').trim(),
+        telefono:  (document.getElementById('mg-c-telefono').value || '').trim(),
+        direccion: (document.getElementById('mg-c-direccion').value || '').trim(),
+        ciudad:    (document.getElementById('mg-c-ciudad').value || '').trim(),
+      };
+
+      // Validacion basica (requeridos + formato de correo/telefono).
+      const errores = {
+        'mg-c-nombre':    datos.nombre.length >= 2,
+        'mg-c-correo':    correoValido(datos.correo),
+        'mg-c-telefono':  telefonoValido(datos.telefono),
+        'mg-c-direccion': datos.direccion.length >= 3,
+        'mg-c-ciudad':    datos.ciudad.length >= 2,
+      };
+      let primerError = null;
+      Object.keys(errores).forEach(function(idCampo){
+        const inp = document.getElementById(idCampo);
+        const campo = inp ? inp.closest('.mg-campo') : null;
+        if(!campo) return;
+        if(errores[idCampo]){ campo.classList.remove('mg-campo--error'); }
+        else { campo.classList.add('mg-campo--error'); if(!primerError) primerError = inp; }
+      });
+      if(primerError){ primerError.focus(); return; }
+
+      const producto = identificadorProducto();
+      if(!producto){
+        mostrarAviso('No pudimos identificar el producto. Recarga la página e inténtalo de nuevo.');
+        return;
+      }
+
+      ponerCargando();
+      try{
+        // El navegador NO envia precio: el servidor lo relee de la base y calcula
+        // la firma. cantidad = 1 en esta etapa.
+        const { data: pago, error } = await supabase.functions.invoke(
+          'crear-intencion-pago',
+          { body: { producto: producto, cantidad: 1 } }
+        );
+
+        if(error || !pago || pago.error){
+          restaurarBoton();
+          mostrarAviso(mensajeDeError(error, pago));
+          return;
+        }
+
+        // Se abre el pago seguro de Wompi con EXACTAMENTE los valores del servidor
+        // (referencia, monto, moneda, firma, llave). Nunca se recalculan aqui.
+        irAWompi(pago, datos);
+      }catch(err){
+        console.error('No se pudo iniciar el pago:', err);
+        restaurarBoton();
+        mostrarAviso('No pudimos conectar para procesar tu pago. Revisa tu conexión e inténtalo de nuevo.');
+      }
+    });
+  }
+
+  // Traduce el error de la funcion a un mensaje sobrio (sin jerga tecnica).
+  function mensajeDeError(error, pago){
+    const texto = (pago && pago.error) || (error && error.message) || '';
+    if(/agotad/i.test(texto)) return 'Este producto se agotó. Escríbenos por WhatsApp y te avisamos cuando vuelva.';
+    if(/no encontrad/i.test(texto)) return 'No encontramos este producto. Recarga la página e inténtalo de nuevo.';
+    return 'No pudimos iniciar tu pago en este momento. Inténtalo de nuevo en un momento o escríbenos por WhatsApp.';
+  }
+
+  // Abre el Web Checkout de Wompi por REDIRECCION: se arma un <form> con los
+  // parametros oficiales y se envia a checkout.wompi.co. Los valores de firma,
+  // monto, moneda, referencia y llave vienen TAL CUAL del servidor. Los datos del
+  // comprador (customer/shipping) solo prellenan y mejoran la experiencia; nunca
+  // afectan la firma.
+  function irAWompi(pago, datos){
+    const form = document.createElement('form');
+    form.method = 'GET';
+    form.action = WOMPI_CHECKOUT_URL;
+
+    const campos = {
+      'public-key':        pago.llave_publica,
+      'currency':          pago.moneda,
+      // monto_en_centavos llega del servidor como STRING (la misma cadena sobre
+      // la que se firmo). Se envia TAL CUAL, sin convertir a Number, para que lo
+      // enviado a Wompi sea identico byte a byte a lo firmado.
+      'amount-in-cents':   pago.monto_en_centavos,
+      'reference':         pago.referencia,
+      'signature:integrity': pago.firma_integridad,
+    };
+    if(pago.url_redireccion) campos['redirect-url'] = pago.url_redireccion;
+
+    // Prellenado del comprador (opcional, no afecta la firma).
+    if(datos){
+      if(datos.correo)   campos['customer-data:email'] = datos.correo;
+      if(datos.nombre)   campos['customer-data:full-name'] = datos.nombre;
+      if(datos.telefono){
+        campos['customer-data:phone-number'] = datos.telefono.replace(/\D/g, '');
+        campos['customer-data:phone-number-prefix'] = '+57';
+      }
+      if(datos.direccion) campos['shipping-address:address-line-1'] = datos.direccion;
+      // El formulario solo pide ciudad, no departamento. NO enviamos
+      // 'shipping-address:region' con la ciudad: seria un dato incorrecto para
+      // Wompi. Se omite hasta que exista un campo de departamento real; el
+      // prellenado no afecta la firma.
+      if(datos.ciudad) campos['shipping-address:city'] = datos.ciudad;
+      campos['shipping-address:country'] = 'CO';
+      if(datos.telefono) campos['shipping-address:phone-number'] = datos.telefono.replace(/\D/g, '');
+    }
+
+    Object.keys(campos).forEach(function(clave){
+      const valor = campos[clave];
+      if(valor === undefined || valor === null || valor === '') return;
+      const input = document.createElement('input');
+      input.type = 'hidden';
+      input.name = clave;
+      input.value = String(valor);
+      form.appendChild(input);
+    });
+
+    document.body.appendChild(form);
+    form.submit();
+  }
+
+  // --- WhatsApp: abre wa.me con un mensaje del producto ----------------------
+  function configurarWhatsApp(){
+    const btn = document.getElementById('mg-whatsapp');
+    if(!btn) return;
+    btn.addEventListener('click', function(){
+      const nombre = (filaProducto && filaProducto.nombre) ? filaProducto.nombre : '';
+      const mensaje = nombre
+        ? 'Hola, me interesa el producto ' + nombre + ' de MAGANDHI'
+        : 'Hola, me interesa un producto de MAGANDHI';
+      const url = 'https://wa.me/' + WHATSAPP_NEGOCIO + '?text=' + encodeURIComponent(mensaje);
+      window.open(url, '_blank', 'noopener');
+    });
+  }
+
+  configurarCompra();
+  configurarWhatsApp();
   cargarProducto();
 </script>
 
