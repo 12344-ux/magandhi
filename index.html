@@ -34,23 +34,20 @@
     pocas tarjetas de misma temperatura/saturacion, se lee "coleccion curada",
     nunca arcoiris. Cada tarjeta lleva el color de su categoria via variables
     inline (--acento / --acento-cl / --acento-sombra) sobre .hg-tarjeta.
-    Esta es la base visual del futuro software "Campanas" (back-office).
+    Los colores de categoria vienen EN VIVO desde la base (catalogo_publico).
 
-  · PALETA DE CATEGORIAS (aprobada por el dueno, misma familia calida):
+  · PALETA DE CATEGORIAS (misma familia calida):
       Belleza femenina (rosa terroso)      #B5657A / #D99FAE / rgba(181,101,122,.16)
       Belleza masculina (grafito calido)   #3A3A3A / #7A7A7A / rgba(58,58,58,.14)
       Cuidado personal/general (topo)      #6E6A66 / #A8A29C / rgba(110,106,102,.15)
       Hogar/limpieza (azul petroleo)       #3E6B78 / #7FA6B0 / rgba(62,107,120,.15)
       Alimentos/naturales (terracota)      #C0682E / #E3A576 / rgba(192,104,46,.16)
       Destacado/clasico (rojo-terracota)   #B23A2E / #D98A80 / rgba(178,58,46,.15)
-    El GRISI Gold conserva su DORADO de firma (#C9962E) para cuidado del cabello.
 
-  · Fase actual: GRID de 5 productos. El primero (Grisi) es "producto estrella"
-    y lleva una estrella DENTRO del sello "Elegido por MAGANDHI" (.hg-medalla__star).
-    El sello SIEMPRE aparece; la estrella es OPCIONAL (simbolo con proposito para
-    productos destacados) -> en Campanas sera un switch por producto.
-    Solo el Grisi tiene pagina real; los otros 4 son productos de EJEMPLO/inventados
-    (el dueno los ajustara desde el software Campanas) y enlazan a "#".
+  · La vitrina se pinta EN VIVO desde catalogo_publico: cada tarjeta lleva el
+    sello "Elegido por MAGANDHI" cuando corresponde, y una estrella opcional para
+    los productos destacados. El precio y la disponibilidad tambien se muestran
+    en movil (informacion de compra).
   · Barra fija inferior: solo iconos de contacto (centrado).
 -->
 <style>
@@ -195,13 +192,11 @@
   .hg-ir svg{width:16px;height:16px}
 
   /* ---------- aviso de urgencia (opcional, por producto) ----------
-     "Solo X disponibles". Es un SWITCH por producto que el dueno enciende
-     desde Campanas (aviso_urgencia_activo) definiendo el numero a mostrar
-     (aviso_urgencia_cantidad). Tiene sentido conectado al inventario: se
-     prende en el momento adecuado (por ejemplo cuando queden pocas unidades).
-     DISENO: chip sobrio en el color de la categoria (nada de rojo de oferta ni
-     urgencia agresiva), coherente con el alma boutique. Solo se pinta si el
-     switch esta activo Y hay una cantidad valida (>0). */
+     "Solo X disponibles": aviso honesto que se muestra cuando quedan pocas
+     unidades reales de un producto. DISENO: chip sobrio en el color de la
+     categoria (nada de rojo de oferta ni urgencia agresiva), coherente con el
+     alma boutique. Solo se pinta si el aviso esta activo Y hay una cantidad
+     valida (>0). */
   .hg-urgencia{
     display:inline-flex;align-items:center;gap:6px;align-self:flex-start;
     background:var(--acento-sombra);color:var(--acento);
@@ -280,13 +275,17 @@
     /* SI mostramos la meta (el dato en gris oscurito, como en PC): da vida a la
        tarjeta y refuerza que es un PRODUCTO, no una categoria. */
     .hg-meta{display:block;font-size:11.5px;margin:0 0 9px;color:var(--gris)}
-    /* se ocultan hook, precio, boton, aviso de urgencia y chip de agotado en
-       movil (se ven al entrar al producto; el escaparate movil muestra solo lo
-       esencial) */
-    .hg-hook,
+    /* En movil se oculta solo el HOOK (frase larga) para que el escaparate
+       respire. PERO el PRECIO (.hg-fila) y el chip AGOTADO (.hg-agotado) SI se
+       muestran: son informacion de compra innegociable y el movil es el trafico
+       real. El aviso de urgencia tambien se conserva (dato honesto de stock). */
+    .hg-hook{display:none}
+    /* el precio en movil: compacto, sin el boton "Ver producto" (la tarjeta
+       entera ya es un enlace). Se muestra solo el precio. */
+    .hg-fila{display:flex;justify-content:flex-start;margin-top:2px}
+    .hg-fila .hg-ir{display:none}
     .hg-urgencia,
-    .hg-agotado,
-    .hg-fila{display:none}
+    .hg-agotado{display:inline-flex}
 
     /* SELLO 'Elegido por MAGANDHI' NO sobre la foto (ocupa mucho): en movil se
        oculta el que va sobre la imagen y se muestra el gemelo de la zona blanca. */
@@ -332,35 +331,23 @@
 
 <!-- vitrina: grid de productos (color = categoria) -->
 <section class="hg-vitrina">
-  <!-- GRID DINAMICO: las tarjetas se pintan desde Supabase (vista catalogo_publico)
-       manteniendo EXACTO el marcado/estilos aprobados. El render (mismo marcado,
-       clases y variables de color que las tarjetas originales) vive en el
-       <script type=module> del final de la pagina. Si no hay datos o falla la
+  <!-- GRID DINAMICO: las tarjetas se pintan EN VIVO desde la vista publica
+       catalogo_publico. El render (marcado, clases y variables de color) vive en
+       el <script type=module> del final de la pagina. Si no hay datos o falla la
        consulta, el grid queda vacio sin romper la pagina. -->
   <div class="hg-grid" id="hg-grid" aria-live="polite"></div>
-
-  <!-- NOTA MANTENIMIENTO: aqui vivian las 5 tarjetas originales dentro de un
-       <template id="hg-plantilla-referencia"> inerte que nunca se instanciaba
-       (codigo muerto). Se elimino: el grid #hg-grid se pinta ENTERAMENTE desde
-       catalogo_publico en el <script type=module> del final de la pagina,
-       reproduciendo EXACTO las clases y variables de color aprobadas. No se
-       pierde nada visual. -->
-
-  <!-- nota: la vitrina se llena desde Campanas; los productos sin pagina propia
-       enlazan a "#" (el dueno los ajusta desde el software Campanas) -->
 </section>
 
 <!-- ============================================================
-     RENDER DINAMICO DE LA VITRINA (desde Campanas / Supabase)
+     RENDER DINAMICO DE LA VITRINA (Supabase / vista publica catalogo_publico)
      ------------------------------------------------------------
      · Lee SOLO la vista publica catalogo_publico (productos publicados y
-       campos publicos). Nunca toca tablas internas ni etiquetas.
-     · Reproduce EXACTO el marcado/clases de las tarjetas aprobadas: mismo
-       sistema color=categoria (variables inline --acento/--acento-cl/
+       campos publicos). Solo datos publicos.
+     · Sistema color=categoria (variables inline --acento/--acento-cl/
        --acento-sombra), sello condicional, estrella condicional, sello-abajo
        (movil), placeholder cuando no hay imagen.
-     · Aviso de urgencia "Solo X disponibles": switch por producto que el dueno
-       enciende desde Campanas (aviso_urgencia_activo + aviso_urgencia_cantidad).
+     · Aviso de urgencia "Solo X disponibles": aviso honesto que aparece cuando
+       quedan pocas unidades reales.
      · Si la consulta falla o no hay datos, degrada sobrio sin romper la pagina.
      ============================================================ -->
 <script type="module">
@@ -410,8 +397,8 @@
   // la primera imagen de la galeria (arreglo 'imagenes', que tiene version -sm);
   // si no hay galeria, cae al banner (imagen_banner_path, que NO tiene -sm, asi
   // que su liviana = grande). El grid pide la liviana y cae a la grande via
-  // onerror. Objetivo del dueno: calidad en la pagina de producto (usa la
-  // grande) SIN penalizar la carga del grid/miniaturas (usan la liviana).
+  // onerror. Objetivo: calidad en la pagina de producto (usa la grande) SIN
+  // penalizar la carga del grid/miniaturas (usan la liviana).
   function fotosGrid(fila){
     let grandePath = '';
     let esGaleria = false; // true = primer elemento de 'imagenes' (tiene -sm); false = banner (sin -sm)
@@ -587,8 +574,7 @@
   <a href="https://wa.me/573132451188" target="_blank" rel="noopener" aria-label="Escríbenos por WhatsApp" title="WhatsApp">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M7.9 20A9 9 0 1 0 4 16.1L2 22z"/></svg>
   </a>
-  <!-- Instagram: retirado del hero a proposito. Se activara mas adelante via
-       campana de email marketing (decision del dueno). -->
+  <!-- Instagram: retirado del hero a proposito. Se activara mas adelante. -->
 </nav>
 
 </body>

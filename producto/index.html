@@ -199,10 +199,10 @@
   .mg-precio b{font-size:28px;font-weight:600;color:var(--negro)}
   .mg-precio small{font-size:13px;color:var(--gris-cl)}
 
-  /* AVISO DE URGENCIA "Solo X disponibles": switch por producto (lo enciende el
-     dueno desde Campanas con su numero). Chip sobrio en el color del acento del
+  /* AVISO DE URGENCIA "Solo X disponibles": aviso honesto que aparece cuando
+     quedan pocas unidades reales. Chip sobrio en el color del acento del
      producto, sin rojo de oferta ni urgencia agresiva: coherente con el alma
-     boutique. Oculto por defecto; el script lo muestra solo si el switch esta on. */
+     boutique. Oculto por defecto; el script lo muestra solo si esta activo. */
   .mg-urgencia{
     display:inline-flex;align-items:center;gap:7px;margin:0 0 16px;
     background:var(--acento-sombra);color:var(--acento);
@@ -299,10 +299,10 @@
   .mg-grid-r{display:grid;grid-template-columns:repeat(2,1fr);gap:16px}
   @media(max-width:720px){.mg-grid-r{grid-template-columns:1fr}}
   /* contorno de la tarjeta de resena = color de la CATEGORIA del producto
-     (via --acento-cl), como pidio el dueno. Las estrellas NO cambian (ver abajo). */
+     (via --acento-cl). Las estrellas NO cambian (ver abajo). */
   .mg-resena{background:var(--blanco);border:1px solid var(--acento-cl);border-radius:14px;padding:18px 20px;
     transition:transform .12s ease, box-shadow .12s ease, border-color .12s ease}
-  /* eleva al pasar el cursor, como las tarjetas del back-office Impulse */
+  /* eleva sutilmente al pasar el cursor */
   .mg-resena:hover{transform:translateY(-3px);box-shadow:0 10px 26px rgba(17,17,17,.09);border-color:var(--acento-cl)}
   .mg-resena__top{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px}
   .mg-resena__pers{display:flex;align-items:center;gap:11px}
@@ -435,9 +435,9 @@
 
     <div class="mg-precio"><b id="mg-precio">—</b><small>COP</small></div>
 
-    <!-- aviso de urgencia "Solo X disponibles": switch por producto que el dueno
-         enciende desde Campanas (aviso_urgencia_activo + aviso_urgencia_cantidad).
-         Vacio por defecto; el script lo rellena solo si el switch esta activo. -->
+    <!-- aviso de urgencia "Solo X disponibles": aviso honesto que aparece cuando
+         quedan pocas unidades reales. Vacio por defecto; el script lo rellena
+         solo si el aviso esta activo. -->
     <div class="mg-urgencia" id="mg-urgencia" hidden></div>
 
     <!-- aviso de agotado: el script lo muestra solo si catalogo_publico.agotado
@@ -618,7 +618,7 @@
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="5" width="20" height="14" rx="2"/><path d="M2 10h20"/></svg>
     </div>
     <h2 id="mg-modal-wompi-tit">Pagos seguros con Wompi</h2>
-    <p><!-- TEXTO PROVISIONAL: el dueño lo reemplazará -->
+    <p><!-- TEXTO PROVISIONAL -->
       Wompi es la pasarela de pagos de Bancolombia. Tus pagos se procesan en su
       plataforma, con el respaldo de una de las entidades financieras más
       grandes del país.</p>
@@ -641,25 +641,24 @@
 </footer>
 
 <!-- ============================================================
-     DATOS EN VIVO DESDE CAMPANAS (Supabase / vista catalogo_publico)
+     DATOS EN VIVO (Supabase / vista publica catalogo_publico)
      ------------------------------------------------------------
      · Plantilla GENERICA: lee el ?slug= (preferido) o ?id= de la URL y consulta
-       la fila publica de ESE producto en catalogo_publico. Nunca toca tablas
-       internas ni etiquetas.
+       la fila publica de ESE producto en catalogo_publico. Solo campos publicos.
      · Rellena titulo, subtitulo, precio, descripcion, "Por que esta en MAGANDHI",
        "Sobre este producto", la ficha y la GALERIA, aplicando el acento de la
        categoria.
-     · GALERIA: resuelve las URLs publicas de las imagenes del bucket 'campanas'
-       con supabase.storage.from('campanas').getPublicUrl(path). Foto principal =
+     · GALERIA: resuelve las URLs publicas de las imagenes con
+       supabase.storage.from('campanas').getPublicUrl(path). Foto principal =
        primer elemento del arreglo imagenes (o imagen_banner_path); miniaturas =
        el resto en orden; clic en una miniatura cambia la principal. Si no hay
        imagenes, conserva el placeholder dibujado.
-     · Aviso "Solo X disponibles": switch por producto (aviso_urgencia_activo +
-       aviso_urgencia_cantidad) que el dueno enciende desde Campanas.
-     · AGOTADO: viene del booleano catalogo_publico.agotado (Inventario lo deriva
-       del stock REAL: existencias<=0). El numero exacto NUNCA se expone. Si es
-       true, muestra el chip de agotado, DESHABILITA el boton 'Comprar ahora' y
-       oculta el aviso de urgencia (el chip Agotado manda).
+     · Aviso "Solo X disponibles": aviso honesto que aparece cuando quedan pocas
+       unidades reales del producto.
+     · AGOTADO: viene del booleano catalogo_publico.agotado (derivado del stock
+       REAL: existencias<=0). El numero exacto NUNCA se expone. Si es true,
+       muestra el chip de agotado, DESHABILITA el boton 'Comprar ahora' y oculta
+       el aviso de urgencia (el chip Agotado manda).
      · Si no hay slug/id o la fila no existe (producto despublicado / placeholder
        no publicado), muestra un aviso sobrio de no disponible sin romper la
        pagina. Las resenas quedan como ejemplo.
@@ -703,8 +702,8 @@
   const ICONO_ESTRELLA = '<svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="m12 2 3 6.3 6.9 1-5 4.9 1.2 6.8L12 17.8 5.9 21l1.2-6.8-5-4.9 6.9-1z"/></svg>';
 
   // Muestra u oculta el sello "Escogido por MAGANDHI" segun sello_elegido, y
-  // antepone la estrella si estrella=true. Si el dueno apaga el sello en Campanas,
-  // la pagina de producto deja de mostrarlo (igual que el home).
+  // antepone la estrella si estrella=true. Si el sello esta apagado para ese
+  // producto, la pagina deja de mostrarlo (igual que el home).
   function pintarSello(fila){
     const el = document.getElementById('mg-sello');
     if(!el) return;
