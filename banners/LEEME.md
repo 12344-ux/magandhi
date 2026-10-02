@@ -35,11 +35,14 @@ Los banners deben distinguirse inequívocamente del fondo arena real de la pági
 `#EFE7DD`. Las superficies base aprobadas son:
 
 - terracota MAGANDHI: gradiente de `#79211F` a `#A6332E`;
-- negro profundo: gradiente de `#111111` a `#1D1D1D`.
+- negro profundo: gradiente de `#111111` a `#1D1D1D`;
+- negro-dorado: combinación funcional de `#111111` y `#C28A3A`, manteniendo
+  negro detrás del texto y dorado en la zona visual.
 
 Crema `#FAF6F1`, tarjeta `#F2ECE4` y arena `#EFE7DD` no se usan como superficie
-dominante de banner porque se confunden con la interfaz. Blanco y ámbar
-`#C28A3A` quedan para texto, sellos, CTA y detalles pequeños.
+dominante de banner porque se confunden con la interfaz. El dorado puede ocupar
+una zona amplia solo cuando se combina con negro y cumple una función compositiva;
+nunca como marco protagonista junto al terracota/rojo.
 
 ## Archivos actuales
 
@@ -48,8 +51,8 @@ banner-1-pc.jpg                       1600×600
 banner-1-movil.jpg                    1080×1080
 banner-curaduria-v2-pc.jpg            1600×600
 banner-curaduria-v2-movil.jpg         1080×1080
-banner-historia-v2-pc.jpg             1600×478
-banner-historia-v3-movil.jpg          1080×1854
+banner-historia-dorado-negro-v1-pc.jpg      1600×478
+banner-historia-dorado-negro-v1-movil.jpg   1080×1854
 ```
 
 El carrusel declara su pareja mediante `data-pc` y `data-movil`. Historia cambia
@@ -59,8 +62,8 @@ lenguaje visual, conservan archivos independientes para evitar acoplamientos.
 Historia exige dos direcciones de arte autónomas: en PC el motivo equilibra el texto
 desde la mitad derecha; en móvil se vuelve a renderizar desde el SVG oficial y se
 ubica completo en la zona visual superior. No se amplía, estira ni recorta el JPEG
-de PC. El micrograno controlado de la versión móvil evita bandas visibles en el
-gradiente terracota sin superar el límite de 300KB.
+de PC. El micrograno controlado evita bandas visibles en los degradados sin
+superar el límite de 300KB.
 
 La especificación completa de comunicación, proceso y control de calidad vive en
 `.kiro/steering/estandar-banners-magandhi.md`.
