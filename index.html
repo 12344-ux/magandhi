@@ -1027,8 +1027,6 @@
   var reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
   function arrancar(){ if(!reduce) timer = setInterval(sig, PAUSA); }
   function reiniciar(){ if(timer){ clearInterval(timer); } arrancar(); }
-  carrusel.addEventListener('mouseenter', function(){ if(timer) clearInterval(timer); });
-  carrusel.addEventListener('mouseleave', reiniciar);
 
   pintar(); arrancar();
 })();
