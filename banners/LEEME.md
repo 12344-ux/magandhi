@@ -49,12 +49,18 @@ banner-1-movil.jpg                    1080×1080
 banner-curaduria-v2-pc.jpg            1600×600
 banner-curaduria-v2-movil.jpg         1080×1080
 banner-historia-v2-pc.jpg             1600×478
-banner-historia-v2-movil.jpg          1080×1854
+banner-historia-v3-movil.jpg          1080×1854
 ```
 
 El carrusel declara su pareja mediante `data-pc` y `data-movil`. Historia cambia
 su pareja desde CSS en el mismo breakpoint de `760px`. Aunque dos piezas compartan
 lenguaje visual, conservan archivos independientes para evitar acoplamientos.
+
+Historia exige dos direcciones de arte autónomas: en PC el motivo equilibra el texto
+desde la mitad derecha; en móvil se vuelve a renderizar desde el SVG oficial y se
+ubica completo en la zona visual superior. No se amplía, estira ni recorta el JPEG
+de PC. El micrograno controlado de la versión móvil evita bandas visibles en el
+gradiente terracota sin superar el límite de 300KB.
 
 La especificación completa de comunicación, proceso y control de calidad vive en
 `.kiro/steering/estandar-banners-magandhi.md`.
