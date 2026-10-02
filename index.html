@@ -475,28 +475,36 @@
   .hg-historia{
     max-width:1200px;margin:70px auto 0;padding:0 24px;
   }
+  /* mismo patron que el hero: UN contenedor con imagen de fondo + velo + texto encima */
   .hg-historia__caja{
-    display:grid;grid-template-columns:1fr 1fr;gap:0;border-radius:20px;overflow:hidden;
-    background:var(--rojo);
+    position:relative;border-radius:20px;overflow:hidden;
+    background-size:cover;background-position:center;
+    aspect-ratio:1600/600;display:flex;align-items:center;
+    box-shadow:0 14px 40px rgba(17,17,17,.10);
   }
-  .hg-historia__txt{padding:clamp(26px,4vw,46px);display:flex;flex-direction:column;justify-content:center}
-  .hg-historia__tit{font-size:clamp(22px,2.6vw,30px);font-weight:700;line-height:1.15;margin:0;color:#fff;letter-spacing:-.3px}
-  .hg-historia__p{font-size:14.5px;color:rgba(255,255,255,.9);line-height:1.65;margin:16px 0 22px;max-width:46ch}
+  /* velo TERRACOTA (en vez del velo neutro del hero) para teñir el banner conservando la imagen */
+  .hg-historia__caja::before{
+    content:"";position:absolute;inset:0;
+    background:linear-gradient(90deg, rgba(166,51,46,.92) 0%, rgba(166,51,46,.72) 42%, rgba(166,51,46,.28) 72%, rgba(166,51,46,.05) 100%);
+  }
+  .hg-historia__cont{position:relative;z-index:1;max-width:52%;padding:0 clamp(24px,4vw,56px)}
+  .hg-historia__tit{font-size:clamp(26px,4.2vw,46px);font-weight:700;line-height:1.08;margin:0 0 10px;letter-spacing:-.5px;color:#fff}
+  .hg-historia__p{font-size:clamp(13px,1.5vw,16.5px);line-height:1.5;margin:0 0 22px;color:rgba(255,255,255,.92);max-width:40ch}
   .hg-historia__btn{
-    align-self:flex-start;display:inline-flex;align-items:center;gap:9px;
-    background:#fff;color:var(--rojo);border:1px solid #fff;
-    font-size:14px;font-weight:600;border-radius:12px;padding:11px 20px;text-decoration:none;
-    transition:background .15s,transform .08s;
+    display:inline-flex;align-items:center;gap:9px;
+    background:#fff;color:var(--rojo);
+    font-size:14.5px;font-weight:600;border-radius:12px;padding:13px 22px;text-decoration:none;
+    transition:background .18s,gap .18s,transform .08s;
   }
-  .hg-historia__btn:hover{background:var(--red-50);transform:translateY(-1px)}
-  .hg-historia__btn svg{width:16px;height:16px}
-  .hg-historia__img{
-    background-size:cover;background-position:center;min-height:300px;
-  }
+  .hg-historia__btn:hover{background:var(--red-50);gap:13px}
+  .hg-historia__btn svg{width:17px;height:17px}
   @media(max-width:760px){
     .hg-historia{padding:0 12px}
-    .hg-historia__caja{grid-template-columns:1fr}
-    .hg-historia__img{min-height:220px;order:-1}  /* imagen arriba en movil */
+    .hg-historia__caja{aspect-ratio:1/1;align-items:flex-end}
+    /* en movil: velo vertical para que el texto abajo contraste */
+    .hg-historia__caja::before{background:linear-gradient(180deg, rgba(166,51,46,.35) 0%, rgba(166,51,46,.72) 55%, rgba(166,51,46,.95) 100%)}
+    .hg-historia__cont{max-width:88%;padding-bottom:34px}
+    .hg-historia__tit{font-size:clamp(23px,7vw,30px)}
   }
 
   /* ---------- franja de GARANTIAS (4 iconos) ---------- */
@@ -888,8 +896,8 @@
      banner de relleno (misma que el hero crema) hasta tener una real.
      ============================================================ -->
 <section class="hg-historia" id="historia" aria-label="Nuestra forma de ver lo cotidiano">
-  <div class="hg-historia__caja">
-    <div class="hg-historia__txt">
+  <div class="hg-historia__caja" style="background-image:url('banners/banner-2-pc.jpg')">
+    <div class="hg-historia__cont">
       <h2 class="hg-historia__tit">Más que productos,<br>una forma de ver lo cotidiano.</h2>
       <p class="hg-historia__p">En MAGANDHI creemos que las pequeñas cosas también pueden hacerte
         sentir bien. Por eso seleccionamos productos que combinan calidad y un toque especial,
@@ -898,7 +906,6 @@
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
       </a>
     </div>
-    <div class="hg-historia__img" style="background-image:url('banners/banner-2-pc.jpg')" role="img" aria-label="MAGANDHI"></div>
   </div>
 </section>
 
