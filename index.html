@@ -144,13 +144,13 @@
      color de categoria ni halo de color. */
   .hg-foto{
     /* ALTURA FIJA: el panel mide IGUAL en todas las tarjetas (vitrina pareja). */
-    position:relative;flex:none;height:230px;
+    position:relative;flex:none;height:180px;
     background:var(--ml-panel);
     border-bottom:1px solid var(--ml-borde);
     display:flex;align-items:center;justify-content:center;overflow:hidden;
   }
   .hg-foto img{
-    position:relative;max-height:230px;max-width:78%;object-fit:contain;
+    position:relative;max-height:168px;max-width:90%;object-fit:contain;
     /* sombra suave: sobre blanco (estilo ML) la foto no necesita el drop-shadow
        fuerte que usaba sobre fondo de color. */
     filter:drop-shadow(0 10px 18px rgba(17,17,17,.10));
@@ -160,11 +160,11 @@
      blanco, en gris neutro tenue (antes era blanco translucido, invisible). */
   .hg-foto__ph{
     position:relative;z-index:1;display:flex;align-items:center;justify-content:center;
-    width:120px;height:120px;border-radius:24px;
+    width:96px;height:96px;border-radius:20px;
     background:#F4F2F0;border:1px solid var(--ml-borde);
     color:var(--gris-cl);
   }
-  .hg-foto__ph svg{width:52px;height:52px;opacity:.95}
+  .hg-foto__ph svg{width:44px;height:44px;opacity:.95}
 
   .hg-medalla{
     position:absolute;top:14px;left:14px;z-index:2;
@@ -195,22 +195,27 @@
   .hg-sello-abajo .hg-medalla__star{width:10px;height:10px}
 
   /* lado del texto */
-  .hg-cont{padding:22px 24px;display:flex;flex-direction:column;gap:2px;flex:1}
+  .hg-cont{padding:16px 18px;display:flex;flex-direction:column;gap:2px;flex:1}
   .hg-kicker{
-    font-size:10.5px;font-weight:600;letter-spacing:.14em;text-transform:uppercase;
-    color:var(--acento);margin-bottom:9px;display:inline-flex;align-items:center;gap:7px;
+    font-size:10px;font-weight:600;letter-spacing:.14em;text-transform:uppercase;
+    color:var(--acento);margin-bottom:7px;display:inline-flex;align-items:center;gap:7px;
   }
   .hg-kicker svg{width:14px;height:14px}
-  .hg-nom{font-size:clamp(17px,2vw,21px);font-weight:600;line-height:1.2;margin:0 0 3px;letter-spacing:-.3px}
-  .hg-meta{font-size:12.5px;color:var(--gris-cl);margin:0 0 12px}
-  .hg-hook{font-size:13.5px;color:#3a3a3a;margin:0 0 16px}
+  .hg-nom{font-size:clamp(15px,1.4vw,18px);font-weight:600;line-height:1.25;margin:0 0 3px;letter-spacing:-.3px}
+  .hg-meta{font-size:12px;color:var(--gris-cl);margin:0 0 10px}
+  /* HOOK (descripcion larga): ya NO se muestra en la vitrina del home (vive en la
+     pagina de producto). Se oculta con CSS para no tocar el JS que lo renderiza. */
+  .hg-hook{display:none;font-size:13.5px;color:#3a3a3a;margin:0 0 16px}
   .hg-fila{display:flex;align-items:center;gap:14px;flex-wrap:wrap;margin-top:auto}
   .hg-precio b{font-size:19px;font-weight:600;color:var(--negro)}
   .hg-precio small{font-size:11.5px;color:var(--gris-cl);margin-left:5px}
   /* boton "Ver producto": ROJO de marca (ya no el color de categoria).
      "Nuestra marca es roja". */
+  /* boton "Ver producto": OCULTO en la vitrina (la tarjeta entera ya es un enlace
+     <a>, el boton rojo repetido metia demasiado "ruido rojo"). Se oculta con CSS
+     para no tocar el JS; el precio (.hg-precio) si se queda. */
   .hg-ir{
-    display:inline-flex;align-items:center;gap:8px;
+    display:none;align-items:center;gap:8px;
     background:var(--rojo);color:#fff;font-size:13.5px;font-weight:600;
     border-radius:11px;padding:10px 18px;transition:background .18s,gap .18s;
   }
