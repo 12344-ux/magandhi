@@ -66,6 +66,13 @@
     --acento-cl:#D9AE6E;
     --acento-sombra:rgba(194,138,58,.16);
 
+    /* ---- Verde de confianza (uso puntual) ----
+       El verde de "Compra verificada". Señal concreta de confianza/verificacion.
+       Tambien tiñe el contorno del boton "Preguntar por WhatsApp" (canal de
+       atencion directa). Nunca como color decorativo general. */
+    --verde:#1B7A46;
+    --verde-sombra:rgba(27,122,70,.14);
+
     /* ---- Neutros estilo Mercado Libre (galeria en blanco) ---- */
     --ml-borde:rgba(17,17,17,.09);
     --ml-sombra:0 1px 3px rgba(17,17,17,.06);
@@ -117,6 +124,35 @@
     .mg-volver span{display:none}
     .mg-volver{padding:9px 12px}
   }
+
+  /* ---------- boton VOLVER flotante (FAB) ----------
+     El boton del header solo sirve si estas arriba; al bajar (p.ej. a reseñas)
+     tocaba subir toda la pagina para volver a la tienda. Este boton flotante
+     resuelve eso: aparece fijo en pantalla al hacer scroll hacia abajo y se
+     oculta cuando estas arriba (alli ya esta el del header, no hace falta
+     duplicarlo). Pildora roja de marca, abajo-izquierda, sobre todo el contenido.
+     En PC muestra "Volver a la tienda"; en movil queda circular (solo la flecha). */
+  .mg-volver-fab{
+    position:fixed;left:20px;bottom:22px;z-index:60;
+    display:inline-flex;align-items:center;gap:9px;
+    font-size:13.5px;font-weight:600;color:#fff;text-decoration:none;
+    background:var(--rojo);border:0;border-radius:999px;padding:12px 18px;
+    box-shadow:0 8px 22px rgba(17,17,17,.22);
+    /* oculto por defecto: baja/escondido y sin interaccion; el JS lo revela al
+       bajar. transicion suave de aparicion. */
+    opacity:0;transform:translateY(14px);pointer-events:none;
+    transition:opacity .22s ease,transform .22s ease,background .15s;
+  }
+  .mg-volver-fab[data-visible="true"]{opacity:1;transform:none;pointer-events:auto}
+  .mg-volver-fab:hover{background:var(--rojo-osc)}
+  .mg-volver-fab svg{width:17px;height:17px;flex:none}
+  @media(max-width:720px){
+    /* en movil: circular (solo flecha) y mas arriba, para no chocar con gestos
+       del borde inferior del telefono. */
+    .mg-volver-fab{left:16px;bottom:76px;padding:13px;gap:0}
+    .mg-volver-fab span{display:none}
+  }
+
   .mg-word{font-weight:600;font-size:20px;letter-spacing:.16em;color:var(--negro);line-height:1}
   .mg-word i{color:var(--terracota);font-style:normal}
   .mg-nav{display:flex;gap:24px;font-size:14px;font-weight:500}
@@ -276,8 +312,11 @@
     background:var(--gris-cl);color:#fff;cursor:not-allowed;opacity:.75;
   }
   .mg-btn--primario:disabled:hover{background:var(--gris-cl);transform:none}
-  .mg-btn--wa{background:#fff;color:var(--tinta);border:1px solid var(--linea)}
-  .mg-btn--wa:hover{border-color:var(--rojo);color:var(--rojo)}
+  /* "Preguntar por WhatsApp": contorno VERDE de confianza (el mismo de "Compra
+     verificada"). WhatsApp es el canal de atencion directa; el verde lo distingue
+     del rojo de "Comprar" sin competir con el. */
+  .mg-btn--wa{background:#fff;color:var(--verde);border:1px solid var(--verde)}
+  .mg-btn--wa:hover{background:var(--verde-sombra);border-color:var(--verde);color:var(--verde)}
   .mg-btn svg{width:17px;height:17px;vertical-align:-3px;margin-right:7px}
 
   .mg-entrega{font-size:13px;color:var(--gris);display:flex;align-items:center;gap:8px}
@@ -315,7 +354,7 @@
   .mg-avatar{width:38px;height:38px;border-radius:50%;background:var(--acento-sombra);color:var(--acento);
     display:flex;align-items:center;justify-content:center;font-weight:600;font-size:15px}
   .mg-resena__nom{font-size:14px;font-weight:600;line-height:1.1}
-  .mg-resena__ver{font-size:11.5px;color:#1B7A46;display:flex;align-items:center;gap:4px}
+  .mg-resena__ver{font-size:11.5px;color:var(--verde);display:flex;align-items:center;gap:4px}
   .mg-resena__ver svg{width:13px;height:13px}
   .mg-resena .s{display:inline-flex;color:var(--acento)}
   .mg-resena .s svg{width:14px;height:14px}
@@ -328,10 +367,13 @@
   .mg-vertodas a{
     display:inline-flex;align-items:center;gap:8px;
     font-size:14px;font-weight:600;color:var(--tinta);text-decoration:none;
-    background:#fff;border:1px solid var(--linea);border-radius:12px;padding:12px 24px;
-    transition:border-color .15s,color .15s,transform .08s;
+    /* borde mas definido (antes var(--linea) al 10% se perdia sobre el hueso):
+       gris medio visible + sombra sutil para que el boton se note e invite. */
+    background:#fff;border:1px solid rgba(17,17,17,.22);border-radius:12px;padding:12px 24px;
+    box-shadow:0 1px 3px rgba(17,17,17,.06);
+    transition:border-color .15s,color .15s,box-shadow .15s,transform .08s;
   }
-  .mg-vertodas a:hover{border-color:var(--acento);color:var(--acento);transform:translateY(-1px)}
+  .mg-vertodas a:hover{border-color:var(--rojo);color:var(--rojo);box-shadow:0 6px 16px rgba(17,17,17,.10);transform:translateY(-1px)}
   .mg-vertodas svg{width:16px;height:16px}
 
   /* ---------- footer ---------- */
@@ -492,6 +534,14 @@
 </style>
 </head>
 <body>
+
+<!-- boton VOLVER flotante: aparece al hacer scroll hacia abajo para que siempre
+     se pueda regresar a la tienda sin subir hasta el header. Lo muestra/oculta el
+     script del final (data-visible). Misma destino que el boton del header. -->
+<a class="mg-volver-fab" id="mg-volver-fab" href="../index.html" aria-label="Volver a la tienda" aria-hidden="true" tabindex="-1">
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
+  <span>Volver a la tienda</span>
+</a>
 
 <!-- barra de confianza -->
 <div class="mg-barra">
@@ -1593,6 +1643,29 @@
     document.addEventListener('keydown', function(e){
       if(e.key === 'Escape' && modal.getAttribute('aria-hidden') === 'false') ocultar();
     });
+  })();
+</script>
+
+<script>
+  // Boton VOLVER flotante: visible solo cuando se bajo lo suficiente para que el
+  // boton del header ya no este a la vista. Asi se puede regresar a la tienda
+  // desde cualquier punto (p.ej. abajo en reseñas) sin subir toda la pagina.
+  (function(){
+    var fab = document.getElementById('mg-volver-fab');
+    if(!fab) return;
+    var UMBRAL = 400; // px de scroll a partir de los cuales aparece
+    function actualizar(){
+      var y = window.scrollY || document.documentElement.scrollTop || 0;
+      var mostrar = y > UMBRAL;
+      fab.setAttribute('data-visible', mostrar ? 'true' : 'false');
+      // accesibilidad: cuando esta oculto, fuera del orden de tabulacion/lectura.
+      fab.setAttribute('aria-hidden', mostrar ? 'false' : 'true');
+      fab.tabIndex = mostrar ? 0 : -1;
+    }
+    // passive: no bloquea el scroll. Se evalua al cargar y al hacer scroll/resize.
+    window.addEventListener('scroll', actualizar, { passive: true });
+    window.addEventListener('resize', actualizar, { passive: true });
+    actualizar();
   })();
 </script>
 
