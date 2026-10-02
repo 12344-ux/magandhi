@@ -277,15 +277,22 @@
          - Fila 3: tarjetas 4 y 5 lado a lado (verticales normales, iguales a 1 y 2).
        Se resuelve SOLO con CSS :nth-child sobre .hg-tarjeta (el JS de render no
        se toca); las tarjetas comparten clase y se pintan en orden. */
+    /* MEJORA 1: align-items:stretch (en vez de start) para que las tarjetas de
+       una MISMA fila igualen su altura a la mas alta de esa fila (catalogo
+       parejo). La central (nth-child 3) va sola en su fila y conserva su
+       min-height:150px, asi que el stretch no la afecta. */
     .hg-grid{
       display:grid;grid-template-columns:repeat(2,1fr);
       column-gap:8px;row-gap:10px;
-      align-items:start;
+      align-items:stretch;
     }
 
-    /* por defecto (tarjetas 1,2,4,5 verticales): cada una 1 columna. */
+    /* por defecto (tarjetas 1,2,4,5 verticales): cada una 1 columna. Con el grid
+       en stretch, height:100% hace que la tarjeta llene la celda estirada (misma
+       altura que su compañera de fila); .hg-cont tiene flex:1 y empuja el precio
+       abajo, de modo que al estirarse el contenido no queda "flotando". */
     .hg-tarjeta{
-      flex-direction:column;height:auto;border-radius:14px;
+      flex-direction:column;height:100%;border-radius:14px;
       grid-column:span 1;
     }
     /* 3a tarjeta (centro): ocupa las 2 columnas y se vuelve HORIZONTAL
@@ -305,9 +312,26 @@
     }
     /* texto de la central: ocupa el resto y se centra verticalmente respecto
        a la foto de al lado. Tipografia sobria, coherente con el resto. */
+    /* MEJORA 2: distribucion propia para el formato HORIZONTAL. En vez de
+       centrar todo (justify-content:center = contenido amontonado al medio),
+       el contenido fluye de ARRIBA hacia abajo (flex-start): arriba van juntos
+       categoria (.hg-kicker) + nombre (.hg-nom), debajo la presentacion
+       (.hg-meta). El bloque de compra se ANCLA ABAJO como pie de la ficha
+       (ver .hg-fila mas abajo con margin-top:auto), usando todo el alto de la
+       foto de al lado. Mismos elementos y mismo orden, solo redistribuidos. */
     .hg-tarjeta:nth-child(3) .hg-cont{
-      flex:1;justify-content:center;padding:14px 16px;
+      flex:1;justify-content:flex-start;padding:14px 16px;
     }
+    /* precio + chip "Agotado"/urgencia + sello anclados ABAJO: margin-top:auto
+       en el PRIMER elemento del bloque de compra empuja ese bloque (chip +
+       .hg-fila + sello) al fondo de la columna, dejando nombre/meta arriba y el
+       precio como pie, con el chip "Agotado" junto al precio. En el orden del
+       DOM el chip va antes que .hg-fila; si el producto tiene chip, su
+       margin-top:auto es el que empuja (y el de .hg-fila ya no encuentra hueco
+       libre). Si NO hay chip, empuja .hg-fila. Asi funciona con o sin chip. */
+    .hg-tarjeta:nth-child(3) .hg-urgencia,
+    .hg-tarjeta:nth-child(3) .hg-agotado,
+    .hg-tarjeta:nth-child(3) .hg-fila{margin-top:auto}
     .hg-tarjeta:nth-child(3) .hg-nom{font-size:16.5px}
     .hg-tarjeta:nth-child(3) .hg-meta{font-size:12px}
     .hg-foto__ph{width:84px;height:84px;border-radius:18px}
