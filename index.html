@@ -21,7 +21,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="marca.css?v=3">
+<link rel="stylesheet" href="marca.css?v=4">
 
 <!--
   MAGANDHI · portada / home de la tienda.
@@ -52,10 +52,15 @@
 -->
 <style>
   *{box-sizing:border-box}
+  /* Un solo eje para TODOS los modulos del home: banner, catalogo, historia,
+     garantias y footer. Evita que el banner se vea mas ancho que los productos. */
+  :root{--ancho-tienda:1200px}
   /* La paleta vive en marca.css (fuente unica). Aqui solo lo especifico del home. */
   html,body{margin:0;padding:0}
   body{
-    background:var(--hueso);color:var(--tinta);
+    /* gris calido tipo Mercado Libre: crea contraste real con las tarjetas
+       blancas sin abandonar la temperatura de MAGANDHI. */
+    background:var(--fondo-tienda);color:var(--tinta);
     font-family:'Poppins',system-ui,-apple-system,'Segoe UI',Roboto,sans-serif;
     line-height:1.65;-webkit-font-smoothing:antialiased;
   }
@@ -67,7 +72,7 @@
      equilibra visualmente el logo sin inventar funciones que la tienda aun no
      necesita. */
   .hg-head{
-    max-width:1200px;margin:0 auto;padding:20px 24px 8px;
+    max-width:var(--ancho-tienda);margin:0 auto;padding:20px 24px 8px;
     display:grid;grid-template-columns:54px 1fr 54px;align-items:center;
   }
   .hg-head__mark{display:flex;align-items:center;justify-content:flex-start}
@@ -95,18 +100,20 @@
   }
   .hg-intro h1 em{font-style:normal;color:var(--rojo)}
 
-  /* ---------- vitrina: grid de productos ---------- */
+  /* ---------- vitrina: cinco productos por fila en PC ----------
+     El catálogo comparte exactamente el mismo ancho del banner. Cinco columnas
+     compactas recuperan la proporción de la referencia y evitan que tres tarjetas
+     enormes parezcan un módulo más estrecho/desconectado. */
   .hg-vitrina{
-    max-width:1100px;margin:34px auto 0;padding:0 24px;
+    max-width:var(--ancho-tienda);margin:34px auto 0;padding:0 24px;
   }
   .hg-grid{
-    display:grid;grid-template-columns:repeat(3,1fr);gap:22px;
+    display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:14px;
   }
-  /* TODAS las tarjetas del mismo tamano (incluida la estrella): quedan 3 arriba
-     y 2 abajo, en orden. El producto estrella se distingue por su estrella y su
-     color, no por el tamano. */
-  @media(max-width:980px){
-    .hg-grid{grid-template-columns:repeat(2,1fr)}
+  /* Tableta / portátil estrecho: tres columnas. En móvil, la regla específica
+     de más abajo conserva el masonry real de dos columnas. */
+  @media(max-width:1100px){
+    .hg-grid{grid-template-columns:repeat(3,minmax(0,1fr));gap:18px}
   }
 
   /* ---------- tarjeta de producto (estilo Mercado Libre) ----------
@@ -127,20 +134,20 @@
     border-color:var(--ml-borde-hover);
   }
   .hg-tarjeta:hover .hg-foto img{transform:scale(1.045)}
-  .hg-tarjeta:hover .hg-ir{gap:12px}
+  .hg-tarjeta:hover .hg-ir{gap:8px}
 
   /* panel donde se exhibe el producto: BLANCO (estilo Mercado Libre), con una
      linea tenue abajo que lo separa de la zona de texto. Ya no hay fondo de
      color de categoria ni halo de color. */
   .hg-foto{
-    /* ALTURA FIJA: el panel mide IGUAL en todas las tarjetas (vitrina pareja). */
-    position:relative;flex:none;height:230px;
+    /* Compacta en PC para que cinco productos respiren en una sola fila. */
+    position:relative;flex:none;height:190px;
     background:var(--ml-panel);
     border-bottom:1px solid var(--ml-borde);
     display:flex;align-items:center;justify-content:center;overflow:hidden;
   }
   .hg-foto img{
-    position:relative;max-height:230px;max-width:78%;object-fit:contain;
+    position:relative;max-height:180px;max-width:82%;object-fit:contain;
     /* sombra suave: sobre blanco (estilo ML) la foto no necesita el drop-shadow
        fuerte que usaba sobre fondo de color. */
     filter:drop-shadow(0 10px 18px rgba(17,17,17,.10));
@@ -150,21 +157,21 @@
      blanco, en gris neutro tenue (antes era blanco translucido, invisible). */
   .hg-foto__ph{
     position:relative;z-index:1;display:flex;align-items:center;justify-content:center;
-    width:120px;height:120px;border-radius:24px;
+    width:100px;height:100px;border-radius:20px;
     background:#F4F2F0;border:1px solid var(--ml-borde);
     color:var(--gris-cl);
   }
-  .hg-foto__ph svg{width:52px;height:52px;opacity:.95}
+  .hg-foto__ph svg{width:44px;height:44px;opacity:.95}
 
   .hg-medalla{
-    position:absolute;top:14px;left:14px;z-index:2;
-    display:inline-flex;align-items:center;gap:7px;
+    position:absolute;top:10px;left:10px;z-index:2;
+    display:inline-flex;align-items:center;gap:5px;
     background:#fff;color:var(--acento);
-    font-size:10.5px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;
-    border-radius:999px;padding:6px 12px;
+    font-size:8.5px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;
+    border-radius:999px;padding:5px 9px;
     border:1px solid var(--ml-borde);box-shadow:0 2px 8px rgba(17,17,17,.08);
   }
-  .hg-medalla svg{width:13px;height:13px}
+  .hg-medalla svg{width:11px;height:11px}
 
   /* estrella DENTRO del sello (producto destacado). Opcional: solo aparece si el
      producto la lleva (en Campanas sera un switch). Va rellena en el color de
@@ -184,28 +191,32 @@
   .hg-sello-abajo svg{width:11px;height:11px;flex:none}
   .hg-sello-abajo .hg-medalla__star{width:10px;height:10px}
 
-  /* lado del texto */
-  .hg-cont{padding:22px 24px;display:flex;flex-direction:column;gap:2px;flex:1}
+  /* lado del texto: densidad compacta para cinco columnas sin perder jerarquia */
+  .hg-cont{padding:16px 14px 18px;display:flex;flex-direction:column;gap:2px;flex:1;min-width:0}
   .hg-kicker{
-    font-size:10.5px;font-weight:600;letter-spacing:.14em;text-transform:uppercase;
-    color:var(--acento);margin-bottom:9px;display:inline-flex;align-items:center;gap:7px;
+    font-size:9px;font-weight:600;letter-spacing:.11em;text-transform:uppercase;
+    color:var(--acento);margin-bottom:8px;display:inline-flex;align-items:center;gap:6px;
   }
-  .hg-kicker svg{width:14px;height:14px}
-  .hg-nom{font-size:clamp(17px,2vw,21px);font-weight:600;line-height:1.2;margin:0 0 3px;letter-spacing:-.3px}
-  .hg-meta{font-size:12.5px;color:var(--gris-cl);margin:0 0 12px}
-  .hg-hook{font-size:13.5px;color:#3a3a3a;margin:0 0 16px}
-  .hg-fila{display:flex;align-items:center;gap:14px;flex-wrap:wrap;margin-top:auto}
-  .hg-precio b{font-size:19px;font-weight:600;color:var(--negro)}
-  .hg-precio small{font-size:11.5px;color:var(--gris-cl);margin-left:5px}
+  .hg-kicker svg{width:12px;height:12px}
+  .hg-nom{font-size:16px;font-weight:600;line-height:1.23;margin:0 0 4px;letter-spacing:-.2px}
+  .hg-meta{font-size:11.5px;color:var(--gris-cl);margin:0 0 10px}
+  .hg-hook{
+    font-size:12.5px;line-height:1.5;color:#3a3a3a;margin:0 0 14px;
+    display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:3;overflow:hidden;
+  }
+  .hg-fila{display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:nowrap;margin-top:auto}
+  .hg-precio{white-space:nowrap}
+  .hg-precio b{font-size:16px;font-weight:600;color:var(--negro)}
+  .hg-precio small{font-size:9px;color:var(--gris-cl);margin-left:2px}
   /* boton "Ver producto": ROJO de marca (ya no el color de categoria).
      "Nuestra marca es roja". */
   .hg-ir{
-    display:inline-flex;align-items:center;gap:8px;
-    background:var(--rojo);color:#fff;font-size:13.5px;font-weight:600;
-    border-radius:11px;padding:10px 18px;transition:background .18s,gap .18s;
+    display:inline-flex;align-items:center;gap:6px;white-space:nowrap;
+    background:var(--rojo);color:#fff;font-size:11.5px;font-weight:600;
+    border-radius:10px;padding:9px 9px;transition:background .18s,gap .18s;
   }
   .hg-ir:hover{background:var(--rojo-osc)}
-  .hg-ir svg{width:16px;height:16px}
+  .hg-ir svg{width:13px;height:13px}
 
   /* ---------- aviso de urgencia (opcional, por producto) ----------
      "Solo X disponibles": aviso honesto que se muestra cuando quedan pocas
@@ -248,8 +259,9 @@
     /* ESCAPARATE 2 COLUMNAS (exclusivo movil): tarjetas verticales compactas, de
        a DOS por fila, que se "cortan" abajo = sensacion de "sigue bajando". En
        tono boutique MAGANDHI (sin ofertas ni urgencia). Cada tarjeta muestra solo
-       lo esencial para no saturar: categoria (con su color) + nombre + sello. El
-       hook, el precio y el boton NO se muestran aqui (se ven al entrar al producto). */
+       lo esencial para no saturar: categoria en ámbar + nombre + sello. El
+       hook y el boton NO se muestran aqui (el precio sí, porque es información
+       de compra y el móvil es el tráfico real). */
     .hg-vitrina{padding:0 12px}
     /* gap pequeno = tarjetas "en escala", con respiro minimo (aire boutique). */
     /* align-items:start = cada tarjeta mide segun SU contenido (no se estira a
@@ -299,6 +311,7 @@
     /* el precio en movil: compacto, sin el boton "Ver producto" (la tarjeta
        entera ya es un enlace). Se muestra solo el precio. */
     .hg-fila{display:flex;justify-content:flex-start;margin-top:2px}
+    .hg-precio b{font-size:19px}
     .hg-fila .hg-ir{display:none}
     .hg-urgencia,
     .hg-agotado{display:inline-flex}
@@ -319,7 +332,7 @@
      Banner ancho con imagen de fondo (dos recortes: PC 1600x600 ~8:3, movil
      1080x1080 1:1) y el TEXTO en HTML encima (editable, nitido, con tildes OK).
      El carrusel pasa de banner con flechas + puntos. */
-  .hg-hero{max-width:1200px;margin:22px auto 0;padding:0 24px}
+  .hg-hero{max-width:var(--ancho-tienda);margin:22px auto 0;padding:0 24px}
   .hg-carrusel{
     position:relative;border-radius:20px;overflow:hidden;
     box-shadow:0 14px 40px rgba(17,17,17,.10);
@@ -408,7 +421,7 @@
   }
 
   /* ---------- separador de seccion (titulo centrado con filetes) ---------- */
-  .hg-sep{max-width:1100px;margin:46px auto 6px;padding:0 24px;text-align:center}
+  .hg-sep{max-width:var(--ancho-tienda);margin:46px auto 6px;padding:0 24px;text-align:center}
   .hg-sep__k{
     display:inline-flex;align-items:center;gap:16px;
     font-size:12.5px;font-weight:600;letter-spacing:.22em;text-transform:uppercase;color:var(--acento);
@@ -418,7 +431,7 @@
 
   /* ---------- bloque HISTORIA ("mas que productos...") ---------- */
   .hg-historia{
-    max-width:1100px;margin:50px auto 0;padding:0 24px;
+    max-width:var(--ancho-tienda);margin:50px auto 0;padding:0 24px;
   }
   .hg-historia__caja{
     display:grid;grid-template-columns:1fr 1fr;gap:0;border-radius:20px;overflow:hidden;
@@ -446,7 +459,7 @@
 
   /* ---------- franja de GARANTIAS (4 iconos) ---------- */
   .hg-garantias{
-    max-width:1100px;margin:46px auto 0;padding:26px 24px;
+    max-width:var(--ancho-tienda);margin:46px auto 0;padding:26px 24px;
     display:grid;grid-template-columns:repeat(4,1fr);gap:20px;
     border-top:1px solid var(--ml-borde);border-bottom:1px solid var(--ml-borde);
   }
@@ -470,7 +483,7 @@
   /* ---------- FOOTER completo ---------- */
   .hg-footer{margin-top:52px;background:#fff;border-top:1px solid var(--ml-borde)}
   .hg-footer__in{
-    max-width:1100px;margin:0 auto;padding:30px 24px;
+    max-width:var(--ancho-tienda);margin:0 auto;padding:30px 24px;
     display:flex;align-items:center;justify-content:space-between;gap:20px 28px;flex-wrap:wrap;
   }
   .hg-footer__marca{display:flex;align-items:center;gap:11px}
@@ -492,7 +505,7 @@
     border-top:1px solid var(--ml-borde);
   }
   .hg-footer__legal-in{
-    max-width:1100px;margin:0 auto;padding:14px 24px;
+    max-width:var(--ancho-tienda);margin:0 auto;padding:14px 24px;
     display:flex;align-items:center;justify-content:space-between;gap:12px 20px;flex-wrap:wrap;
     font-size:12px;color:var(--gris-cl);
   }

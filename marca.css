@@ -20,8 +20,11 @@
 
   /* ---- Neutros ---- */
   --black-900:#111111; /* texto principal, footer */
-  --cream-50:#FAF6F1;  /* FONDO GENERAL (reemplaza blanco puro) */
-  --cream-100:#F2ECE4; /* fondo de tarjetas sobre el fondo general */
+  --cream-50:#FAF6F1;  /* crema de marca (fondos editoriales / producto) */
+  --cream-100:#F2ECE4; /* fondo de tarjetas editoriales */
+  --canvas-100:#ECEAE7;/* lienzo general de la TIENDA: gris cálido estilo ML;
+                          separa con claridad las tarjetas blancas sin enfriar
+                          la paleta MAGANDHI */
   --gray-500:#6B6660;  /* texto secundario, descripciones */
 
   /* ---- Acento ÁMBAR de marca (FIJO, igual para toda la tienda) ----
@@ -58,9 +61,10 @@
   --rojo-prof:var(--red-900);
   --negro:var(--black-900);
   --tinta:#1C1C1C;
-  --blanco:var(--cream-50);    /* "blanco" de la marca = crema */
-  --tarjeta:var(--cream-100);  /* tarjetas sobre el fondo general */
+  --blanco:var(--cream-50);    /* "blanco" editorial de la marca = crema */
+  --tarjeta:var(--cream-100);  /* tarjetas editoriales */
   --hueso:var(--cream-50);
+  --fondo-tienda:var(--canvas-100); /* lienzo gris cálido del home/catálogo */
   --gris:var(--gray-500);
   --gris-cl:#9A938B;
   --linea:rgba(17,17,17,.10);
