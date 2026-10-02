@@ -42,38 +42,54 @@ El carrusel principal vive autocontenido en `index.html`:
 
 Las imágenes actuales son fondos de presentación, no campañas fotográficas definitivas. Lo que sí está aprobado y debe conservarse es el **sistema**: proporciones, riel, jerarquía, zona de texto, contraste, sobriedad y adaptación independiente a móvil.
 
-### Medidas verificadas en producción
+### Perfiles verificados en producción
 
-| Contexto | Archivo fuente | Proporción | Caja visible comprobada |
-|---|---:|---:|---:|
-| PC | `1600 × 600 px` | `8:3` | a 1280px de viewport: `1152 × 432 px` |
-| Móvil | `1080 × 1080 px` | `1:1` | a 390px de viewport: `351 × 351 px` |
+Cada espacio tiene un perfil propio. **Estas medidas y proporciones son contratos, no recomendaciones.**
 
-La caja del hero tiene `max-width:1200px`, padding lateral de `24px` en PC y `12px` en móvil. El carrusel conserva radio de `20px`, recorte interno (`overflow:hidden`) y sombra sutil. No se cambia esta geometría para acomodar una idea: **la idea se compone para esta geometría**.
+| Espacio | Asset PC | Caja PC comprobada a 1280px | Asset móvil | Caja móvil comprobada a 390px |
+|---|---:|---:|---:|---:|
+| Carrusel hero (banners 1 y 2) | `1600 × 600` · `8:3` | `1152 × 432` | `1080 × 1080` · `1:1` | `351 × 351` |
+| Banner Historia (banner 3) | `1600 × 478` · ≈`3,35:1` | `1152 × 344` | `1080 × 1854` · ≈`0,583:1` | `351 × 602` |
+
+El riel común tiene `max-width:1200px`, padding lateral de `24px` en PC y `12px` en móvil. Los contenedores conservan radio de `20px`, recorte interno (`overflow:hidden`) y sombra sutil.
+
+### Regla dura de geometría
+
+- Nunca cambiar el formato, la proporción, la altura CSS ni el espacio ocupado para hacer caber una campaña.
+- Primero se identifica **qué espacio** se va a reemplazar; después se diseña dentro del perfil exacto de ese espacio.
+- PC y móvil siempre son dos construcciones del mismo concepto, pero no necesariamente comparten proporción entre espacios.
+- El móvil de Historia es vertical y alargado; **nunca es cuadrado**.
+- La idea se adapta al marco. El marco no se adapta a la idea.
 
 ## 3. Entregable obligatorio por cada concepto
 
-Cada banner nuevo requiere una pareja diseñada como una misma campaña:
+Cada campaña requiere una pareja diseñada expresamente para el espacio solicitado:
 
-1. `banner-{id}-pc.jpg` o `.webp`: **1600 × 600 px**, relación `8:3`.
-2. `banner-{id}-movil.jpg` o `.webp`: **1080 × 1080 px**, relación `1:1`.
+### Si reemplaza un slide del carrusel hero
+
+1. `banner-{id}-pc.jpg` o `.webp`: **1600 × 600 px**.
+2. `banner-{id}-movil.jpg` o `.webp`: **1080 × 1080 px**.
+
+### Si reemplaza el banner Historia
+
+1. `banner-historia-{id}-pc.jpg` o `.webp`: **1600 × 478 px**.
+2. `banner-historia-{id}-movil.jpg` o `.webp`: **1080 × 1854 px**.
 
 Reglas duras:
 
 - Nunca entregar una sola imagen para ambos formatos.
-- Nunca fabricar móvil con un recorte central automático del PC.
+- Nunca fabricar móvil con un recorte automático del PC.
+- Nunca aplicar las medidas del hero al banner Historia ni viceversa.
 - Nunca superar **2000 px en ninguna dimensión**.
 - Objetivo de peso: **menos de 300 KB por archivo** sin degradación visible.
 - Usar `sRGB`; evitar perfiles de color exóticos.
-- Preferir nombres semánticos y versionados para campañas reales, por ejemplo:
-  - `banner-curaduria-v1-pc.webp`
-  - `banner-curaduria-v1-movil.webp`
-- No sobrescribir un nombre publicado si puede quedar en caché. Subir versión (`v2`) y cambiar las rutas en HTML.
-- No reutilizar un asset del carrusel en otra sección. Aunque dos piezas compartan exactamente el mismo lenguaje visual, cada una conserva su propia pareja de archivos. Historia ya usa assets terracota independientes para que una campaña futura no cambie dos zonas por accidente.
+- Usar nombres semánticos y versionados, por ejemplo `banner-color-compras-v1-pc.webp` y `banner-color-compras-v1-movil.webp`.
+- No sobrescribir un nombre publicado si puede quedar en caché. Subir versión (`v2`) y cambiar las rutas en HTML/CSS.
+- No reutilizar un asset entre espacios. Aunque dos piezas compartan lenguaje visual, cada una conserva su propia pareja de archivos.
 
 ## 4. Retícula y zonas seguras
 
-### PC — composición horizontal 1600 × 600
+### Carrusel hero · PC — 1600 × 600
 
 - El contenido HTML ocupa como máximo el **52% izquierdo**.
 - Reservar visualmente el **55% izquierdo** como zona tranquila para sello, título, apoyo y CTA.
@@ -83,7 +99,7 @@ Reglas duras:
 - El fondo detrás del texto puede tener textura, pero no detalle de alto contraste que rompa la lectura.
 - El recorrido visual ideal es izquierda → derecha: primero mensaje, después evidencia visual.
 
-### Móvil — composición cuadrada 1080 × 1080
+### Carrusel hero · móvil — 1080 × 1080
 
 - El contenido HTML se apoya abajo y puede ocupar hasta el **88% del ancho**.
 - Reservar el tercio inferior, especialmente la esquina inferior izquierda, como zona tranquila.
@@ -91,6 +107,21 @@ Reglas duras:
 - El sujeto puede crecer respecto a PC; no debe quedar diminuto por conservar el encuadre horizontal.
 - Verificar que el sujeto no choque con sello, título, descripción, CTA ni puntos del carrusel.
 - No asumir que “responsive” significa cortar: es una **segunda dirección de arte** del mismo concepto.
+
+### Historia · PC — 1600 × 478
+
+- El banner completo es una sola superficie visual; no se divide en “imagen de un lado + fondo de página del otro”.
+- La mitad izquierda aloja el texto y la derecha el motivo protagonista.
+- Mantener el motivo tono sobre tono, grande y parcialmente recortado por el borde.
+- El texto, el motivo y el CTA deben sentirse dentro de una misma pieza continua.
+
+### Historia · móvil — 1080 × 1854
+
+- Es un lienzo vertical alargado, no un cuadrado del hero.
+- El primer tramo reserva aire para el motivo visual; el texto ocupa el tramo inferior sin cambiar la altura existente de la tarjeta.
+- La superficie cromática continúa detrás de motivo, título, párrafo y CTA: no aparece un panel arena o crema debajo.
+- El motivo se recompone para el formato vertical y permanece hacia la derecha, sin invadir la lectura.
+- Conservar la estructura actual que produce aproximadamente `351 × 602px` a 390px de viewport.
 
 ## 5. Dirección visual
 
@@ -120,8 +151,14 @@ Tokens estructurales actuales:
 
 Reglas:
 
-- El terracota, crema y negro construyen la marca.
-- El ámbar es un **detalle pequeño**: sello, botón o filo. Nunca un marco o superficie grande junto al terracota; esa combinación protagonista se percibe como comida rápida y rompe el carácter boutique.
+- El fondo real de la página es arena `#EFE7DD`. Un banner **nunca puede confundirse con ese fondo**.
+- Superficies base aprobadas para banners:
+  - terracota: gradiente de `#79211F` a `#A6332E`;
+  - negro profundo: gradiente de `#111111` a `#1D1D1D`.
+- Crema `#FAF6F1`, tarjeta `#F2ECE4` y arena `#EFE7DD` no se usan como superficie dominante de banner. Pueden aparecer dentro de una fotografía o como detalle, pero el perímetro de la pieza debe distinguirse inequívocamente de la página.
+- Blanco y ámbar se reservan para texto, sello, CTA y detalles de jerarquía.
+- El ámbar es un **detalle pequeño**. Nunca un marco o superficie grande junto al terracota; esa combinación protagonista se percibe como comida rápida y rompe el carácter boutique.
+- Una campaña como “¿de qué color son tus compras?” puede mostrar varios colores en objetos o señales visuales, pero mantiene una superficie base negra o terracota que la ancla a MAGANDHI.
 - El color particular de un producto puede vivir en la fotografía o en detalles menores, pero no reemplaza la estructura cromática de MAGANDHI.
 - No introducir un color decorativo nuevo sin una función comunicativa clara.
 
@@ -134,12 +171,21 @@ Todo texto comunicativo va en HTML, nunca rasterizado dentro del JPG/WebP:
 - es accesible y seleccionable;
 - evita crear cuatro archivos por cada cambio de frase.
 
-La familia actual es **Poppins**. Jerarquía existente:
+La familia actual es **Poppins**. Jerarquías por espacio:
+
+**Carrusel hero**
 
 - sello: `10–11px`, semibold, mayúsculas, tracking amplio;
 - titular PC: `26–46px`; móvil: `23–30px`; peso `700`; interlínea `1.08`;
 - apoyo: `13–16.5px`, interlínea `1.5`, máximo `30ch`;
 - CTA: `14.5px`, semibold.
+
+**Historia**
+
+- titular: `22–30px`, peso `700`, interlínea `1.15`;
+- párrafo: `14.5px`, interlínea `1.65`, máximo `46ch`;
+- CTA: `14px`, semibold;
+- estas medidas y el padding existente se conservan para no cambiar la altura del banner.
 
 Límites de copy recomendados:
 
@@ -173,25 +219,27 @@ La gramática gráfica que da identidad al sistema actual es deliberadamente mí
 
 En una campaña fotográfica no es obligatorio repetir la bolsa/ícono actual. Sí debe conservarse esa lógica: **masa visual grande a la derecha + calma a la izquierda + contraste progresivo + un solo protagonista**. El motivo visual apoya la idea; no se convierte en marca de agua ni ilustración de relleno.
 
-## 6. Dos tratamientos permitidos
+## 6. Superficies cromáticas permitidas
 
-Elegir el tratamiento por el contraste real de la imagen, no por gusto arbitrario.
+La base se elige por intención de campaña, pero siempre debe separarse del fondo arena de la página.
 
-### Oscuro — `.hg-slide`
+### Terracota MAGANDHI
 
-- Para terracota oscuro, fotografía oscura o fondo con masa tonal profunda.
+- Gradiente de `#79211F` a `#A6332E`.
+- Para cercanía, identidad de marca, emoción cotidiana y mensajes institucionales como Historia.
 - Titular y apoyo blancos.
-- Velo PC negro horizontal: más fuerte a la izquierda y transparente a la derecha.
-- Velo móvil negro vertical: más fuerte abajo, donde vive el texto.
+- Motivo tono sobre tono en rojo claro, grande y discreto.
 
-### Claro — `.hg-slide.hg-slide--claro`
+### Negro profundo
 
-- Para crema, blanco o fotografía luminosa.
-- Titular negro y apoyo gris.
-- Velo PC blanco horizontal.
-- Velo móvil blanco vertical, más fuerte abajo.
+- Gradiente de `#111111` a `#1D1D1D`.
+- Para curaduría, anticipación, tecnología, exclusividad o campañas donde los colores protagonistas necesiten resaltar.
+- Titular y apoyo blancos.
+- El motivo puede usar terracota profundo, manteniendo contraste bajo.
 
-No crear una tercera variante por campaña. Si una imagen no funciona con ninguno de los dos tratamientos, la composición o la fotografía debe corregirse.
+La clase heredada `.hg-slide--claro` puede seguir existiendo en el CSS, pero no convierte el crema en una superficie aprobada para campañas nuevas. No se usa sin una decisión explícita del dueño.
+
+**Unidad de superficie:** cada banner se percibe como una sola pieza cromática. No dejar media tarjeta terracota y media tarjeta arena como consecuencia accidental de la estructura HTML. Una división solo existe si la idea de comunicación la exige explícitamente.
 
 **Contraste obligatorio:** medir el resultado real sobre la imagen final. Texto normal y CTA deben alcanzar como mínimo `4.5:1`; texto grande, `3:1`. El ámbar actual con texto blanco puede no alcanzar `4.5:1`: no convertir esa combinación en regla ciega. Resolver el contraste sin cambiar globalmente la paleta durante un trabajo de campaña; puede usarse texto oscuro sobre ámbar o un tono funcional más oscuro, documentando la decisión.
 
@@ -202,15 +250,16 @@ Estas constantes forman parte del marco aprobado. No se ajustan por campaña:
 | Elemento | Valor actual |
 |---|---|
 | riel exterior | `max-width:1200px`; `24px` laterales PC; `12px` móvil |
-| proporción | `1600/600` PC; `1/1` móvil |
+| proporción hero | `1600/600` PC; `1/1` móvil |
+| proporción Historia | `1600/478` PC; `1080/1854` móvil |
 | contenedor | `border-radius:20px`; `overflow:hidden` |
 | sombra | `0 14px 40px rgba(17,17,17,.10)` |
-| contenido PC | centrado vertical; `max-width:52%`; padding horizontal `clamp(24px,4vw,56px)` |
-| contenido móvil | apoyado abajo; `max-width:88%`; `padding-bottom:34px` |
-| velo oscuro PC | `linear-gradient(90deg, rgba(17,17,17,.42) 0%, rgba(17,17,17,.12) 48%, transparent 72%)` |
-| velo claro PC | `linear-gradient(90deg, rgba(255,255,255,.55) 0%, rgba(255,255,255,.18) 48%, transparent 72%)` |
-| velo oscuro móvil | `linear-gradient(180deg, rgba(17,17,17,.12) 0%, rgba(17,17,17,.08) 40%, rgba(17,17,17,.58) 100%)` |
-| velo claro móvil | `linear-gradient(180deg, rgba(255,255,255,.1) 0%, rgba(255,255,255,.3) 55%, rgba(255,255,255,.75) 100%)` |
+| contenido hero PC | centrado vertical; `max-width:52%`; padding horizontal `clamp(24px,4vw,56px)` |
+| contenido hero móvil | apoyado abajo; `max-width:88%`; `padding-bottom:34px` |
+| estructura Historia PC | grid `1fr 1fr`; texto a la izquierda; motivo a la derecha; fondo continuo en la caja completa |
+| estructura Historia móvil | una columna; zona visual superior `220px`; texto debajo; fondo continuo en toda la caja |
+| velo hero PC | `linear-gradient(90deg, rgba(17,17,17,.42) 0%, rgba(17,17,17,.12) 48%, transparent 72%)` |
+| velo hero móvil | `linear-gradient(180deg, rgba(17,17,17,.12) 0%, rgba(17,17,17,.08) 40%, rgba(17,17,17,.58) 100%)` |
 | sello | blanco, radio píldora, sombra sutil, icono lineal/simple |
 | CTA | un botón ámbar, radio `12px`, flecha a la derecha |
 | transición | desplazamiento horizontal `.5s ease`; autoavance `6000ms` |
@@ -242,7 +291,7 @@ Mientras el carrusel actual siga vigente, una diapositiva nueva conserva este co
 </div>
 ```
 
-Para fondo claro, añadir `hg-slide--claro`. Al agregar o quitar slides:
+Para las superficies terracota y negra se usa la variante oscura con texto blanco; no añadir `hg-slide--claro`. Al agregar o quitar slides:
 
 - actualizar `aria-label="X de N"` en **todas** las diapositivas;
 - comprobar que el CTA llega a una ruta real;
@@ -251,59 +300,104 @@ Para fondo claro, añadir `hg-slide--claro`. Al agregar o quitar slides:
 - conservar el texto como HTML y los SVG inline;
 - verificar que la diapositiva funcione con teclado, swipe, puntos y autoavance.
 
-## 8. Proceso cuando el dueño propone una idea
+### Contrato del banner Historia
 
-El trabajo no empieza generando una imagen. El Kiro responsable debe traducir la idea a una decisión de comunicación.
+Historia no es una diapositiva del carrusel. Su fondo responsive pertenece a `.hg-historia__caja`, porque toda la caja debe ser una superficie continua:
 
-### Paso 1 — Extraer el brief mínimo
+```css
+.hg-historia__caja{
+  background-image:url('banners/banner-historia-{id}-pc.webp');
+  background-size:cover;
+  background-position:center;
+}
+@media(max-width:760px){
+  .hg-historia__caja{
+    background-image:url('banners/banner-historia-{id}-movil.webp');
+  }
+}
+```
+
+`.hg-historia__txt` y `.hg-historia__img` permanecen transparentes. La división interna organiza contenido y espacio visual, pero nunca divide el color del banner. La zona `.hg-historia__img` conserva `min-height:300px` en PC y `220px` en móvil para no alterar la geometría.
+
+## 8. Flujo cuando el dueño llega con una idea
+
+Este es el flujo contractual. El dueño no necesita entregar un diseño terminado: entrega la intención. El sistema la convierte en una campaña coherente dentro del espacio existente y después se afinan detalles.
+
+### Paso 1 — Recibir la idea sin deformarla
+
+Ejemplo de entrada válida:
+
+> “Quiero reemplazar el banner 1 por una campaña sobre de qué color son tus compras, para que las personas identifiquen el color de sus compras y sepan que esta función llegará próximamente”.
+
+Primero se conserva el núcleo de la idea. No se cambia el formato del banner, no se inventa otra campaña y no se llena de mensajes adicionales.
+
+### Paso 2 — Identificar el espacio exacto
+
+Antes de diseñar, declarar cuál perfil se reemplaza:
+
+- slide del hero: `1600×600` PC + `1080×1080` móvil;
+- Historia: `1600×478` PC + `1080×1854` móvil.
+
+Las proporciones quedan bloqueadas desde este momento.
+
+### Paso 3 — Traducir la idea a comunicación visual
 
 Definir, sin inventar promesas:
 
 - objetivo de negocio;
 - persona a quien se habla;
 - una idea principal;
-- evidencia o apoyo;
-- acción esperada;
-- destino real del CTA;
-- producto o símbolo visual protagonista;
-- tratamiento oscuro o claro.
+- evidencia o explicación mínima;
+- acción esperada y destino real del CTA;
+- protagonista visual;
+- superficie base terracota o negra;
+- recorrido de mirada;
+- tratamiento independiente para PC y móvil.
 
-Si la idea del dueño ya permite deducirlo con seguridad, avanzar sin interrogatorio innecesario. Preguntar solo cuando falte una decisión que cambie el sentido, la honestidad o el destino del banner.
+Si la idea permite deducirlo con seguridad, avanzar sin interrogatorio innecesario. Preguntar solo cuando falte una decisión que cambie el sentido, la honestidad o el destino.
 
-### Paso 2 — Escribir antes de decorar
+Para el ejemplo “color de tus compras”, una traducción coherente sería: superficie negra para separar la pieza del arena y hacer resaltar una familia controlada de colores; un único objeto/sistema visual que represente la compra; mensaje de anticipación, no de función ya disponible; CTA informativo, no una compra engañosa. El copy exacto y los detalles se afinan después de establecer esta dirección.
 
-Proponer internamente:
+### Paso 4 — Escribir antes de decorar
+
+Construir:
 
 - sello;
-- titular de dos líneas;
+- titular breve;
 - apoyo de una frase;
 - CTA;
 - frase de dirección visual: “punto focal + ubicación + atmósfera”.
 
 Eliminar todo lo que no sostenga la idea principal.
 
-### Paso 3 — Diseñar PC y móvil como pareja
+### Paso 5 — Diseñar las dos construcciones
 
-- Crear primero la estructura horizontal y después **recomponer** el cuadrado.
-- Mantener el mismo concepto, sujeto, luz y tono en ambas piezas.
-- Respetar las zonas seguras de la sección 4.
+- Crear PC en la medida exacta del espacio elegido.
+- Crear móvil desde el mismo concepto, pero recomponiendo escala, posición y zonas seguras para su propia proporción.
+- Mantener protagonista, luz, tono y significado; no las mismas coordenadas.
+- Mantener una superficie base aprobada que se distinga del arena real.
 - No incrustar copy en la imagen.
-- Exportar con las medidas exactas y peso objetivo.
+- Exportar con medidas exactas y peso objetivo.
 
-### Paso 4 — Integrar sin rediseñar el sistema
+### Paso 6 — Integrar sin rediseñar el marco
 
 - Añadir los dos assets versionados en `banners/`.
-- Añadir o reemplazar solo el bloque `.hg-slide` necesario.
-- Usar rutas `data-pc` y `data-movil` correctas.
-- Seleccionar una de las dos variantes de contraste existentes.
-- Mantener intactos riel, radio, sombra, breakpoints y controles salvo solicitud expresa.
+- Reemplazar únicamente el espacio solicitado.
+- Usar `data-pc`/`data-movil` para el hero o el cambio CSS correspondiente para Historia.
+- Mantener intactos riel, proporción, altura, radio, sombra, breakpoint y controles.
+- Garantizar que toda la pieza use la superficie elegida; la estructura interna no puede dejar visible accidentalmente el fondo arena.
 
-### Paso 5 — Verificar con evidencia
+### Paso 7 — Presentar la primera ejecución y afinar
 
-No declarar “listo” porque el código compile o la página cargue. Comprobar los criterios de la sección 10.
+La primera entrega debe ser una propuesta ya construida y coherente, no una lista de ideas vagas. A partir de ella se afinan copy, color, escala, posición o motivo visual **sin cambiar el formato contratado**.
+
+### Paso 8 — Verificar con evidencia
+
+No declarar “listo” porque la página cargue. Comprobar dimensiones de archivos, caja renderizada, asset correcto por breakpoint, contraste, ausencia de solapes, CTA, peso y separación visual respecto al fondo arena.
 
 ## 9. Errores que hacen que deje de parecer MAGANDHI
 
+- Cambiar el formato, la proporción o la altura del espacio para acomodar una idea.
 - Diseñar un volante con cinco mensajes dentro del banner.
 - Quemar el copy en la imagen.
 - Usar el mismo recorte en PC y móvil.
@@ -311,6 +405,8 @@ No declarar “listo” porque el código compile o la página cargue. Comprobar
 - Llenar el espacio negativo con adornos sin función.
 - Usar dorado/ámbar como aro, marco o fondo protagonista junto al terracota.
 - Introducir colores chillones por “llamar la atención”.
+- Usar crema o arena como superficie principal hasta que el banner se confunda con la página.
+- Colorear solo el panel que antes contenía una imagen y dejar el resto del mismo banner arena por accidente.
 - Crear una variante CSS distinta para cada campaña.
 - Reducir letra hasta hacer caber un titular largo.
 - Poner dos CTA con el mismo peso.
@@ -332,7 +428,8 @@ No declarar “listo” porque el código compile o la página cargue. Comprobar
 
 ### Dirección de arte
 
-- [ ] Existe pareja `1600×600` + `1080×1080`.
+- [ ] La pareja coincide con el perfil del espacio: hero `1600×600 + 1080×1080` o Historia `1600×478 + 1080×1854`.
+- [ ] No se cambió la proporción ni el espacio renderizado existente.
 - [ ] Ninguna dimensión supera 2000px.
 - [ ] Móvil fue recompuesto, no recortado automáticamente.
 - [ ] PC deja aire a la izquierda y protagonista a la derecha.
@@ -345,7 +442,7 @@ No declarar “listo” porque el código compile o la página cargue. Comprobar
 
 - [ ] Las dos rutas existen y no producen 404.
 - [ ] Los nombres están versionados para evitar caché obsoleta.
-- [ ] La variante clara/oscura corresponde a la luminosidad real.
+- [ ] La superficie base terracota o negra se distingue claramente del fondo arena.
 - [ ] Los `aria-label` reflejan correctamente `X de N`.
 - [ ] El CTA y el SVG siguen en HTML.
 - [ ] No se rompió el uso táctil, teclado, puntos, flechas ni autoavance.
@@ -355,10 +452,12 @@ No declarar “listo” porque el código compile o la página cargue. Comprobar
 
 Verificar por DOM/CSS y medidas; no hace falta una captura de pantalla para cada tamaño.
 
-- [ ] 390px: caja aproximada `351×351`, imagen móvil cargada, texto sin tercera línea ni solapes.
-- [ ] 760px: sigue activo el diseño móvil.
-- [ ] 761px: entra el diseño PC sin salto roto.
-- [ ] 1280px: carrusel aproximado `1152×432` dentro del riel de 1200px.
+- [ ] 390px · hero: caja aproximada `351×351`, asset móvil cuadrado, texto sin tercera línea ni solapes.
+- [ ] 390px · Historia: caja aproximada `351×602`, asset móvil vertical `1080×1854`, superficie cromática continua.
+- [ ] 760px: siguen activos ambos diseños móviles.
+- [ ] 761px: entran ambos diseños PC sin salto roto.
+- [ ] 1280px · hero: caja aproximada `1152×432`.
+- [ ] 1280px · Historia: caja aproximada `1152×344`, asset PC `1600×478`, sin panel arena interno.
 - [ ] Pantalla amplia: el riel no supera 1200px y queda centrado.
 - [ ] Contraste medido: `4.5:1` normal / `3:1` grande.
 - [ ] El significado completo existe en HTML aunque la imagen no se vea.
