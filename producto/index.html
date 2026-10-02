@@ -16,6 +16,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../marca.css?v=3">
 
 <!--
   MAGANDHI · Pagina de producto GENERICA. Mismo diseno boutique aprobado del
@@ -29,10 +30,12 @@
   · Esta pagina vive en magandhi/producto/ (UN nivel bajo la raiz): los assets se
     referencian con '../' (la del Grisi usa '../../' por estar dos niveles) y el
     import es '../supabase-config.js'.
-  · CSS autocontenido. Prefijo de clases mg- para no colisionar.
+  · CSS de componentes autocontenido con prefijo mg-; los tokens estructurales
+    compartidos (incluido el fondo arena) vienen de ../marca.css.
   · Sistema de marca (PALETA REDUCIDA, estilo Mercado Libre): rojo/terracota de
     marca #A6332E (estructura, botones), AMBAR #C28A3A (acento fijo en detalles),
-    galeria y fondo en BLANCO con bordes gris tenue, negro #111, Poppins.
+    galeria en BLANCO, fondo mayor ARENA #EFE7DD, bordes gris tenue, negro #111
+    y tipografia Poppins.
   · ACENTO FIJO: la variable --acento es AMBAR y es IGUAL para todo producto; el
     script YA NO la cambia por categoria. La vista catalogo_publico aun manda los
     colores por categoria, pero la tienda los ignora a proposito (cambio solo de
@@ -78,8 +81,11 @@
     --ml-sombra:0 1px 3px rgba(17,17,17,.06);
   }
   html,body{margin:0;padding:0}
+  html{background:var(--fondo-pagina)}
   body{
-    background:var(--hueso);color:var(--tinta);
+    /* FONDO MAYOR compartido con el home. Las tarjetas, galeria y controles
+       conservan sus superficies blancas: solo cambia el lienzo estructural. */
+    background:var(--fondo-pagina);color:var(--tinta);
     font-family:'Poppins',system-ui,-apple-system,'Segoe UI',Roboto,sans-serif;
     line-height:1.65;-webkit-font-smoothing:antialiased;
   }
@@ -133,12 +139,12 @@
   /* STICKY EN PC: el header blanco (Volver + logo + nav) queda pegado arriba
      durante todo el scroll, siempre accesible (reemplaza al viejo FAB). La barra
      negra va arriba en el flujo normal: al bajar sale de vista y el header se
-     pega al top. Fondo solido var(--hueso) para que el contenido no se transparente
-     por detras + borde inferior y sombra sutil para separarlo al estar pegado.
+     pega al top. Fondo solido var(--fondo-pagina), el mismo arena mayor del home,
+     para que el contenido no se transparente por detras + borde inferior y sombra sutil para separarlo al estar pegado.
      z-index por debajo del modal de Wompi (z-index:100). */
   header{
     position:sticky;top:0;z-index:50;
-    background:var(--hueso);border-bottom:1px solid var(--linea);
+    background:var(--fondo-pagina);border-bottom:1px solid var(--linea);
     box-shadow:0 1px 3px rgba(17,17,17,.06);
     display:flex;align-items:center;justify-content:space-between;
     max-width:1120px;margin:0 auto;padding:18px 24px;gap:16px;
@@ -234,6 +240,30 @@
     box-shadow:var(--ml-sombra);
     aspect-ratio:1/1;display:flex;align-items:center;justify-content:center;
   }
+  /* El contenido cambia de imagen sin reemplazar .mg-foto: asi las flechas
+     permanecen estables. touch-action conserva el scroll vertical mientras el
+     gesto horizontal cambia de foto en pantallas tactiles. */
+  .mg-foto__contenido{
+    width:100%;height:100%;display:flex;align-items:center;justify-content:center;
+    touch-action:pan-y;user-select:none;-webkit-user-select:none;
+  }
+  /* Flechas discretas SOLO en PC, con el mismo lenguaje del hero. La navegacion
+     es circular: anterior desde la primera lleva a la ultima y viceversa. */
+  .mg-galeria-flecha{
+    display:none;position:absolute;top:50%;z-index:3;transform:translateY(-50%);
+    width:38px;height:38px;border-radius:50%;border:1px solid rgba(17,17,17,.08);
+    background:rgba(255,255,255,.68);color:var(--negro);cursor:pointer;
+    align-items:center;justify-content:center;padding:0;
+    box-shadow:0 4px 14px rgba(17,17,17,.16);
+    opacity:.78;transition:background .15s,opacity .15s,transform .1s;
+  }
+  .mg-galeria-flecha:hover{background:#fff;opacity:1;transform:translateY(-50%) scale(1.06)}
+  .mg-galeria-flecha:focus-visible{outline:3px solid var(--acento-cl);outline-offset:2px;opacity:1}
+  .mg-galeria-flecha svg{width:19px;height:19px}
+  .mg-galeria-flecha--prev{left:12px}
+  .mg-galeria-flecha--next{right:12px}
+  .mg-galeria-flecha[hidden]{display:none!important}
+  @media(min-width:861px){.mg-galeria-flecha{display:flex}}
   /* imagen real de la galeria (foto principal): cubre el marco cuadrado sin
      deformarse; sobre el blanco. */
   .mg-foto__img{
@@ -252,6 +282,7 @@
     color:var(--gris-cl);overflow:hidden;cursor:pointer;padding:0;
   }
   .mg-tira.activa{border-color:var(--acento);box-shadow:0 0 0 2px var(--acento-sombra)}
+  .mg-tira:focus-visible{outline:3px solid var(--acento-cl);outline-offset:2px}
   .mg-tira svg{width:22px;height:22px}
   /* miniatura con imagen real: llena el cuadrito */
   .mg-tira img{width:100%;height:100%;object-fit:cover;display:block}
@@ -423,6 +454,9 @@
   .mg-foot-links a:hover{color:var(--rojo)}
   /* en movil el footer se apila y centra (marca y links centrados) */
   @media(max-width:720px){
+    /* La franja de confianza se oculta en movil; este margen deja respirar el
+       cierre de opiniones antes de que empiece el footer blanco. */
+    .mg-prefooter + footer{margin-top:48px}
     .mg-foot{flex-direction:column;align-items:center;text-align:center}
     .mg-foot-links{justify-content:center}
   }
@@ -617,11 +651,19 @@
 <section class="mg-ficha">
   <!-- galería -->
   <div class="mg-galeria">
-    <div class="mg-foto" id="mg-foto">
-      <div class="mg-foto__ph">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="9" cy="9" r="2"/><path d="m21 15-3.09-3.09a2 2 0 0 0-2.82 0L6 21"/></svg>
-        Aquí va la foto real del producto<br><small>(la sube el equipo)</small>
+    <div class="mg-foto" id="mg-foto" tabindex="0" aria-label="Galería del producto">
+      <div class="mg-foto__contenido" id="mg-foto-contenido" aria-live="polite">
+        <div class="mg-foto__ph">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="9" cy="9" r="2"/><path d="m21 15-3.09-3.09a2 2 0 0 0-2.82 0L6 21"/></svg>
+          Aquí va la foto real del producto<br><small>(la sube el equipo)</small>
+        </div>
       </div>
+      <button type="button" class="mg-galeria-flecha mg-galeria-flecha--prev" id="mg-galeria-prev" aria-label="Imagen anterior" hidden>
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 18l-6-6 6-6"/></svg>
+      </button>
+      <button type="button" class="mg-galeria-flecha mg-galeria-flecha--next" id="mg-galeria-next" aria-label="Imagen siguiente" hidden>
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 6l6 6-6 6"/></svg>
+      </button>
     </div>
     <div class="mg-tiras" id="mg-tiras">
       <div class="mg-tira activa"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="3" width="18" height="18" rx="2"/></svg></div>
@@ -1075,8 +1117,9 @@
      · GALERIA: resuelve las URLs publicas de las imagenes con
        supabase.storage.from('campanas').getPublicUrl(path). Foto principal =
        primer elemento del arreglo imagenes (o imagen_banner_path); miniaturas =
-       el resto en orden; clic en una miniatura cambia la principal. Si no hay
-       imagenes, conserva el placeholder dibujado.
+       el resto en orden. Las miniaturas seleccionan directamente; en PC hay
+       flechas discretas y en movil swipe. Toda navegacion es circular/infinita.
+       Si no hay imagenes, conserva el placeholder dibujado.
      · Aviso "Solo X disponibles": aviso honesto que aparece cuando quedan pocas
        unidades reales del producto.
      · AGOTADO: viene del booleano catalogo_publico.agotado (derivado del stock
@@ -1223,64 +1266,127 @@
     return sv ? (urlPublica(sv) || urlPublica(pathGrande)) : urlPublica(pathGrande);
   }
 
-  // GALERIA real: arma la lista ordenada de imagenes (primero el arreglo
-  // 'imagenes'; si no hay, usa 'imagen_banner_path'), pinta la foto principal y
-  // las miniaturas, y permite cambiar la principal al hacer clic en una miniatura.
-  // Si no hay ninguna imagen, conserva el placeholder dibujado.
+  // GALERIA real: arma la lista ordenada de imagenes y mantiene UN solo indice
+  // activo. Miniaturas, flechas, teclado y swipe llaman a irA(); el modulo hace
+  // circular la navegacion (ultima -> primera y primera -> ultima) sin clones.
   function pintarGaleria(fila){
     const foto = document.getElementById('mg-foto');
+    const contenido = document.getElementById('mg-foto-contenido');
     const tiras = document.getElementById('mg-tiras');
-    if(!foto) return;
+    const prev = document.getElementById('mg-galeria-prev');
+    const next = document.getElementById('mg-galeria-next');
+    if(!foto || !contenido) return;
 
-    // Reune los paths en orden: el arreglo 'imagenes' manda; si viene vacio o no
-    // existe, se recurre al banner. Se filtran vacios.
-    let paths = [];
-    if(Array.isArray(fila.imagenes)) paths = fila.imagenes.slice();
+    // El arreglo ordenado manda. Se filtra ANTES del fallback para que [null]
+    // no impida usar imagen_banner_path cuando sea la unica imagen valida.
+    let paths = Array.isArray(fila.imagenes) ? fila.imagenes.filter(Boolean) : [];
     if(paths.length === 0 && fila.imagen_banner_path) paths = [fila.imagen_banner_path];
-    paths = paths.filter(function(p){ return !!p; });
 
-    // La foto PRINCIPAL usa la version GRANDE (calidad boutique); las MINIATURAS
-    // usan la version LIVIANA (-sm) para no penalizar la carga. Se guardan ambas
-    // por imagen: 'grande' para pintar la principal al hacer clic, 'liviana' para
-    // la miniatura (con fallback a la grande via onerror).
+    // Principal en calidad grande; miniatura liviana con fallback a la grande.
     const fotos = paths.map(function(p){
       return { grande: urlPublica(p), liviana: urlLiviana(p) };
     }).filter(function(f){ return !!f.grande; });
 
-    // Sin imagenes: se conserva el placeholder dibujado que ya esta en el HTML.
-    if(fotos.length === 0) return;
+    if(fotos.length === 0){
+      if(prev) prev.hidden = true;
+      if(next) next.hidden = true;
+      return;
+    }
 
     const alt = fila.nombre || 'Producto';
+    const total = fotos.length;
+    let indiceActivo = 0;
 
-    // Foto principal = primer elemento, siempre la GRANDE.
-    function mostrarPrincipal(url){
-      foto.innerHTML = '<img class="mg-foto__img" src="' + esc(url) + '" alt="' + esc(alt) + '">';
+    function normalizar(indice){
+      return ((indice % total) + total) % total;
     }
-    mostrarPrincipal(fotos[0].grande);
 
-    // Miniaturas = TODAS las imagenes en orden (para poder volver a la primera).
-    // La miniatura carga la LIVIANA (con fallback a la grande via onerror), y al
-    // hacer clic muestra la GRANDE como principal y marca la activa.
+    function precargarVecinas(){
+      if(total < 2) return;
+      [normalizar(indiceActivo - 1), normalizar(indiceActivo + 1)].forEach(function(i){
+        const img = new Image();
+        img.src = fotos[i].grande;
+      });
+    }
+
+    function pintarEstado(){
+      const actual = fotos[indiceActivo];
+      contenido.innerHTML = '<img class="mg-foto__img" src="' + esc(actual.grande) + '" alt="' +
+        esc(alt + ' — imagen ' + (indiceActivo + 1) + ' de ' + total) + '" decoding="async" draggable="false">';
+      foto.setAttribute('aria-label','Galería de ' + alt + '. Imagen ' + (indiceActivo + 1) + ' de ' + total);
+
+      if(tiras){
+        tiras.querySelectorAll('.mg-tira').forEach(function(t, i){
+          const activa = i === indiceActivo;
+          t.classList.toggle('activa', activa);
+          t.setAttribute('aria-current', activa ? 'true' : 'false');
+          t.setAttribute('aria-pressed', activa ? 'true' : 'false');
+        });
+      }
+      precargarVecinas();
+    }
+
+    function irA(indice){
+      indiceActivo = normalizar(indice);
+      pintarEstado();
+    }
+
     if(tiras){
       tiras.innerHTML = fotos.map(function(f, i){
-        const activa = i === 0 ? ' activa' : '';
         const fb = (f.grande && f.grande !== f.liviana)
           ? "this.onerror=null;this.src='" + f.grande.replace(/'/g, "\\'") + "'"
           : '';
-        return '<button type="button" class="mg-tira' + activa + '" data-url="' + esc(f.grande) + '">' +
-          '<img src="' + esc(f.liviana) + '" alt="' + esc(alt) + ' ' + (i + 1) + '"' +
+        return '<button type="button" class="mg-tira' + (i === 0 ? ' activa' : '') + '" data-indice="' + i +
+          '" aria-label="Ver imagen ' + (i + 1) + ' de ' + total + '" aria-current="' + (i === 0 ? 'true' : 'false') +
+          '" aria-pressed="' + (i === 0 ? 'true' : 'false') + '">' +
+          '<img src="' + esc(f.liviana) + '" alt="" loading="lazy" decoding="async"' +
           (fb ? ' onerror="' + esc(fb) + '"' : '') + '></button>';
       }).join('');
-      tiras.addEventListener('click', function(e){
+      // Asignacion estable: si la galeria se repinta, no acumula listeners.
+      tiras.onclick = function(e){
         const btn = e.target.closest('.mg-tira');
-        if(!btn) return;
-        const url = btn.getAttribute('data-url');
-        if(!url) return;
-        mostrarPrincipal(url);
-        tiras.querySelectorAll('.mg-tira').forEach(function(t){ t.classList.remove('activa'); });
-        btn.classList.add('activa');
-      });
+        if(!btn || !tiras.contains(btn)) return;
+        irA(Number(btn.getAttribute('data-indice')));
+      };
     }
+
+    const multiple = total > 1;
+    if(prev){
+      prev.hidden = !multiple;
+      prev.onclick = function(){ irA(indiceActivo - 1); };
+    }
+    if(next){
+      next.hidden = !multiple;
+      next.onclick = function(){ irA(indiceActivo + 1); };
+    }
+
+    foto.onkeydown = function(e){
+      if(!multiple) return;
+      if(e.key === 'ArrowLeft'){ e.preventDefault(); irA(indiceActivo - 1); }
+      if(e.key === 'ArrowRight'){ e.preventDefault(); irA(indiceActivo + 1); }
+    };
+
+    // Swipe horizontal tactil SOLO sobre la foto. touch-action:pan-y mantiene el
+    // scroll vertical; un gesto debe ser suficientemente largo y mas horizontal
+    // que vertical para cambiar de imagen.
+    let gesto = null;
+    contenido.onpointerdown = function(e){
+      if(!multiple || e.pointerType === 'mouse') return;
+      gesto = { id:e.pointerId, x:e.clientX, y:e.clientY };
+      try{ contenido.setPointerCapture(e.pointerId); }catch(_){ /* opcional */ }
+    };
+    contenido.onpointerup = function(e){
+      if(!gesto || gesto.id !== e.pointerId) return;
+      const dx = e.clientX - gesto.x;
+      const dy = e.clientY - gesto.y;
+      gesto = null;
+      if(Math.abs(dx) >= 46 && Math.abs(dx) > Math.abs(dy) * 1.2){
+        irA(indiceActivo + (dx < 0 ? 1 : -1));
+      }
+    };
+    contenido.onpointercancel = function(){ gesto = null; };
+
+    irA(0);
   }
 
   function mostrarNoDisponible(){
