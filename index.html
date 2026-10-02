@@ -421,18 +421,19 @@
   .hg-slide__btn:hover{background:#A9772F;gap:13px}
   .hg-slide__btn svg{width:17px;height:17px}
 
-  /* flechas */
+  /* flechas: en PC van a los extremos, centradas verticalmente, discretas.
+     Semitransparentes para no estorbar la vista del banner; al hover suben. */
   .hg-flecha{
-    position:absolute;right:18px;bottom:18px;z-index:3;
-    width:40px;height:40px;border-radius:50%;border:0;cursor:pointer;
-    background:rgba(255,255,255,.92);color:var(--negro);
+    position:absolute;top:50%;transform:translateY(-50%);z-index:3;
+    width:36px;height:36px;border-radius:50%;border:0;cursor:pointer;
+    background:rgba(255,255,255,.6);color:var(--negro);
     display:flex;align-items:center;justify-content:center;
     box-shadow:0 4px 14px rgba(17,17,17,.18);transition:background .15s,transform .1s;
   }
-  .hg-flecha:hover{background:#fff;transform:scale(1.06)}
+  .hg-flecha:hover{background:#fff;transform:translateY(-50%) scale(1.06)}
   .hg-flecha svg{width:19px;height:19px}
-  .hg-flecha--prev{right:66px}
-  .hg-flecha--next{right:18px}
+  .hg-flecha--prev{left:14px;right:auto}
+  .hg-flecha--next{right:14px;left:auto}
   /* puntos */
   .hg-puntos{position:absolute;left:0;right:0;bottom:14px;z-index:3;display:flex;justify-content:center;gap:8px}
   .hg-punto{width:8px;height:8px;border-radius:50%;border:0;cursor:pointer;background:rgba(255,255,255,.55);padding:0;transition:background .15s,width .15s}
@@ -455,13 +456,9 @@
     .hg-slide__tit{font-size:clamp(23px,7vw,30px);margin:14px 0 8px}
     .hg-slide__sub{margin-bottom:18px}
     .hg-pill{font-size:10px;padding:5px 11px}
-    /* las flechas se agrupan abajo a la derecha (como en la referencia), lejos
-       del titulo. En la primera prueba, al quedar centradas a ambos lados,
-       invadian el texto del banner movil. */
-    .hg-flecha{top:auto;bottom:14px;width:34px;height:34px;transform:none}
-    .hg-flecha:hover{transform:scale(1.06)}
-    .hg-flecha--prev{left:auto;right:54px}
-    .hg-flecha--next{right:14px}
+    /* en movil no van flechas: el banner se cambia solo (auto-avance), con
+       swipe y los puntitos. Las flechas invadian el texto del banner. */
+    .hg-flecha{display:none}
   }
 
   /* ---------- separador de seccion (titulo centrado con filetes) ----------
@@ -557,7 +554,13 @@
   .hg-footer__legal-in a{color:var(--gris-cl);text-decoration:none}
   .hg-footer__legal-in a:hover{color:var(--rojo)}
   @media(max-width:760px){
-    .hg-footer__in{flex-direction:column;align-items:flex-start;gap:18px;padding:26px 16px}
+    /* footer compacto en movil: marca (izq) y social (der) comparten la
+       primera fila; la nav salta a una fila completa debajo. Asi desaparece
+       el hueco en blanco que dejaba la fila suelta de iconos. */
+    .hg-footer__in{align-items:center;justify-content:space-between;gap:14px 16px;padding:22px 16px}
+    .hg-footer__marca{flex:0 1 auto}
+    .hg-footer__social{flex:0 0 auto}
+    .hg-footer__nav{flex-basis:100%;order:3}
     .hg-footer__legal-in{flex-direction:column;align-items:flex-start;padding:14px 16px}
   }
 </style>
