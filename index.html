@@ -55,7 +55,10 @@
   /* La paleta vive en marca.css (fuente unica). Aqui solo lo especifico del home. */
   html,body{margin:0;padding:0}
   body{
-    background:var(--hueso);color:var(--tinta);
+    /* FONDO DE PAGINA: arena calido (--fondo-pagina #EFE7DD) para que las
+       tarjetas de producto en blanco puro (--ml-panel) resalten. Las tarjetas
+       NO cambian; solo cambia el fondo de la pagina. */
+    background:var(--fondo-pagina);color:var(--tinta);
     font-family:'Poppins',system-ui,-apple-system,'Segoe UI',Roboto,sans-serif;
     line-height:1.65;-webkit-font-smoothing:antialiased;
   }
@@ -95,18 +98,25 @@
   }
   .hg-intro h1 em{font-style:normal;color:var(--rojo)}
 
-  /* ---------- vitrina: grid de productos ---------- */
+  /* ---------- vitrina: grid de productos ----------
+     RIEL COMUN: la vitrina comparte el mismo ancho maximo (1200px) y el mismo
+     padding horizontal (24px) que el banner hero (.hg-hero) y las secciones
+     historia/garantias, para que banner y productos empiecen y terminen en la
+     misma linea vertical. */
   .hg-vitrina{
-    max-width:1100px;margin:34px auto 0;padding:0 24px;
+    max-width:1200px;margin:34px auto 0;padding:0 24px;
   }
+  /* GRID PC: 5 columnas (tarjetas verticales iguales, mismo tamano). */
   .hg-grid{
-    display:grid;grid-template-columns:repeat(3,1fr);gap:22px;
+    display:grid;grid-template-columns:repeat(5,1fr);gap:22px;
   }
-  /* TODAS las tarjetas del mismo tamano (incluida la estrella): quedan 3 arriba
-     y 2 abajo, en orden. El producto estrella se distingue por su estrella y su
-     color, no por el tamano. */
-  @media(max-width:980px){
-    .hg-grid{grid-template-columns:repeat(2,1fr)}
+  /* breakpoints intermedios: tablet grande 4 columnas, tablet 3 columnas,
+     antes de llegar al layout de movil (<=760px). */
+  @media(max-width:1180px){
+    .hg-grid{grid-template-columns:repeat(4,1fr)}
+  }
+  @media(max-width:900px){
+    .hg-grid{grid-template-columns:repeat(3,1fr)}
   }
 
   /* ---------- tarjeta de producto (estilo Mercado Libre) ----------
@@ -251,31 +261,38 @@
        lo esencial para no saturar: categoria (con su color) + nombre + sello. El
        hook, el precio y el boton NO se muestran aqui (se ven al entrar al producto). */
     .hg-vitrina{padding:0 12px}
-    /* gap pequeno = tarjetas "en escala", con respiro minimo (aire boutique). */
-    /* align-items:start = cada tarjeta mide segun SU contenido (no se estira a
-       la altura de su vecina). Asi las de menos texto (ej. Serum rosa) quedan
-       mas cortas y nace el ZIGZAG natural tipo Pinterest, sin forzar nada. */
-    /* MASONRY REAL con multicolumna CSS (no Grid): 2 columnas verticales
-       INDEPENDIENTES donde las tarjetas se apilan una tras otra. Cada tarjeta
-       mide segun su contenido, asi que el desfase (zigzag tipo Pinterest) nace
-       solo y se PROPAGA a todas -- sin huecos grandes ni filas rigidas. Al
-       agregar productos, se acomodan solos. (CSS Grid arma filas alineadas: por
-       eso antes solo se desfasaba la primera fila y quedaba el hueco.) */
+    /* ESTRUCTURA FIJA MOVIL (reemplaza el masonry Pinterest): grid REGULAR de
+       6 columnas con "3 arriba + 2 abajo", la estructura de los mockups del
+       dueno. Pensada para los 5 productos actuales:
+         - las 3 PRIMERAS tarjetas ocupan 2 columnas cada una (2+2+2 = fila de 3),
+           tarjetas pequenas arriba;
+         - las 2 SIGUIENTES ocupan 3 columnas cada una (3+3 = fila de 2),
+           tarjetas "grandecitas" (media columna) abajo, mas altas.
+       Se resuelve SOLO con CSS :nth-child sobre .hg-tarjeta (el JS de render no
+       se toca); las tarjetas comparten clase y se pintan en orden. */
     .hg-grid{
-      display:block;column-count:2;column-gap:8px;
-      grid-template-columns:none;
+      display:grid;grid-template-columns:repeat(6,1fr);
+      column-gap:8px;row-gap:10px;
+      align-items:start;
     }
 
-    /* height:auto = la tarjeta se ajusta a su contenido; break-inside:avoid =
-       no se parte entre columnas; margin-bottom = separacion vertical (en
-       multicolumna no aplica gap entre elementos apilados). */
+    /* por defecto (fila de arriba, 3 tarjetas pequenas): cada una 2 columnas. */
     .hg-tarjeta{
       flex-direction:column;height:auto;border-radius:14px;
-      break-inside:avoid;-webkit-column-break-inside:avoid;
-      margin-bottom:8px;
+      grid-column:span 2;
+    }
+    /* 4a y 5a tarjetas (fila de abajo, 2 "grandecitas"): cada una 3 columnas. */
+    .hg-tarjeta:nth-child(4),
+    .hg-tarjeta:nth-child(5){
+      grid-column:span 3;
     }
 
     .hg-foto{flex:none;height:150px}
+    /* las "grandecitas" de abajo muestran un poco mas de detalle: foto mas alta. */
+    .hg-tarjeta:nth-child(4) .hg-foto,
+    .hg-tarjeta:nth-child(5) .hg-foto{height:190px}
+    .hg-tarjeta:nth-child(4) .hg-foto img,
+    .hg-tarjeta:nth-child(5) .hg-foto img{max-height:170px}
     .hg-foto img{max-height:130px;max-width:80%}
     .hg-foto__ph{width:84px;height:84px;border-radius:18px}
     .hg-foto__ph svg{width:38px;height:38px}
@@ -407,8 +424,9 @@
     .hg-flecha--next{right:14px}
   }
 
-  /* ---------- separador de seccion (titulo centrado con filetes) ---------- */
-  .hg-sep{max-width:1100px;margin:46px auto 6px;padding:0 24px;text-align:center}
+  /* ---------- separador de seccion (titulo centrado con filetes) ----------
+     Mismo riel comun (1200px / padding 24px) que el banner y la vitrina. */
+  .hg-sep{max-width:1200px;margin:46px auto 6px;padding:0 24px;text-align:center}
   .hg-sep__k{
     display:inline-flex;align-items:center;gap:16px;
     font-size:12.5px;font-weight:600;letter-spacing:.22em;text-transform:uppercase;color:var(--acento);
@@ -418,7 +436,7 @@
 
   /* ---------- bloque HISTORIA ("mas que productos...") ---------- */
   .hg-historia{
-    max-width:1100px;margin:50px auto 0;padding:0 24px;
+    max-width:1200px;margin:50px auto 0;padding:0 24px;
   }
   .hg-historia__caja{
     display:grid;grid-template-columns:1fr 1fr;gap:0;border-radius:20px;overflow:hidden;
@@ -446,7 +464,7 @@
 
   /* ---------- franja de GARANTIAS (4 iconos) ---------- */
   .hg-garantias{
-    max-width:1100px;margin:46px auto 0;padding:26px 24px;
+    max-width:1200px;margin:46px auto 0;padding:26px 24px;
     display:grid;grid-template-columns:repeat(4,1fr);gap:20px;
     border-top:1px solid var(--ml-borde);border-bottom:1px solid var(--ml-borde);
   }
