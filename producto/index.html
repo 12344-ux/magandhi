@@ -200,6 +200,14 @@
        barra sticky de arriba */
     .mg-prefooter{display:none}
   }
+  /* CINTURON DE SEGURIDAD para telefonos ANCHOS (muchos reportan 760-820px de
+     ancho CSS y NO entran al @media max-width:720px): se oculta "Cada producto
+     revisado por el equipo" tambien hasta 860px. SOLO este item; el resto del
+     modo movil de la barra (sticky, flecha, 2 mensajes) y el prefooter de PC
+     siguen calibrados a 720px, intactos. En PC real la .mg-barra es display:none,
+     asi que esta regla no afecta la franja de arriba; y el prefooter conserva sus
+     3 mensajes porque solo se oculta <=720px. */
+  @media(max-width:860px){ .mg-barra-revisado{display:none} }
 
   /* ---------- migas ---------- */
   .mg-migas{max-width:1120px;margin:0 auto;padding:8px 24px 0;font-size:12.5px;color:var(--gris-cl)}
