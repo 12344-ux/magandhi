@@ -87,10 +87,20 @@
 
   /* ---------- barra de confianza ---------- */
   .mg-barra{
+    position:relative;
     background:var(--negro);color:#fff;font-size:12.5px;letter-spacing:.3px;
     display:flex;justify-content:center;gap:30px;padding:9px 16px;flex-wrap:wrap;
   }
   .mg-barra span{display:inline-flex;align-items:center;gap:7px;opacity:.92}
+  /* flecha de retroceso DENTRO de la barra negra: unico control de "volver" en
+     movil. Oculta en PC (alli manda el boton "Volver a la tienda" del header
+     sticky); el @media movil la muestra a la izquierda de la barra. Mismo destino
+     que .mg-volver (../index.html, la raiz de la tienda). */
+  .mg-barra-volver{
+    display:none;align-items:center;justify-content:center;flex:none;
+    color:#fff;text-decoration:none;opacity:.92;
+  }
+  .mg-barra-volver svg{width:20px;height:20px}
   .mg-barra svg{width:15px;height:15px;flex:none}
   /* el 3er item es un boton (abre el modal de Wompi): se ve igual que los span */
   .mg-barra-btn{
@@ -102,7 +112,16 @@
   .mg-barra-btn:hover{opacity:1;border-bottom-color:#fff}
 
   /* ---------- header ---------- */
+  /* STICKY EN PC: el header blanco (Volver + logo + nav) queda pegado arriba
+     durante todo el scroll, siempre accesible (reemplaza al viejo FAB). La barra
+     negra va arriba en el flujo normal: al bajar sale de vista y el header se
+     pega al top. Fondo solido var(--hueso) para que el contenido no se transparente
+     por detras + borde inferior y sombra sutil para separarlo al estar pegado.
+     z-index por debajo del modal de Wompi (z-index:100). */
   header{
+    position:sticky;top:0;z-index:50;
+    background:var(--hueso);border-bottom:1px solid var(--linea);
+    box-shadow:0 1px 3px rgba(17,17,17,.06);
     display:flex;align-items:center;justify-content:space-between;
     max-width:1120px;margin:0 auto;padding:18px 24px;gap:16px;
   }
@@ -120,37 +139,12 @@
   .mg-volver:hover{border-color:var(--rojo);color:var(--rojo);transform:translateX(-2px)}
   .mg-volver svg{width:16px;height:16px}
   @media(max-width:720px){
-    /* en movil: boton compacto (solo flecha + 'Volver'), el logo pasa a segundo plano */
-    .mg-volver span{display:none}
-    .mg-volver{padding:9px 12px}
-  }
-
-  /* ---------- boton VOLVER flotante (FAB) ----------
-     El boton del header solo sirve si estas arriba; al bajar (p.ej. a reseñas)
-     tocaba subir toda la pagina para volver a la tienda. Este boton flotante
-     resuelve eso: aparece fijo en pantalla al hacer scroll hacia abajo y se
-     oculta cuando estas arriba (alli ya esta el del header, no hace falta
-     duplicarlo). Pildora roja de marca, abajo-izquierda, sobre todo el contenido.
-     En PC muestra "Volver a la tienda"; en movil queda circular (solo la flecha). */
-  .mg-volver-fab{
-    position:fixed;left:20px;bottom:22px;z-index:60;
-    display:inline-flex;align-items:center;gap:9px;
-    font-size:13.5px;font-weight:600;color:#fff;text-decoration:none;
-    background:var(--rojo);border:0;border-radius:999px;padding:12px 18px;
-    box-shadow:0 8px 22px rgba(17,17,17,.22);
-    /* oculto por defecto: baja/escondido y sin interaccion; el JS lo revela al
-       bajar. transicion suave de aparicion. */
-    opacity:0;transform:translateY(14px);pointer-events:none;
-    transition:opacity .22s ease,transform .22s ease,background .15s;
-  }
-  .mg-volver-fab[data-visible="true"]{opacity:1;transform:none;pointer-events:auto}
-  .mg-volver-fab:hover{background:var(--rojo-osc)}
-  .mg-volver-fab svg{width:17px;height:17px;flex:none}
-  @media(max-width:720px){
-    /* en movil: circular (solo flecha) y mas arriba, para no chocar con gestos
-       del borde inferior del telefono. */
-    .mg-volver-fab{left:16px;bottom:76px;padding:13px;gap:0}
-    .mg-volver-fab span{display:none}
+    /* en movil el control de "volver" vive en la barra negra sticky (flecha a la
+       izquierda), asi que el boton del header blanco se oculta para no duplicarlo.
+       Ademas el header blanco deja de ser sticky: en movil lo fijo es la barra
+       negra (lleva la flecha); el logo scrollea normal. */
+    .mg-volver{display:none}
+    header{position:static;background:transparent;border-bottom:0;box-shadow:none}
   }
 
   .mg-word{font-weight:600;font-size:20px;letter-spacing:.16em;color:var(--negro);line-height:1}
@@ -159,12 +153,15 @@
   .mg-nav a{text-decoration:none;color:var(--tinta);opacity:.8}
   .mg-nav a:hover{opacity:1;color:var(--rojo)}
   @media(max-width:720px){.mg-nav{display:none}}
-  /* BARRA DE CONFIANZA COMPACTA EN MOVIL (opcion B): en vez de apilarse en 3
-     lineas altas (flex-wrap ocupaba media pantalla), queda en UNA franja
-     delgada: fuente y gap menores, sin envolver, con scroll horizontal suave si
-     no cabe. Los 3 mensajes de confianza SIGUEN visibles (son senales de venta). */
+  /* BARRA DE CONFIANZA EN MOVIL: queda STICKY arriba (es la que lleva la flecha de
+     volver, debe estar siempre accesible) y se reduce a DOS items: "Envios
+     nacionales" + "Pagos seguros con Wompi"; se oculta "Cada producto revisado por
+     el equipo" para que la franja quepa en una linea delgada junto a la flecha de
+     la izquierda. La flecha (.mg-barra-volver) aparece a la izquierda. z-index por
+     debajo del modal de Wompi (z-index:100). */
   @media(max-width:720px){
     .mg-barra{
+      position:sticky;top:0;z-index:50;
       flex-wrap:nowrap;justify-content:flex-start;gap:16px;
       font-size:10.5px;letter-spacing:.2px;padding:8px 14px;
       overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:none;
@@ -172,6 +169,12 @@
     .mg-barra::-webkit-scrollbar{display:none}
     .mg-barra span,.mg-barra-btn{white-space:nowrap;flex:none}
     .mg-barra svg{width:13px;height:13px}
+    /* la flecha de retroceso se muestra a la izquierda, pegada al borde */
+    .mg-barra-volver{display:inline-flex;margin-right:2px}
+    .mg-barra-volver svg{width:18px;height:18px}
+    /* se oculta el primer item para dejar solo 2 mensajes (no se borra el HTML:
+       en PC los 3 siguen visibles) */
+    .mg-barra-revisado{display:none}
   }
 
   /* ---------- migas ---------- */
@@ -535,17 +538,15 @@
 </head>
 <body>
 
-<!-- boton VOLVER flotante: aparece al hacer scroll hacia abajo para que siempre
-     se pueda regresar a la tienda sin subir hasta el header. Lo muestra/oculta el
-     script del final (data-visible). Misma destino que el boton del header. -->
-<a class="mg-volver-fab" id="mg-volver-fab" href="../index.html" aria-label="Volver a la tienda" aria-hidden="true" tabindex="-1">
-  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
-  <span>Volver a la tienda</span>
-</a>
-
 <!-- barra de confianza -->
 <div class="mg-barra">
-  <span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z"/></svg>Cada producto revisado por el equipo</span>
+  <!-- flecha de retroceso: UNICO control de "volver" en movil (sobre el fondo
+       negro, a la izquierda). Oculta en PC via CSS (alli manda "Volver a la tienda"
+       del header sticky). Mismo destino que .mg-volver (../index.html). -->
+  <a class="mg-barra-volver" href="../index.html" aria-label="Volver a la tienda">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
+  </a>
+  <span class="mg-barra-revisado"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z"/></svg>Cada producto revisado por el equipo</span>
   <span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="1" y="3" width="15" height="13" rx="1"/><path d="M16 8h4l3 3v5h-7z"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></svg>Envíos nacionales</span>
   <button type="button" class="mg-barra-btn" id="mg-abrir-wompi" aria-haspopup="dialog" aria-controls="mg-modal-wompi"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="5" width="20" height="14" rx="2"/><path d="M2 10h20"/></svg>Pagos seguros con Wompi</button>
 </div>
@@ -1643,29 +1644,6 @@
     document.addEventListener('keydown', function(e){
       if(e.key === 'Escape' && modal.getAttribute('aria-hidden') === 'false') ocultar();
     });
-  })();
-</script>
-
-<script>
-  // Boton VOLVER flotante: visible solo cuando se bajo lo suficiente para que el
-  // boton del header ya no este a la vista. Asi se puede regresar a la tienda
-  // desde cualquier punto (p.ej. abajo en reseñas) sin subir toda la pagina.
-  (function(){
-    var fab = document.getElementById('mg-volver-fab');
-    if(!fab) return;
-    var UMBRAL = 400; // px de scroll a partir de los cuales aparece
-    function actualizar(){
-      var y = window.scrollY || document.documentElement.scrollTop || 0;
-      var mostrar = y > UMBRAL;
-      fab.setAttribute('data-visible', mostrar ? 'true' : 'false');
-      // accesibilidad: cuando esta oculto, fuera del orden de tabulacion/lectura.
-      fab.setAttribute('aria-hidden', mostrar ? 'false' : 'true');
-      fab.tabIndex = mostrar ? 0 : -1;
-    }
-    // passive: no bloquea el scroll. Se evalua al cargar y al hacer scroll/resize.
-    window.addEventListener('scroll', actualizar, { passive: true });
-    window.addEventListener('resize', actualizar, { passive: true });
-    actualizar();
   })();
 </script>
 
