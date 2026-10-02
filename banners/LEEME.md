@@ -37,12 +37,17 @@ Para cada diapositiva usa el mismo número o identificador:
 ```text
 banner-1-pc.jpg
 banner-1-movil.jpg
-banner-2-pc.jpg
-banner-2-movil.jpg
+banner-curaduria-v2-pc.jpg
+banner-curaduria-v2-movil.jpg
+banner-historia-v1-pc.jpg
+banner-historia-v1-movil.jpg
 ```
 
-En `index.html`, cada `.hg-slide` declara ambas rutas mediante `data-pc` y
-`data-movil`. Para agregar o cambiar una diapositiva hay que mantener esa pareja.
+El carrusel declara cada pareja en `.hg-slide` mediante `data-pc` y
+`data-movil`. El bloque Historia selecciona su propia pareja desde CSS en el
+mismo breakpoint de `760px`. Aunque dos conceptos compartan lenguaje visual,
+deben conservar archivos independientes para que una campaña futura no cambie
+otra sección por accidente.
 
 > La imagen comunica la campaña; los colores estructurales de la interfaz siempre
 > siguen la marca MAGANDHI: terracota `#A6332E`, ámbar `#C28A3A`, blanco y neutros.

@@ -491,12 +491,18 @@
   .hg-historia__btn:hover{background:var(--red-50);transform:translateY(-1px)}
   .hg-historia__btn svg{width:16px;height:16px}
   .hg-historia__img{
+    /* Pareja independiente del banner 1: mismo lenguaje terracota, sin quedar
+       acoplada a futuras campañas del carrusel. */
+    background-image:url('banners/banner-historia-v1-pc.jpg');
     background-size:cover;background-position:center;min-height:300px;
   }
   @media(max-width:760px){
     .hg-historia{padding:0 12px}
     .hg-historia__caja{grid-template-columns:1fr}
-    .hg-historia__img{min-height:220px;order:-1}  /* imagen arriba en movil */
+    .hg-historia__img{
+      background-image:url('banners/banner-historia-v1-movil.jpg');
+      min-height:220px;order:-1;
+    }  /* imagen recompuesta para movil, no recorte del horizontal */
   }
 
   /* ---------- franja de GARANTIAS (4 iconos) ---------- */
@@ -614,10 +620,10 @@
         </div>
       </div>
 
-      <!-- Slide 2 · crema (texto en tinta) -->
-      <div class="hg-slide hg-slide--claro" role="group" aria-roledescription="diapositiva" aria-label="2 de 2"
-           style="background-image:url('banners/banner-2-pc.jpg')"
-           data-pc="banners/banner-2-pc.jpg" data-movil="banners/banner-2-movil.jpg">
+      <!-- Slide 2 · negro profundo (texto blanco) -->
+      <div class="hg-slide" role="group" aria-roledescription="diapositiva" aria-label="2 de 2"
+           style="background-image:url('banners/banner-curaduria-v2-pc.jpg')"
+           data-pc="banners/banner-curaduria-v2-pc.jpg" data-movil="banners/banner-curaduria-v2-movil.jpg">
         <div class="hg-slide__cont">
           <span class="hg-pill">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m9 12 2 2 4-4"/><circle cx="12" cy="12" r="10"/></svg>
@@ -884,8 +890,9 @@
 
 <!-- ============================================================
      BLOQUE HISTORIA ("mas que productos...")
-     Texto de marca + boton a la historia, con imagen al lado. La imagen es un
-     banner de relleno (misma que el hero crema) hasta tener una real.
+     Texto de marca + boton a la historia, con una pareja visual propia. Usa el
+     mismo lenguaje terracota del primer hero, pero conserva archivos separados
+     para que PC y movil tengan composiciones distintas y no queden acoplados.
      ============================================================ -->
 <section class="hg-historia" id="historia" aria-label="Nuestra forma de ver lo cotidiano">
   <div class="hg-historia__caja">
@@ -898,7 +905,7 @@
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
       </a>
     </div>
-    <div class="hg-historia__img" style="background-image:url('banners/banner-2-pc.jpg')" role="img" aria-label="MAGANDHI"></div>
+    <div class="hg-historia__img" role="img" aria-label="MAGANDHI"></div>
   </div>
 </section>
 
