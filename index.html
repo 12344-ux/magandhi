@@ -476,33 +476,34 @@
     max-width:1200px;margin:70px auto 0;padding:0 24px;
   }
   .hg-historia__caja{
+    /* Tercer banner: una sola superficie terracota continua. Mantiene la caja
+       horizontal de PC; el arte cambia por completo en movil sin cambiar el
+       espacio vertical que ya ocupa el contenido. */
     display:grid;grid-template-columns:1fr 1fr;gap:0;border-radius:20px;overflow:hidden;
-    background:var(--tarjeta);border:1px solid var(--ml-borde);
+    background-image:url('banners/banner-historia-v2-pc.jpg');
+    background-size:cover;background-position:center;
+    border:1px solid rgba(255,255,255,.08);
+    box-shadow:0 14px 40px rgba(17,17,17,.10);
   }
   .hg-historia__txt{padding:clamp(26px,4vw,46px);display:flex;flex-direction:column;justify-content:center}
-  .hg-historia__tit{font-size:clamp(22px,2.6vw,30px);font-weight:700;line-height:1.15;margin:0;color:var(--acento);letter-spacing:-.3px}
-  .hg-historia__p{font-size:14.5px;color:var(--gris);line-height:1.65;margin:16px 0 22px;max-width:46ch}
+  .hg-historia__tit{font-size:clamp(22px,2.6vw,30px);font-weight:700;line-height:1.15;margin:0;color:#fff;letter-spacing:-.3px}
+  .hg-historia__p{font-size:14.5px;color:rgba(255,255,255,.9);line-height:1.65;margin:16px 0 22px;max-width:46ch}
   .hg-historia__btn{
     align-self:flex-start;display:inline-flex;align-items:center;gap:9px;
-    background:#fff;color:var(--rojo);border:1px solid var(--rojo);
+    background:var(--acento);color:#fff;border:1px solid var(--acento);
     font-size:14px;font-weight:600;border-radius:12px;padding:11px 20px;text-decoration:none;
-    transition:background .15s,transform .08s;
+    transition:background .15s,gap .15s,transform .08s;
   }
-  .hg-historia__btn:hover{background:var(--red-50);transform:translateY(-1px)}
+  .hg-historia__btn:hover{background:#A9772F;border-color:#A9772F;gap:13px;transform:translateY(-1px)}
   .hg-historia__btn svg{width:16px;height:16px}
-  .hg-historia__img{
-    /* Pareja independiente del banner 1: mismo lenguaje terracota, sin quedar
-       acoplada a futuras campañas del carrusel. */
-    background-image:url('banners/banner-historia-v1-pc.jpg');
-    background-size:cover;background-position:center;min-height:300px;
-  }
+  .hg-historia__img{min-height:300px}
   @media(max-width:760px){
     .hg-historia{padding:0 12px}
-    .hg-historia__caja{grid-template-columns:1fr}
-    .hg-historia__img{
-      background-image:url('banners/banner-historia-v1-movil.jpg');
-      min-height:220px;order:-1;
-    }  /* imagen recompuesta para movil, no recorte del horizontal */
+    .hg-historia__caja{
+      grid-template-columns:1fr;
+      background-image:url('banners/banner-historia-v2-movil.jpg');
+    }
+    .hg-historia__img{min-height:220px;order:-1}
   }
 
   /* ---------- franja de GARANTIAS (4 iconos) ---------- */
@@ -890,9 +891,9 @@
 
 <!-- ============================================================
      BLOQUE HISTORIA ("mas que productos...")
-     Texto de marca + boton a la historia, con una pareja visual propia. Usa el
-     mismo lenguaje terracota del primer hero, pero conserva archivos separados
-     para que PC y movil tengan composiciones distintas y no queden acoplados.
+     Tercer banner: una sola superficie terracota continua. Conserva su caja
+     horizontal en PC y su caja vertical alargada en movil; cada formato tiene
+     una composicion propia y archivos independientes del carrusel.
      ============================================================ -->
 <section class="hg-historia" id="historia" aria-label="Nuestra forma de ver lo cotidiano">
   <div class="hg-historia__caja">
@@ -905,7 +906,7 @@
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
       </a>
     </div>
-    <div class="hg-historia__img" role="img" aria-label="MAGANDHI"></div>
+    <div class="hg-historia__img" aria-hidden="true"></div>
   </div>
 </section>
 
