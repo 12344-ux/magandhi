@@ -157,11 +157,12 @@ Reglas:
 - El fondo real de la página es arena `#EFE7DD`. Un banner **nunca puede confundirse con ese fondo**.
 - Superficies base aprobadas para banners:
   - terracota: gradiente de `#79211F` a `#A6332E`;
-  - negro profundo: gradiente de `#111111` a `#1D1D1D`.
+  - negro profundo: gradiente de `#111111` a `#1D1D1D`;
+  - negro-dorado: combinación funcional de `#111111` y `#C28A3A`, con negro bajo el texto y dorado en la zona visual.
 - Crema `#FAF6F1`, tarjeta `#F2ECE4` y arena `#EFE7DD` no se usan como superficie dominante de banner. Pueden aparecer dentro de una fotografía o como detalle, pero el perímetro de la pieza debe distinguirse inequívocamente de la página.
-- Blanco y ámbar se reservan para texto, sello, CTA y detalles de jerarquía.
-- El ámbar es un **detalle pequeño**. Nunca un marco o superficie grande junto al terracota; esa combinación protagonista se percibe como comida rápida y rompe el carácter boutique.
-- Una campaña como “¿de qué color son tus compras?” puede mostrar varios colores en objetos o señales visuales, pero mantiene una superficie base negra o terracota que la ancla a MAGANDHI.
+- Blanco y ámbar sirven para texto, sello, CTA y detalles de jerarquía.
+- El dorado puede ocupar una zona amplia **solo cuando se combina con negro** y el degradado cumple una función de lectura. Nunca funciona como marco o superficie protagonista junto al terracota/rojo; esa combinación se percibe como comida rápida y rompe el carácter boutique.
+- Una campaña como “¿de qué color son tus compras?” puede mostrar varios colores en objetos o señales visuales, anclados por una superficie negra, terracota o negro-dorada.
 - El color particular de un producto puede vivir en la fotografía o en detalles menores, pero no reemplaza la estructura cromática de MAGANDHI.
 - No introducir un color decorativo nuevo sin una función comunicativa clara.
 
@@ -239,6 +240,15 @@ La base se elige por intención de campaña, pero siempre debe separarse del fon
 - Para curaduría, anticipación, tecnología, exclusividad o campañas donde los colores protagonistas necesiten resaltar.
 - Titular y apoyo blancos.
 - El motivo puede usar terracota profundo, manteniendo contraste bajo.
+
+### Negro + dorado MAGANDHI
+
+- Usa exclusivamente negro `#111111` y dorado `#C28A3A`, con tonos intermedios producidos por la mezcla.
+- En PC, el degradado es horizontal: negro estable bajo el texto y dorado hacia el protagonista de la derecha.
+- En móvil, el degradado se rediseña verticalmente: dorado en la zona visual superior y negro en la zona inferior de lectura.
+- El símbolo usa negro sobre la zona dorada; el texto permanece blanco sobre negro.
+- Es una excepción controlada a la regla de “dorado pequeño”: puede ocupar una zona amplia porque está emparejado con negro, nunca con rojo/terracota.
+- La orientación del gradiente responde a la jerarquía de cada formato; no se rota automáticamente el archivo de PC.
 
 La clase heredada `.hg-slide--claro` puede seguir existiendo en el CSS, pero no convierte el crema en una superficie aprobada para campañas nuevas. No se usa sin una decisión explícita del dueño.
 
@@ -353,7 +363,7 @@ Definir, sin inventar promesas:
 - evidencia o explicación mínima;
 - acción esperada y destino real del CTA;
 - protagonista visual;
-- superficie base terracota o negra;
+- superficie base terracota, negra o negro-dorada;
 - recorrido de mirada;
 - tratamiento independiente para PC y móvil.
 
@@ -446,13 +456,13 @@ No declarar “listo” porque la página cargue. Comprobar dimensiones de archi
 - [ ] Los gradientes no presentan bandas, bloques ni degradación visible en el dispositivo real.
 - [ ] No hay texto incrustado en el asset.
 - [ ] Cada archivo pesa menos de 300KB o existe una razón documentada.
-- [ ] El ámbar sigue siendo detalle, no superficie protagonista.
+- [ ] El dorado sigue siendo detalle salvo en una composición negro-dorada aprobada, donde nunca se mezcla como gran superficie con terracota.
 
 ### Implementación
 
 - [ ] Las dos rutas existen y no producen 404.
 - [ ] Los nombres están versionados para evitar caché obsoleta.
-- [ ] La superficie base terracota o negra se distingue claramente del fondo arena.
+- [ ] La superficie base terracota, negra o negro-dorada se distingue claramente del fondo arena.
 - [ ] Los `aria-label` reflejan correctamente `X de N`.
 - [ ] El CTA y el SVG siguen en HTML.
 - [ ] No se rompió el uso táctil, teclado, puntos, flechas ni autoavance.
