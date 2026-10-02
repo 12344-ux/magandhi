@@ -21,7 +21,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="marca.css?v=2">
+<link rel="stylesheet" href="marca.css?v=3">
 
 <!--
   MAGANDHI · portada / home de la tienda.
@@ -48,37 +48,48 @@
     sello "Elegido por MAGANDHI" cuando corresponde, y una estrella opcional para
     los productos destacados. El precio y la disponibilidad tambien se muestran
     en movil (informacion de compra).
-  · Barra fija inferior: solo iconos de contacto (centrado).
+  · Footer completo: navegacion + canales reales (WhatsApp y correo).
 -->
 <style>
   *{box-sizing:border-box}
   /* La paleta vive en marca.css (fuente unica). Aqui solo lo especifico del home. */
-  :root{ --barra-h:60px; }
   html,body{margin:0;padding:0}
   body{
     background:var(--hueso);color:var(--tinta);
     font-family:'Poppins',system-ui,-apple-system,'Segoe UI',Roboto,sans-serif;
     line-height:1.65;-webkit-font-smoothing:antialiased;
-    padding-bottom:var(--barra-h);
   }
   a{color:inherit;text-decoration:none}
 
-  /* ---------- header ---------- */
+  /* ---------- header compacto ----------
+     Sigue la estructura de la referencia: mark a la izquierda y wordmark/tagline
+     centrados. No hay buscador, cuenta ni carrito; una columna vacia a la derecha
+     equilibra visualmente el logo sin inventar funciones que la tienda aun no
+     necesita. */
   .hg-head{
-    display:flex;align-items:center;justify-content:center;
-    padding:26px 24px 6px;
+    max-width:1200px;margin:0 auto;padding:20px 24px 8px;
+    display:grid;grid-template-columns:54px 1fr 54px;align-items:center;
   }
-  .hg-marca{display:flex;flex-direction:column;align-items:center;gap:12px}
-  .hg-marca img{width:76px;height:76px;display:block}
+  .hg-head__mark{display:flex;align-items:center;justify-content:flex-start}
+  .hg-head__mark img{width:46px;height:46px;display:block}
+  .hg-head__equilibrio{width:54px;height:1px}
+  .hg-marca{display:flex;flex-direction:column;align-items:center;gap:8px}
   /* wordmark: todo negro, centrado y AJUSTADO (letter-spacing menor = letras juntas) */
   .hg-word{
-    font-weight:600;font-size:26px;letter-spacing:.16em;color:var(--negro);
+    font-weight:600;font-size:25px;letter-spacing:.16em;color:var(--negro);
     line-height:1;text-indent:.16em; /* compensa el spacing del ultimo caracter para centrar optico */
   }
-  .hg-tag{font-size:10.5px;letter-spacing:.26em;text-transform:uppercase;color:var(--gris-cl);text-indent:.26em}
+  .hg-tag{font-size:9px;letter-spacing:.26em;text-transform:uppercase;color:var(--gris-cl);text-indent:.26em}
+  @media(max-width:760px){
+    .hg-head{padding:14px 14px 6px;grid-template-columns:44px 1fr 44px}
+    .hg-head__mark img{width:38px;height:38px}
+    .hg-head__equilibrio{width:44px}
+    .hg-word{font-size:20px}
+    .hg-tag{font-size:7.5px;letter-spacing:.22em}
+  }
 
   /* ---------- intro corta ---------- */
-  .hg-intro{max-width:620px;margin:14px auto 0;padding:0 24px;text-align:center}
+  .hg-intro{max-width:620px;margin:12px auto 0;padding:0 24px;text-align:center}
   .hg-intro h1{
     font-size:clamp(24px,4vw,34px);font-weight:600;line-height:1.22;margin:0;letter-spacing:-.4px;
   }
@@ -298,35 +309,214 @@
     .hg-sello-abajo{display:inline-flex}
   }
 
-  /* ---------- barra fija inferior ---------- */
-  .hg-barra{
-    position:fixed;left:0;right:0;bottom:0;height:var(--barra-h);z-index:50;
-    background:rgba(17,17,17,.96);backdrop-filter:blur(6px);
-    display:flex;align-items:center;justify-content:center;gap:14px;
-    border-top:1px solid rgba(255,255,255,.08);
+  /* ============================================================
+     ESTRUCTURA NUEVA (fase banners): carrusel hero, bloque historia,
+     franja de garantias y footer completo. Todo con la PALETA REDUCIDA
+     (terracota + ambar acento + blanco/crema), sin colores de categoria.
+     ============================================================ */
+
+  /* ---------- CARRUSEL / BANNER HERO ----------
+     Banner ancho con imagen de fondo (dos recortes: PC 1600x600 ~8:3, movil
+     1080x1080 1:1) y el TEXTO en HTML encima (editable, nitido, con tildes OK).
+     El carrusel pasa de banner con flechas + puntos. */
+  .hg-hero{max-width:1200px;margin:22px auto 0;padding:0 24px}
+  .hg-carrusel{
+    position:relative;border-radius:20px;overflow:hidden;
+    box-shadow:0 14px 40px rgba(17,17,17,.10);
   }
-  /* iconos de contacto: solo simbolos, sin texto */
-  .hg-barra a, .hg-barra span.ico{
-    display:inline-flex;align-items:center;justify-content:center;color:#fff;
-    width:42px;height:42px;border-radius:50%;
-    transition:background .15s,opacity .15s,transform .12s;
+  .hg-slides{display:flex;transition:transform .5s ease;will-change:transform}
+  .hg-slide{
+    position:relative;flex:0 0 100%;min-width:100%;
+    aspect-ratio:1600/600;              /* recorte PC */
+    background-size:cover;background-position:center;
+    display:flex;align-items:center;
   }
-  .hg-barra a{opacity:.9}
-  .hg-barra a:hover{background:rgba(255,255,255,.12);opacity:1;transform:translateY(-2px)}
-  .hg-barra a svg, .hg-barra span.ico svg{width:20px;height:20px}
-  /* canales aun no disponibles: atenuados y sin clic */
-  .hg-barra span.ico{opacity:.28;cursor:default}
+  /* velo para que el texto blanco siempre tenga contraste sobre la imagen */
+  .hg-slide::before{
+    content:"";position:absolute;inset:0;
+    background:linear-gradient(90deg, rgba(17,17,17,.42) 0%, rgba(17,17,17,.12) 48%, rgba(17,17,17,0) 72%);
+  }
+  .hg-slide--claro::before{
+    background:linear-gradient(90deg, rgba(255,255,255,.55) 0%, rgba(255,255,255,.18) 48%, rgba(255,255,255,0) 72%);
+  }
+  .hg-slide__cont{position:relative;z-index:1;max-width:52%;padding:0 clamp(24px,4vw,56px)}
+  .hg-pill{
+    display:inline-flex;align-items:center;gap:7px;
+    background:#fff;color:var(--acento);
+    font-size:11px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;
+    border-radius:999px;padding:6px 13px;box-shadow:0 3px 10px rgba(17,17,17,.12);
+  }
+  .hg-pill svg{width:13px;height:13px}
+  .hg-slide__tit{
+    font-size:clamp(26px,4.2vw,46px);font-weight:700;line-height:1.08;margin:16px 0 10px;
+    letter-spacing:-.5px;color:#fff;
+  }
+  .hg-slide__sub{font-size:clamp(13px,1.5vw,16.5px);line-height:1.5;margin:0 0 22px;color:rgba(255,255,255,.92);max-width:30ch}
+  /* variante clara (banner crema): texto en tinta/terracota */
+  .hg-slide--claro .hg-slide__tit{color:var(--negro)}
+  .hg-slide--claro .hg-slide__sub{color:var(--gris)}
+  .hg-slide__btn{
+    display:inline-flex;align-items:center;gap:9px;
+    background:var(--acento);color:#fff;font-size:14.5px;font-weight:600;
+    border-radius:12px;padding:13px 22px;text-decoration:none;
+    transition:background .18s,gap .18s,transform .08s;
+  }
+  .hg-slide__btn:hover{background:#A9772F;gap:13px}
+  .hg-slide__btn svg{width:17px;height:17px}
+
+  /* flechas */
+  .hg-flecha{
+    position:absolute;right:18px;bottom:18px;z-index:3;
+    width:40px;height:40px;border-radius:50%;border:0;cursor:pointer;
+    background:rgba(255,255,255,.92);color:var(--negro);
+    display:flex;align-items:center;justify-content:center;
+    box-shadow:0 4px 14px rgba(17,17,17,.18);transition:background .15s,transform .1s;
+  }
+  .hg-flecha:hover{background:#fff;transform:scale(1.06)}
+  .hg-flecha svg{width:19px;height:19px}
+  .hg-flecha--prev{right:66px}
+  .hg-flecha--next{right:18px}
+  /* puntos */
+  .hg-puntos{position:absolute;left:0;right:0;bottom:14px;z-index:3;display:flex;justify-content:center;gap:8px}
+  .hg-punto{width:8px;height:8px;border-radius:50%;border:0;cursor:pointer;background:rgba(255,255,255,.55);padding:0;transition:background .15s,width .15s}
+  .hg-punto[aria-current="true"]{background:#fff;width:22px;border-radius:999px}
+  @media(max-width:760px){
+    .hg-hero{padding:0 12px;margin-top:14px}
+    .hg-slide{aspect-ratio:1/1}        /* recorte movil (cuadrado) */
+    .hg-slide__cont{max-width:88%}
+    .hg-slide::before{
+      background:linear-gradient(180deg, rgba(17,17,17,.12) 0%, rgba(17,17,17,.08) 40%, rgba(17,17,17,.58) 100%);
+    }
+    .hg-slide--claro::before{
+      background:linear-gradient(180deg, rgba(255,255,255,.1) 0%, rgba(255,255,255,.3) 55%, rgba(255,255,255,.75) 100%);
+    }
+    .hg-slide{align-items:flex-end}
+    .hg-slide__cont{padding-bottom:34px}
+    /* en el cuadrado movil el contenido va mas apretado: el pill necesita aire
+       bajo el, el titulo un pelin mas chico y las lineas mas juntas para que no
+       se encime con el pill ni con el subtitulo. */
+    .hg-slide__tit{font-size:clamp(23px,7vw,30px);margin:14px 0 8px}
+    .hg-slide__sub{margin-bottom:18px}
+    .hg-pill{font-size:10px;padding:5px 11px}
+    /* las flechas se agrupan abajo a la derecha (como en la referencia), lejos
+       del titulo. En la primera prueba, al quedar centradas a ambos lados,
+       invadian el texto del banner movil. */
+    .hg-flecha{top:auto;bottom:14px;width:34px;height:34px;transform:none}
+    .hg-flecha:hover{transform:scale(1.06)}
+    .hg-flecha--prev{left:auto;right:54px}
+    .hg-flecha--next{right:14px}
+  }
+
+  /* ---------- separador de seccion (titulo centrado con filetes) ---------- */
+  .hg-sep{max-width:1100px;margin:46px auto 6px;padding:0 24px;text-align:center}
+  .hg-sep__k{
+    display:inline-flex;align-items:center;gap:16px;
+    font-size:12.5px;font-weight:600;letter-spacing:.22em;text-transform:uppercase;color:var(--acento);
+  }
+  .hg-sep__k::before,.hg-sep__k::after{content:"";width:46px;height:1px;background:var(--acento-cl)}
+  .hg-sep__d{font-size:13.5px;color:var(--gris-cl);margin:8px 0 0}
+
+  /* ---------- bloque HISTORIA ("mas que productos...") ---------- */
+  .hg-historia{
+    max-width:1100px;margin:50px auto 0;padding:0 24px;
+  }
+  .hg-historia__caja{
+    display:grid;grid-template-columns:1fr 1fr;gap:0;border-radius:20px;overflow:hidden;
+    background:var(--tarjeta);border:1px solid var(--ml-borde);
+  }
+  .hg-historia__txt{padding:clamp(26px,4vw,46px);display:flex;flex-direction:column;justify-content:center}
+  .hg-historia__tit{font-size:clamp(22px,2.6vw,30px);font-weight:700;line-height:1.15;margin:0;color:var(--acento);letter-spacing:-.3px}
+  .hg-historia__p{font-size:14.5px;color:var(--gris);line-height:1.65;margin:16px 0 22px;max-width:46ch}
+  .hg-historia__btn{
+    align-self:flex-start;display:inline-flex;align-items:center;gap:9px;
+    background:#fff;color:var(--rojo);border:1px solid var(--rojo);
+    font-size:14px;font-weight:600;border-radius:12px;padding:11px 20px;text-decoration:none;
+    transition:background .15s,transform .08s;
+  }
+  .hg-historia__btn:hover{background:var(--red-50);transform:translateY(-1px)}
+  .hg-historia__btn svg{width:16px;height:16px}
+  .hg-historia__img{
+    background-size:cover;background-position:center;min-height:300px;
+  }
+  @media(max-width:760px){
+    .hg-historia{padding:0 12px}
+    .hg-historia__caja{grid-template-columns:1fr}
+    .hg-historia__img{min-height:220px;order:-1}  /* imagen arriba en movil */
+  }
+
+  /* ---------- franja de GARANTIAS (4 iconos) ---------- */
+  .hg-garantias{
+    max-width:1100px;margin:46px auto 0;padding:26px 24px;
+    display:grid;grid-template-columns:repeat(4,1fr);gap:20px;
+    border-top:1px solid var(--ml-borde);border-bottom:1px solid var(--ml-borde);
+  }
+  .hg-gar{display:flex;align-items:center;gap:13px}
+  .hg-gar__ic{
+    width:42px;height:42px;border-radius:12px;flex:none;
+    background:var(--acento-sombra);color:var(--acento);
+    display:flex;align-items:center;justify-content:center;
+  }
+  .hg-gar__ic svg{width:21px;height:21px}
+  .hg-gar__t{font-size:13.5px;font-weight:600;line-height:1.2}
+  .hg-gar__d{font-size:12px;color:var(--gris-cl);margin-top:2px}
+  @media(max-width:760px){
+    .hg-garantias{grid-template-columns:repeat(2,1fr);gap:16px 14px;padding:22px 14px}
+    .hg-gar__ic{width:36px;height:36px}
+    .hg-gar__ic svg{width:18px;height:18px}
+    .hg-gar__t{font-size:12px}
+    .hg-gar__d{font-size:11px}
+  }
+
+  /* ---------- FOOTER completo ---------- */
+  .hg-footer{margin-top:52px;background:#fff;border-top:1px solid var(--ml-borde)}
+  .hg-footer__in{
+    max-width:1100px;margin:0 auto;padding:30px 24px;
+    display:flex;align-items:center;justify-content:space-between;gap:20px 28px;flex-wrap:wrap;
+  }
+  .hg-footer__marca{display:flex;align-items:center;gap:11px}
+  .hg-footer__marca img{width:34px;height:34px}
+  .hg-footer__wm{font-weight:600;letter-spacing:.14em;color:var(--negro);font-size:16px}
+  .hg-footer__wm small{display:block;font-size:8.5px;letter-spacing:.24em;color:var(--gris-cl);font-weight:500}
+  .hg-footer__nav{display:flex;gap:22px;flex-wrap:wrap}
+  .hg-footer__nav a{font-size:13.5px;color:var(--gris);text-decoration:none}
+  .hg-footer__nav a:hover{color:var(--rojo)}
+  .hg-footer__social{display:flex;gap:10px}
+  .hg-footer__social a{
+    width:36px;height:36px;border-radius:50%;border:1px solid var(--ml-borde);
+    display:flex;align-items:center;justify-content:center;color:var(--gris);
+    transition:border-color .15s,color .15s,transform .1s;
+  }
+  .hg-footer__social a:hover{border-color:var(--rojo);color:var(--rojo);transform:translateY(-2px)}
+  .hg-footer__social svg{width:17px;height:17px}
+  .hg-footer__legal{
+    border-top:1px solid var(--ml-borde);
+  }
+  .hg-footer__legal-in{
+    max-width:1100px;margin:0 auto;padding:14px 24px;
+    display:flex;align-items:center;justify-content:space-between;gap:12px 20px;flex-wrap:wrap;
+    font-size:12px;color:var(--gris-cl);
+  }
+  .hg-footer__legal-in a{color:var(--gris-cl);text-decoration:none}
+  .hg-footer__legal-in a:hover{color:var(--rojo)}
+  @media(max-width:760px){
+    .hg-footer__in{flex-direction:column;align-items:flex-start;gap:18px;padding:26px 16px}
+    .hg-footer__legal-in{flex-direction:column;align-items:flex-start;padding:14px 16px}
+  }
 </style>
 </head>
 <body>
 
-<!-- header -->
+<!-- header compacto: mark a la izquierda, wordmark centrado. SIN carrito,
+     cuenta ni buscador (no se inventan funciones antes de necesitarlas). -->
 <header class="hg-head">
+  <a class="hg-head__mark" href="index.html" aria-label="MAGANDHI, inicio">
+    <img src="logo-mark-terracota.png" alt="">
+  </a>
   <div class="hg-marca">
-    <img src="logo-mark-terracota.png" alt="MAGANDHI">
     <div class="hg-word">MAGANDHI</div>
     <div class="hg-tag">Hoy mereces lo mejor</div>
   </div>
+  <span class="hg-head__equilibrio" aria-hidden="true"></span>
 </header>
 
 <!-- intro (breve: el producto es el protagonista, no el manifiesto) -->
@@ -334,7 +524,71 @@
   <h1>Ahora, <em>descúbrelo</em>.</h1>
 </div>
 
-<!-- vitrina: grid de productos (color = categoria) -->
+<!-- ============================================================
+     CARRUSEL / BANNER HERO
+     ------------------------------------------------------------
+     Estructura de banner con dos recortes de imagen (PC 1600x600 ~8:3 y movil
+     1080x1080 1:1), elegidos por CSS segun el ancho. El TEXTO va en HTML (no
+     quemado en la imagen): editable, nitido y con tildes correctas. Los banners
+     de banners/ son de RELLENO con la marca; se reemplazan por los reales mas
+     adelante (misma medida).
+     ============================================================ -->
+<section class="hg-hero" aria-label="Destacados">
+  <div class="hg-carrusel" id="hg-carrusel">
+    <div class="hg-slides" id="hg-slides">
+
+      <!-- Slide 1 · terracota (texto blanco) -->
+      <div class="hg-slide" role="group" aria-roledescription="diapositiva" aria-label="1 de 2"
+           style="background-image:url('banners/banner-1-pc.jpg')"
+           data-pc="banners/banner-1-pc.jpg" data-movil="banners/banner-1-movil.jpg">
+        <div class="hg-slide__cont">
+          <span class="hg-pill">
+            <svg viewBox="0 0 24 24" fill="currentColor"><path d="m12 2 3 6.3 6.9 1-5 4.9 1.2 6.8L12 17.8 5.9 21l1.2-6.8-5-4.9 6.9-1z"/></svg>
+            Selección MAGANDHI
+          </span>
+          <h2 class="hg-slide__tit">Pequeños detalles,<br>grandes momentos.</h2>
+          <p class="hg-slide__sub">Productos que te acompañan en lo cotidiano y lo hacen especial.</p>
+          <a class="hg-slide__btn" href="#descubrir">Explorar colección
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+          </a>
+        </div>
+      </div>
+
+      <!-- Slide 2 · crema (texto en tinta) -->
+      <div class="hg-slide hg-slide--claro" role="group" aria-roledescription="diapositiva" aria-label="2 de 2"
+           style="background-image:url('banners/banner-2-pc.jpg')"
+           data-pc="banners/banner-2-pc.jpg" data-movil="banners/banner-2-movil.jpg">
+        <div class="hg-slide__cont">
+          <span class="hg-pill">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m9 12 2 2 4-4"/><circle cx="12" cy="12" r="10"/></svg>
+            Curaduría MAGANDHI
+          </span>
+          <h2 class="hg-slide__tit">Lo que encuentras aquí,<br>está escogido.</h2>
+          <p class="hg-slide__sub">Cada producto revisado por el equipo antes de ofrecerlo.</p>
+          <a class="hg-slide__btn" href="#descubrir">Ver la selección
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+          </a>
+        </div>
+      </div>
+
+    </div>
+    <button class="hg-flecha hg-flecha--prev" id="hg-prev" aria-label="Anterior">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg>
+    </button>
+    <button class="hg-flecha hg-flecha--next" id="hg-next" aria-label="Siguiente">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6l6 6-6 6"/></svg>
+    </button>
+    <div class="hg-puntos" id="hg-puntos" role="tablist" aria-label="Elegir diapositiva"></div>
+  </div>
+</section>
+
+<!-- separador de seccion -->
+<div class="hg-sep" id="descubrir">
+  <span class="hg-sep__k">Hora de descubrir</span>
+  <p class="hg-sep__d">Una pequeña selección para hacer especial lo cotidiano.</p>
+</div>
+
+<!-- vitrina: grid de productos (paleta reducida, estilo Mercado Libre) -->
 <section class="hg-vitrina">
   <!-- GRID DINAMICO: las tarjetas se pintan EN VIVO desde la vista publica
        catalogo_publico. El render (marcado, clases y variables de color) vive en
@@ -568,18 +822,157 @@
   pintarVitrina();
 </script>
 
-<!-- barra fija inferior: solo iconos de contacto -->
-<nav class="hg-barra" aria-label="Canales de contacto">
-  <!-- Correo (activo) -->
-  <a href="mailto:contacto@magandhi.com" aria-label="Escríbenos por correo" title="Correo">
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="m2 7 10 6 10-6"/></svg>
-  </a>
-  <!-- WhatsApp (activo) -->
-  <a href="https://wa.me/573132451188" target="_blank" rel="noopener" aria-label="Escríbenos por WhatsApp" title="WhatsApp">
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M7.9 20A9 9 0 1 0 4 16.1L2 22z"/></svg>
-  </a>
-  <!-- Instagram: retirado del hero a proposito. Se activara mas adelante. -->
-</nav>
+<!-- ============================================================
+     BLOQUE HISTORIA ("mas que productos...")
+     Texto de marca + boton a la historia, con imagen al lado. La imagen es un
+     banner de relleno (misma que el hero crema) hasta tener una real.
+     ============================================================ -->
+<section class="hg-historia" id="historia" aria-label="Nuestra forma de ver lo cotidiano">
+  <div class="hg-historia__caja">
+    <div class="hg-historia__txt">
+      <h2 class="hg-historia__tit">Más que productos,<br>una forma de ver lo cotidiano.</h2>
+      <p class="hg-historia__p">En MAGANDHI creemos que las pequeñas cosas también pueden hacerte
+        sentir bien. Por eso seleccionamos productos que combinan calidad y un toque especial,
+        para que cada día sea un poco mejor que el anterior.</p>
+      <a class="hg-historia__btn" href="#historia">Conoce nuestra historia
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+      </a>
+    </div>
+    <div class="hg-historia__img" style="background-image:url('banners/banner-2-pc.jpg')" role="img" aria-label="MAGANDHI"></div>
+  </div>
+</section>
+
+<!-- ============================================================
+     FRANJA DE GARANTIAS (4 señales de confianza)
+     ============================================================ -->
+<section class="hg-garantias" aria-label="Garantías">
+  <div class="hg-gar">
+    <span class="hg-gar__ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="1" y="3" width="15" height="13" rx="1"/><path d="M16 8h4l3 3v5h-7z"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></svg></span>
+    <div><div class="hg-gar__t">Envíos seguros</div><div class="hg-gar__d">A todo el país.</div></div>
+  </div>
+  <div class="hg-gar">
+    <span class="hg-gar__ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="5" width="20" height="14" rx="2"/><path d="M2 10h20"/></svg></span>
+    <div><div class="hg-gar__t">Pagos confiables</div><div class="hg-gar__d">Procesados por Wompi.</div></div>
+  </div>
+  <div class="hg-gar">
+    <span class="hg-gar__ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z"/></svg></span>
+    <div><div class="hg-gar__t">Atención personalizada</div><div class="hg-gar__d">Estamos para ti.</div></div>
+  </div>
+  <div class="hg-gar">
+    <span class="hg-gar__ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 1 0 2.6-6.4L3 8"/><path d="M3 3v5h5"/></svg></span>
+    <div><div class="hg-gar__t">Cambios y devoluciones</div><div class="hg-gar__d">Según nuestras políticas.</div></div>
+  </div>
+</section>
+
+<!-- ============================================================
+     FOOTER completo
+     MARCA: solo canales que corresponden a esta interfaz -> WhatsApp y correo.
+     SIN Instagram/Facebook/TikTok. El carrito/cuenta/buscador tampoco van
+     (no tienen funcion aun y la tienda no necesita fingir escala).
+     ============================================================ -->
+<footer class="hg-footer" id="contacto">
+  <div class="hg-footer__in">
+    <div class="hg-footer__marca">
+      <img src="logo-mark-terracota.png" alt="MAGANDHI">
+      <div class="hg-footer__wm">MAGANDHI<small>Hoy mereces lo mejor</small></div>
+    </div>
+    <nav class="hg-footer__nav" aria-label="Navegación">
+      <a href="index.html">Inicio</a>
+      <a href="#descubrir">Productos</a>
+      <a href="#historia">Nosotros</a>
+      <a href="#contacto">Contacto</a>
+    </nav>
+    <div class="hg-footer__social">
+      <a href="https://wa.me/573132451188" target="_blank" rel="noopener" aria-label="WhatsApp" title="WhatsApp">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M7.9 20A9 9 0 1 0 4 16.1L2 22z"/></svg>
+      </a>
+      <a href="mailto:contacto@magandhi.com" aria-label="Correo" title="Correo">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="m2 7 10 6 10-6"/></svg>
+      </a>
+    </div>
+  </div>
+  <div class="hg-footer__legal">
+    <div class="hg-footer__legal-in">
+      <span>© 2025–2026 MAGANDHI. Todos los derechos reservados.</span>
+      <span><a href="#">Términos y condiciones</a> · <a href="#">Política de privacidad</a></span>
+    </div>
+  </div>
+</footer>
+
+<!-- ============================================================
+     CARRUSEL · logica (sin dependencias). Dos recortes por slide (PC/movil):
+     el CSS elige por aspect-ratio, pero ademas cambiamos el background-image al
+     recorte correcto segun el ancho para no descargar el que no se usa. Flechas,
+     puntos, teclado, swipe y auto-avance con pausa al interactuar.
+     ============================================================ -->
+<script>
+(function(){
+  var carrusel = document.getElementById('hg-carrusel');
+  var pista = document.getElementById('hg-slides');
+  if(!carrusel || !pista) return;
+  var slides = Array.prototype.slice.call(pista.children);
+  var puntosCont = document.getElementById('hg-puntos');
+  var i = 0, timer = null, PAUSA = 6000;
+  var MOVIL = window.matchMedia('(max-width:760px)');
+
+  // Elige el recorte correcto (PC vs movil) para cada slide.
+  function aplicarRecorte(){
+    slides.forEach(function(s){
+      var url = MOVIL.matches ? s.getAttribute('data-movil') : s.getAttribute('data-pc');
+      if(url) s.style.backgroundImage = "url('" + url + "')";
+    });
+  }
+  aplicarRecorte();
+  if(MOVIL.addEventListener) MOVIL.addEventListener('change', aplicarRecorte);
+
+  // Puntos
+  slides.forEach(function(_, idx){
+    var b = document.createElement('button');
+    b.className = 'hg-punto'; b.setAttribute('role','tab');
+    b.setAttribute('aria-label','Ir a la diapositiva ' + (idx+1));
+    b.addEventListener('click', function(){ ir(idx); reiniciar(); });
+    puntosCont.appendChild(b);
+  });
+  var puntos = Array.prototype.slice.call(puntosCont.children);
+
+  function pintar(){
+    pista.style.transform = 'translateX(' + (-i*100) + '%)';
+    puntos.forEach(function(p, idx){ p.setAttribute('aria-current', idx===i ? 'true':'false'); });
+  }
+  function ir(n){ i = (n + slides.length) % slides.length; pintar(); }
+  function sig(){ ir(i+1); }
+  function ant(){ ir(i-1); }
+
+  document.getElementById('hg-next').addEventListener('click', function(){ sig(); reiniciar(); });
+  document.getElementById('hg-prev').addEventListener('click', function(){ ant(); reiniciar(); });
+
+  // Teclado (cuando el carrusel tiene foco)
+  carrusel.setAttribute('tabindex','0');
+  carrusel.addEventListener('keydown', function(e){
+    if(e.key==='ArrowRight'){ sig(); reiniciar(); }
+    if(e.key==='ArrowLeft'){ ant(); reiniciar(); }
+  });
+
+  // Swipe tactil
+  var x0=null;
+  carrusel.addEventListener('touchstart', function(e){ x0 = e.touches[0].clientX; }, {passive:true});
+  carrusel.addEventListener('touchend', function(e){
+    if(x0===null) return;
+    var dx = e.changedTouches[0].clientX - x0;
+    if(Math.abs(dx) > 40){ (dx<0 ? sig : ant)(); reiniciar(); }
+    x0=null;
+  }, {passive:true});
+
+  // Auto-avance, con respeto a quien prefiere menos movimiento
+  var reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  function arrancar(){ if(!reduce) timer = setInterval(sig, PAUSA); }
+  function reiniciar(){ if(timer){ clearInterval(timer); } arrancar(); }
+  carrusel.addEventListener('mouseenter', function(){ if(timer) clearInterval(timer); });
+  carrusel.addEventListener('mouseleave', reiniciar);
+
+  pintar(); arrancar();
+})();
+</script>
 
 </body>
 </html>
