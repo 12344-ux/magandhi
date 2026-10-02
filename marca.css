@@ -33,6 +33,12 @@
   --acento-cl:#D9AE6E;     /* ámbar claro (tintes, bordes de acento suaves) */
   --acento-sombra:rgba(194,138,58,.16);
 
+  /* ---- Verde de confianza (uso puntual) ----
+     El verde de "Compra verificada". Se usa SOLO para señales concretas de
+     confianza/verificación (nunca como color decorativo general). */
+  --verde:#1B7A46;
+  --verde-sombra:rgba(27,122,70,.14);
+
   /* ---- Neutros estilo Mercado Libre (vitrina en blanco) ----
      El producto se exhibe sobre BLANCO con un borde gris muy tenue y una
      sombra sutil al hover (sin teñir de color). */
