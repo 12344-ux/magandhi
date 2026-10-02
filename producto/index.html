@@ -86,10 +86,14 @@
   a{color:inherit}
 
   /* ---------- barra de confianza ---------- */
+  /* .mg-barra: franja negra de confianza. SOLO visible en MOVIL (fija arriba, con
+     la flecha de retroceso). En PC esta oculta (display:none) y su contenido se
+     muestra en el .mg-prefooter de abajo (ver mas adelante). El @media movil la
+     reactiva con display:flex. */
   .mg-barra{
-    position:relative;
+    position:relative;display:none;
     background:var(--negro);color:#fff;font-size:12.5px;letter-spacing:.3px;
-    display:flex;justify-content:center;gap:30px;padding:9px 16px;flex-wrap:wrap;
+    justify-content:center;gap:30px;padding:9px 16px;flex-wrap:wrap;
   }
   .mg-barra span{display:inline-flex;align-items:center;gap:7px;opacity:.92}
   /* flecha de retroceso DENTRO de la barra negra: unico control de "volver" en
@@ -98,7 +102,7 @@
      que .mg-volver (../index.html, la raiz de la tienda). */
   .mg-barra-volver{
     display:none;align-items:center;justify-content:center;flex:none;
-    color:#fff;text-decoration:none;opacity:.92;
+    color:var(--rojo);text-decoration:none;opacity:.92;
   }
   .mg-barra-volver svg{width:20px;height:20px}
   .mg-barra svg{width:15px;height:15px;flex:none}
@@ -110,6 +114,20 @@
     border-bottom:1px dotted rgba(255,255,255,.5);transition:opacity .15s;
   }
   .mg-barra-btn:hover{opacity:1;border-bottom-color:#fff}
+
+  /* ---------- prefooter de confianza (SOLO PC) ---------- */
+  /* En PC la franja negra de confianza NO va arriba (ahi manda el header blanco
+     sticky): va al final, justo antes del footer, como "prefooter". Mismo lenguaje
+     visual que .mg-barra (fondo negro, texto blanco, iconos). Se oculta en movil
+     (@media max-width:720px -> display:none), donde la franja vive arriba (.mg-barra).
+     Reusa .mg-barra-btn para el boton de Wompi. */
+  .mg-prefooter{
+    background:var(--negro);color:#fff;font-size:12.5px;letter-spacing:.3px;
+    display:flex;justify-content:center;align-items:center;gap:30px;
+    padding:14px 16px;flex-wrap:wrap;margin-top:70px;
+  }
+  .mg-prefooter span{display:inline-flex;align-items:center;gap:7px;opacity:.92}
+  .mg-prefooter svg{width:15px;height:15px;flex:none}
 
   /* ---------- header ---------- */
   /* STICKY EN PC: el header blanco (Volver + logo + nav) queda pegado arriba
@@ -160,21 +178,27 @@
      la izquierda. La flecha (.mg-barra-volver) aparece a la izquierda. z-index por
      debajo del modal de Wompi (z-index:100). */
   @media(max-width:720px){
+    /* SIN scroll horizontal: los 3 elementos (flecha + "Envios nacionales" +
+       "Pagos seguros con Wompi") deben CABER en una sola linea sin deslizar ni
+       cortarse en moviles tipicos (360-414px). Se reduce font-size y gap, y las
+       etiquetas pueden partir en 2 lineas si hace falta (sin nowrap) para que
+       nada quede fuera de la franja. */
     .mg-barra{
-      position:sticky;top:0;z-index:50;
-      flex-wrap:nowrap;justify-content:flex-start;gap:16px;
-      font-size:10.5px;letter-spacing:.2px;padding:8px 14px;
-      overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:none;
+      display:flex;position:sticky;top:0;z-index:50;
+      flex-wrap:nowrap;justify-content:flex-start;gap:10px;
+      font-size:9.5px;letter-spacing:.1px;padding:8px 12px;
     }
-    .mg-barra::-webkit-scrollbar{display:none}
-    .mg-barra span,.mg-barra-btn{white-space:nowrap;flex:none}
-    .mg-barra svg{width:13px;height:13px}
+    .mg-barra span,.mg-barra-btn{flex:0 1 auto;min-width:0}
+    .mg-barra svg{width:12px;height:12px}
     /* la flecha de retroceso se muestra a la izquierda, pegada al borde */
     .mg-barra-volver{display:inline-flex;margin-right:2px}
-    .mg-barra-volver svg{width:18px;height:18px}
+    .mg-barra-volver svg{width:17px;height:17px}
     /* se oculta el primer item para dejar solo 2 mensajes (no se borra el HTML:
        en PC los 3 siguen visibles) */
     .mg-barra-revisado{display:none}
+    /* el prefooter negro es solo para PC: en movil la franja de confianza es la
+       barra sticky de arriba */
+    .mg-prefooter{display:none}
   }
 
   /* ---------- migas ---------- */
@@ -381,11 +405,19 @@
 
   /* ---------- footer ---------- */
   footer{margin-top:70px;border-top:1px solid var(--linea);background:#fff}
+  /* en PC el .mg-prefooter negro ya aporta su propio margen superior justo antes
+     del footer, asi que el footer no agrega otro hueco encima (evita doble espacio) */
+  .mg-prefooter + footer{margin-top:0}
   .mg-foot{max-width:1120px;margin:0 auto;padding:34px 24px;display:flex;justify-content:space-between;align-items:center;gap:20px 24px;flex-wrap:wrap}
   .mg-foot-marca{font-size:12.5px;color:var(--gris-cl);margin:0}
   .mg-foot-links{display:flex;align-items:center;gap:20px;flex-wrap:wrap}
   .mg-foot-links a{color:var(--gris);text-decoration:none;font-size:12.5px}
   .mg-foot-links a:hover{color:var(--rojo)}
+  /* en movil el footer se apila y centra (marca y links centrados) */
+  @media(max-width:720px){
+    .mg-foot{flex-direction:column;align-items:center;text-align:center}
+    .mg-foot-links{justify-content:center}
+  }
 
   /* ---------- modal Wompi ---------- */
   .mg-modal{
@@ -548,7 +580,7 @@
   </a>
   <span class="mg-barra-revisado"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z"/></svg>Cada producto revisado por el equipo</span>
   <span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="1" y="3" width="15" height="13" rx="1"/><path d="M16 8h4l3 3v5h-7z"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></svg>Envíos nacionales</span>
-  <button type="button" class="mg-barra-btn" id="mg-abrir-wompi" aria-haspopup="dialog" aria-controls="mg-modal-wompi"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="5" width="20" height="14" rx="2"/><path d="M2 10h20"/></svg>Pagos seguros con Wompi</button>
+  <button type="button" class="mg-barra-btn mg-abrir-wompi" id="mg-abrir-wompi" aria-haspopup="dialog" aria-controls="mg-modal-wompi"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="5" width="20" height="14" rx="2"/><path d="M2 10h20"/></svg>Pagos seguros con Wompi</button>
 </div>
 
 <!-- header -->
@@ -1001,12 +1033,22 @@
   </div>
 </div>
 
+<!-- prefooter de confianza: SOLO PC (en movil estos mensajes viven en la barra
+     negra sticky de arriba). Franja negra con los 3 mensajes centrados, justo
+     antes del footer. El boton de Wompi usa la clase comun .mg-abrir-wompi (NO
+     repite el id="mg-abrir-wompi", que es unico) para que el mismo script abra el
+     modal desde cualquiera de los dos disparadores. -->
+<div class="mg-prefooter">
+  <span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z"/></svg>Cada producto revisado por el equipo</span>
+  <span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="1" y="3" width="15" height="13" rx="1"/><path d="M16 8h4l3 3v5h-7z"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></svg>Envíos nacionales</span>
+  <button type="button" class="mg-barra-btn mg-abrir-wompi" aria-haspopup="dialog" aria-controls="mg-modal-wompi"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="5" width="20" height="14" rx="2"/><path d="M2 10h20"/></svg>Pagos seguros con Wompi</button>
+</div>
+
 <!-- footer -->
 <footer>
   <div class="mg-foot">
-    <p class="mg-foot-marca"><b style="color:var(--negro)">MAGANDHI</b> · magandhi.com</p>
+    <p class="mg-foot-marca"><b style="color:var(--negro)">MAGANDHI</b> · www.magandhi.com</p>
     <nav class="mg-foot-links">
-      <a href="#">Cómo trabajamos</a>
       <a href="#">Entregas</a>
       <a href="#">Privacidad</a>
       <a href="#">Condiciones</a>
@@ -1632,13 +1674,18 @@
   // Modal "Pagos seguros con Wompi": abrir desde la barra, cerrar con X, clic
   // afuera o Escape. Sin dependencias; accesible (aria-hidden + foco).
   (function(){
-    var abrir  = document.getElementById('mg-abrir-wompi');
+    // puede haber DOS disparadores: el de la barra negra (movil, arriba) y el del
+    // prefooter (PC, abajo). Ambos llevan la clase .mg-abrir-wompi, asi que se
+    // escucha por clase (querySelectorAll), no por id. Se recuerda cual abrio el
+    // modal para devolverle el foco al cerrar.
+    var abridores = document.querySelectorAll('.mg-abrir-wompi');
     var modal  = document.getElementById('mg-modal-wompi');
     var cerrar = document.getElementById('mg-cerrar-wompi');
-    if(!abrir || !modal || !cerrar) return;
-    function mostrar(){ modal.setAttribute('aria-hidden','false'); cerrar.focus(); }
-    function ocultar(){ modal.setAttribute('aria-hidden','true'); abrir.focus(); }
-    abrir.addEventListener('click', mostrar);
+    if(!abridores.length || !modal || !cerrar) return;
+    var ultimoAbridor = null;
+    function mostrar(e){ ultimoAbridor = e.currentTarget; modal.setAttribute('aria-hidden','false'); cerrar.focus(); }
+    function ocultar(){ modal.setAttribute('aria-hidden','true'); if(ultimoAbridor) ultimoAbridor.focus(); }
+    abridores.forEach(function(btn){ btn.addEventListener('click', mostrar); });
     cerrar.addEventListener('click', ocultar);
     modal.addEventListener('click', function(e){ if(e.target === modal) ocultar(); });
     document.addEventListener('keydown', function(e){
