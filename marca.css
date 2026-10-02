@@ -24,10 +24,23 @@
   --cream-100:#F2ECE4; /* fondo de tarjetas sobre el fondo general */
   --gray-500:#6B6660;  /* texto secundario, descripciones */
 
-  /* ---- Acento por producto (se sobreescribe por producto) ---- */
-  --acento:#C9962E;        /* dorado del GRISI Gold */
-  --acento-cl:#E7C56B;
-  --acento-sombra:rgba(201,150,46,.18);
+  /* ---- Acento ÁMBAR de marca (FIJO, igual para toda la tienda) ----
+     Paleta reducida (presentación estilo Mercado Libre): el acento ya NO
+     cambia por categoría; es un solo ámbar cálido de la familia MAGANDHI,
+     que dialoga con el terracota. Se usa en detalles pequeños (filo, sello,
+     estrellas), nunca como marco/fondo grande junto al rojo. */
+  --acento:#C28A3A;        /* ámbar cálido de marca */
+  --acento-cl:#D9AE6E;     /* ámbar claro (tintes, bordes de acento suaves) */
+  --acento-sombra:rgba(194,138,58,.16);
+
+  /* ---- Neutros estilo Mercado Libre (vitrina en blanco) ----
+     El producto se exhibe sobre BLANCO con un borde gris muy tenue y una
+     sombra sutil al hover (sin teñir de color). */
+  --ml-panel:#FFFFFF;             /* fondo donde se exhibe el producto */
+  --ml-borde:rgba(17,17,17,.09);  /* línea tenue de la tarjeta (ML) */
+  --ml-borde-hover:rgba(17,17,17,.16); /* línea un poco más marcada al hover */
+  --ml-sombra:0 1px 3px rgba(17,17,17,.06);          /* reposo */
+  --ml-sombra-hover:0 10px 28px rgba(17,17,17,.12);  /* elevada al hover */
 
   /* ============================================================
      ALIAS semánticos: los nombres que usa el CSS de las páginas

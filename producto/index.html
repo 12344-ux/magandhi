@@ -30,17 +30,24 @@
     referencian con '../' (la del Grisi usa '../../' por estar dos niveles) y el
     import es '../supabase-config.js'.
   · CSS autocontenido. Prefijo de clases mg- para no colisionar.
-  · Sistema de marca: rojo #D32F2F (acento/estructura), negro #111, hueso #FAF7F5, Poppins.
-  · ACENTO DE PRODUCTO: variable --acento (por defecto DORADO); el script la
-    cambia por el color de la CATEGORIA de la fila. Sin tocar el resto del sistema.
+  · Sistema de marca (PALETA REDUCIDA, estilo Mercado Libre): rojo/terracota de
+    marca #A6332E (estructura, botones), AMBAR #C28A3A (acento fijo en detalles),
+    galeria y fondo en BLANCO con bordes gris tenue, negro #111, Poppins.
+  · ACENTO FIJO: la variable --acento es AMBAR y es IGUAL para todo producto; el
+    script YA NO la cambia por categoria. La vista catalogo_publico aun manda los
+    colores por categoria, pero la tienda los ignora a proposito (cambio solo de
+    frontend; Supabase/Campañas intactos).
   · Objetivo de percepcion: "una tienda que llego", no "una tienda empezando".
   · Voz de marca: MAGANDHI / "el equipo". Nunca una persona individual.
 -->
 <style>
   *{box-sizing:border-box}
   :root{
-    --rojo:#D32F2F;
-    --rojo-osc:#B02525;
+    /* MARCA UNIFICADA: el rojo de la pagina de producto ahora es el terracota de
+       marca #A6332E (antes vivia el rojo viejo #D32F2F, incoherente con el home
+       y marca.css). "Nuestra marca es roja". */
+    --rojo:#A6332E;
+    --rojo-osc:#7A2A26;
     --terracota:#A6332E;
     --negro:#111111;
     --tinta:#1C1C1C;
@@ -50,10 +57,18 @@
     --gris-cl:#9A9A9A;
     --linea:rgba(17,17,17,.10);
 
-    /* ---- ACENTO DEL PRODUCTO (dorado por defecto; el script lo ajusta) ---- */
-    --acento:#C9962E;
-    --acento-cl:#E7C56B;
-    --acento-sombra:rgba(201,150,46,.16);
+    /* ---- ACENTO FIJO: ÁMBAR de marca (igual para TODO producto) ----
+       Paleta reducida: el acento YA NO cambia por categoria. Es un solo ambar
+       calido de la familia MAGANDHI, en detalles pequeños (filo de la galeria,
+       sello, estrellas, bloque de curaduria). El script ya NO lo sobreescribe
+       con el color de la categoria. */
+    --acento:#C28A3A;
+    --acento-cl:#D9AE6E;
+    --acento-sombra:rgba(194,138,58,.16);
+
+    /* ---- Neutros estilo Mercado Libre (galeria en blanco) ---- */
+    --ml-borde:rgba(17,17,17,.09);
+    --ml-sombra:0 1px 3px rgba(17,17,17,.06);
   }
   html,body{margin:0;padding:0}
   body{
@@ -139,26 +154,17 @@
   .mg-galeria{position:relative}
   .mg-foto{
     position:relative;border-radius:18px;overflow:hidden;
-    border:1px solid var(--linea);
-    /* BANO DE COLOR del acento (antes blanco plano): un gradiente radial suave
-       da la calidez/brillo del acento (como el panel del home) SIN saturar, para
-       que la foto real del producto siga resaltando cuando se suba. */
-    background:
-      radial-gradient(120% 95% at 50% 0%,
-        var(--acento-sombra) 0%,
-        rgba(255,255,255,.72) 55%,
-        var(--blanco) 100%),
-      var(--blanco);
-    box-shadow:0 18px 40px rgba(17,17,17,.06);
+    /* GALERIA EN BLANCO estilo Mercado Libre: el producto se exhibe sobre fondo
+       blanco plano, con un borde gris muy tenue y una sombra sutil. Se retiro el
+       bano de color y el aro dorado grueso (ese aro grande junto al rojo rompia
+       el tono boutique). */
+    border:1px solid var(--ml-borde);
+    background:var(--blanco);
+    box-shadow:var(--ml-sombra);
     aspect-ratio:1/1;display:flex;align-items:center;justify-content:center;
   }
-  .mg-foto::before{
-    content:"";position:absolute;inset:0;border-radius:18px;pointer-events:none;
-    border:1.5px solid var(--acento-cl);
-    box-shadow:inset 0 0 0 4px var(--acento-sombra);
-  }
   /* imagen real de la galeria (foto principal): cubre el marco cuadrado sin
-     deformarse; queda sobre el bano de color del acento. */
+     deformarse; sobre el blanco. */
   .mg-foto__img{
     position:relative;z-index:1;width:100%;height:100%;
     object-fit:contain;display:block;padding:18px;
@@ -431,14 +437,14 @@
   }
   /* estado invalido tras intentar enviar (lo marca el JS con .mg-campo--error) */
   .mg-campo--error input,
-  .mg-campo--error select{border-color:var(--rojo);box-shadow:0 0 0 3px rgba(211,47,47,.12)}
+  .mg-campo--error select{border-color:var(--rojo);box-shadow:0 0 0 3px rgba(166,51,46,.12)}
   .mg-campo__error{font-size:11.5px;color:var(--rojo);min-height:0;display:none}
   .mg-campo--error .mg-campo__error{display:block}
   /* mensaje de error general (fallo de red / respuesta con error) */
   .mg-form-aviso{
     display:none;align-items:flex-start;gap:8px;margin:2px 0 0;
     background:var(--hueso);color:var(--rojo-osc);
-    border:1px solid rgba(211,47,47,.28);border-radius:11px;
+    border:1px solid rgba(166,51,46,.28);border-radius:11px;
     font-size:13px;padding:10px 12px;line-height:1.45;
   }
   .mg-form-aviso[data-visible="true"]{display:flex}
@@ -1004,15 +1010,12 @@
     if(el) el.textContent = texto;
   }
 
-  // Aplica el acento de la categoria (colores de la fila) sobre la pagina, sin
-  // tocar el resto del sistema (las variables --acento gobiernan galeria, sello,
-  // curaduria, etc.).
-  function aplicarAcento(fila){
-    const raiz = document.documentElement.style;
-    if(fila.color_fuerte)  raiz.setProperty('--acento', fila.color_fuerte);
-    if(fila.color_claro)   raiz.setProperty('--acento-cl', fila.color_claro);
-    if(fila.color_sombra)  raiz.setProperty('--acento-sombra', fila.color_sombra);
-  }
+  // PALETA REDUCIDA: el acento es FIJO (ámbar de marca, definido en el :root de
+  // esta pagina). Ya NO se sobreescribe con el color de la categoria. La vista
+  // catalogo_publico aun manda color_fuerte/claro/sombra, pero la tienda los
+  // IGNORA a proposito (Opcion A: cambio solo de frontend, sin tocar Supabase/
+  // Campañas). Si mas adelante se limpia el back-office, esos campos se podran
+  // retirar sin afectar esta pagina.
 
   // Estrella opcional dentro del sello (SVG de estrella rellena; hereda el color
   // del sello via .mg-sello svg). Reproduce el simbolo del home sin tocar clases.
@@ -1221,7 +1224,7 @@
       // Se guarda la fila para los botones de compra y WhatsApp.
       filaProducto = data;
 
-      aplicarAcento(data);
+      // (acento fijo de marca; ya no se aplica color por categoria)
       pintarSello(data);
       set('mg-titulo', data.nombre || '');
       document.title = (data.nombre ? data.nombre + ' · MAGANDHI' : 'Producto · MAGANDHI');
