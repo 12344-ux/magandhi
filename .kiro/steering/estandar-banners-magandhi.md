@@ -69,7 +69,7 @@ Reglas duras:
   - `banner-curaduria-v1-pc.webp`
   - `banner-curaduria-v1-movil.webp`
 - No sobrescribir un nombre publicado si puede quedar en caché. Subir versión (`v2`) y cambiar las rutas en HTML.
-- No reutilizar un asset del carrusel en otra sección. Hoy `banner-2-pc.jpg` también aparece en Historia: antes de reemplazarlo, desacoplar ese uso o crear un identificador nuevo para no cambiar dos zonas sin querer.
+- No reutilizar un asset del carrusel en otra sección. Aunque dos piezas compartan exactamente el mismo lenguaje visual, cada una conserva su propia pareja de archivos. Historia ya usa assets terracota independientes para que una campaña futura no cambie dos zonas por accidente.
 
 ## 4. Retícula y zonas seguras
 
@@ -316,7 +316,7 @@ No declarar “listo” porque el código compile o la página cargue. Comprobar
 - Poner dos CTA con el mismo peso.
 - Usar “compra ya”, contadores o urgencia sin fundamento real.
 - Hablar como emprendimiento personal o explicar que la tienda está empezando.
-- Sobrescribir `banner-2-pc.jpg` sin notar que hoy también afecta Historia.
+- Reutilizar el mismo archivo en el carrusel y en Historia, dejando dos zonas acopladas por accidente.
 - Cambiar la mecánica completa del carrusel dentro de una tarea de contenido.
 
 ## 10. Lista de control obligatoria
@@ -349,7 +349,7 @@ No declarar “listo” porque el código compile o la página cargue. Comprobar
 - [ ] Los `aria-label` reflejan correctamente `X de N`.
 - [ ] El CTA y el SVG siguen en HTML.
 - [ ] No se rompió el uso táctil, teclado, puntos, flechas ni autoavance.
-- [ ] No se modificó accidentalmente Historia u otra sección por compartir asset.
+- [ ] Carrusel, Historia y cualquier otra sección conservan parejas de assets independientes.
 
 ### Verificación responsive y accesible
 
