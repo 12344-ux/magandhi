@@ -1,20 +1,28 @@
-# Logo nuevo de MAGANDHI
+# Logo oficial de MAGANDHI
 
-Esta carpeta es el hogar del **logo oficial nuevo** de la tienda.
+Esta carpeta guarda el **logo vectorial** de la tienda (la fuente de todos los íconos).
 
-## Sube aquí el archivo
+## Archivos
 
-Desde GitHub, dentro de esta carpeta (`marca/logo/`):
-**Add file → Upload files**, arrastra el archivo y confirma con *Commit changes*.
+- **`logo-magandhi.svg`** — el logo oficial, color de marca **terracota `#A6332E`**.
+  Es la FUENTE: de aquí se generan todos los PNG del sitio.
+- `Rebranding Magandhi.svg` — el vector original tal como se subió (venía en
+  `#A8332C`). Se conserva como referencia; el que manda es `logo-magandhi.svg`.
 
-## Recomendaciones
+## Cómo regenerar los íconos del sitio
 
-- Si tienes el vectorial, sube el **`.svg`** (es el ideal: escala sin perder nitidez
-  y pesa poco). Nombre sugerido sin espacios ni mayúsculas, por ejemplo:
-  `logo-magandhi.svg`.
-- Si además tienes versiones en `.png` (fondo transparente), súbelas también
-  (p. ej. `logo-magandhi.png`), útiles para favicon / redes.
+Si se edita el logo o su color, se vuelven a generar los PNG corriendo, **desde la
+raíz del repo**:
 
-> El logo anterior (`logo_vector 1.svg`, en la raíz) se retiró: no estaba enlazado en
-> ninguna página, así que borrarlo no rompió nada. Cuando el logo nuevo esté arriba,
-> lo conectaremos a las páginas de la tienda en el rediseño.
+```
+pip install cairosvg Pillow
+python3 marca/generar_assets.py
+```
+
+Eso regenera, con el mismo nombre/tamaño que usa la tienda:
+`favicon.png`, `icono-app-180.png`, `icono-app.png`, `logo.png` y
+`logo-mark-terracota.png`.
+
+> Al cambiar los íconos, subir el `?v=N` en los `<link>` de `index.html`,
+> `producto/index.html` y en `site.webmanifest` para que los navegadores dejen de
+> servir la versión cacheada vieja.
