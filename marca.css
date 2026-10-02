@@ -20,9 +20,16 @@
 
   /* ---- Neutros ---- */
   --black-900:#111111; /* texto principal, footer */
-  --cream-50:#FAF6F1;  /* FONDO GENERAL (reemplaza blanco puro) */
+  --cream-50:#FAF6F1;  /* crema casi-blanco (usado como "blanco" de marca) */
   --cream-100:#F2ECE4; /* fondo de tarjetas sobre el fondo general */
   --gray-500:#6B6660;  /* texto secundario, descripciones */
+
+  /* ---- Fondo de pagina (arena calido) ----
+     Fondo general de la tienda. ARENA CALIDO para que las tarjetas de producto
+     (blanco puro --ml-panel #FFFFFF) contrasten y resalten; antes el fondo era
+     tan claro (#FAF6F1) que los productos se perdian. Solo afecta al fondo de
+     pagina (body): las tarjetas blancas NO cambian. */
+  --fondo-pagina:#EFE7DD;
 
   /* ---- Acento ÁMBAR de marca (FIJO, igual para toda la tienda) ----
      Paleta reducida (presentación estilo Mercado Libre): el acento ya NO
