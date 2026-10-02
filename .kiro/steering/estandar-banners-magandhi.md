@@ -118,10 +118,13 @@ Reglas duras:
 ### Historia · móvil — 1080 × 1854
 
 - Es un lienzo vertical alargado, no un cuadrado del hero.
+- Se trata como **una segunda pieza completa**, casi otro banner: no se deriva ampliando, estirando ni recortando el JPEG de PC.
 - El primer tramo reserva aire para el motivo visual; el texto ocupa el tramo inferior sin cambiar la altura existente de la tarjeta.
+- El motivo se renderiza desde el SVG oficial o desde una fuente de resolución suficiente y se compone específicamente para la zona superior derecha.
 - La superficie cromática continúa detrás de motivo, título, párrafo y CTA: no aparece un panel arena o crema debajo.
-- El motivo se recompone para el formato vertical y permanece hacia la derecha, sin invadir la lectura.
+- El motivo debe percibirse completo en la zona visual; no basta con que el archivo correcto cargue si en pantalla solo queda visible un arco o fragmento accidental.
 - Conservar la estructura actual que produce aproximadamente `351 × 602px` a 390px de viewport.
+- Los gradientes planos deben llevar microtextura controlada o una exportación equivalente que evite banding visible; calidad técnica y peso se equilibran sin superar 300KB.
 
 ## 5. Dirección visual
 
@@ -373,7 +376,9 @@ Eliminar todo lo que no sostenga la idea principal.
 ### Paso 5 — Diseñar las dos construcciones
 
 - Crear PC en la medida exacta del espacio elegido.
-- Crear móvil desde el mismo concepto, pero recomponiendo escala, posición y zonas seguras para su propia proporción.
+- Crear móvil como una composición autónoma desde las fuentes originales —SVG, fotografía o ilustración—, no transformando el JPG exportado para PC.
+- Recomponer escala, posición, cantidad de aire y zonas seguras para su propia proporción.
+- En espacios complejos como Historia, asumir desde el principio que se están diseñando **dos banners coordinados**, no un banner y su recorte.
 - Mantener protagonista, luz, tono y significado; no las mismas coordenadas.
 - Mantener una superficie base aprobada que se distinga del arena real.
 - No incrustar copy en la imagen.
@@ -401,6 +406,9 @@ No declarar “listo” porque la página cargue. Comprobar dimensiones de archi
 - Diseñar un volante con cinco mensajes dentro del banner.
 - Quemar el copy en la imagen.
 - Usar el mismo recorte en PC y móvil.
+- Ampliar o estirar un JPEG de PC para fabricar la versión móvil.
+- Dar por aprobado un móvil porque sus dimensiones son correctas aunque el motivo haya quedado fuera del lienzo.
+- Comprimir un gradiente hasta producir bandas visibles.
 - Centrar el producto justo debajo del texto.
 - Llenar el espacio negativo con adornos sin función.
 - Usar dorado/ámbar como aro, marco o fondo protagonista junto al terracota.
@@ -431,9 +439,11 @@ No declarar “listo” porque la página cargue. Comprobar dimensiones de archi
 - [ ] La pareja coincide con el perfil del espacio: hero `1600×600 + 1080×1080` o Historia `1600×478 + 1080×1854`.
 - [ ] No se cambió la proporción ni el espacio renderizado existente.
 - [ ] Ninguna dimensión supera 2000px.
-- [ ] Móvil fue recompuesto, no recortado automáticamente.
+- [ ] Móvil fue compuesto desde fuentes originales, no recortado ni ampliado desde el JPG de PC.
+- [ ] El motivo principal se percibe completo y con intención; no queda reducido a un fragmento accidental.
 - [ ] PC deja aire a la izquierda y protagonista a la derecha.
 - [ ] Móvil protege la zona inferior del texto.
+- [ ] Los gradientes no presentan bandas, bloques ni degradación visible en el dispositivo real.
 - [ ] No hay texto incrustado en el asset.
 - [ ] Cada archivo pesa menos de 300KB o existe una razón documentada.
 - [ ] El ámbar sigue siendo detalle, no superficie protagonista.
