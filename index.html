@@ -269,39 +269,47 @@
        lo esencial para no saturar: categoria (con su color) + nombre + sello. El
        hook, el precio y el boton NO se muestran aqui (se ven al entrar al producto). */
     .hg-vitrina{padding:0 12px}
-    /* ESTRUCTURA FIJA MOVIL (reemplaza el masonry Pinterest): grid REGULAR de
-       6 columnas con "3 arriba + 2 abajo", la estructura de los mockups del
-       dueno. Pensada para los 5 productos actuales:
-         - las 3 PRIMERAS tarjetas ocupan 2 columnas cada una (2+2+2 = fila de 3),
-           tarjetas pequenas arriba;
-         - las 2 SIGUIENTES ocupan 3 columnas cada una (3+3 = fila de 2),
-           tarjetas "grandecitas" (media columna) abajo, mas altas.
+    /* ESTRUCTURA FIJA MOVIL "2-1-2" (reemplaza el 3+2): grid REGULAR de
+       2 columnas iguales, pensada para los 5 productos actuales:
+         - Fila 1: tarjetas 1 y 2 lado a lado (verticales normales).
+         - Fila 2: la tarjeta 3 SOLA a todo el ancho, como ficha DESTACADA
+           HORIZONTAL (foto a la izquierda + texto a la derecha).
+         - Fila 3: tarjetas 4 y 5 lado a lado (verticales normales, iguales a 1 y 2).
        Se resuelve SOLO con CSS :nth-child sobre .hg-tarjeta (el JS de render no
        se toca); las tarjetas comparten clase y se pintan en orden. */
     .hg-grid{
-      display:grid;grid-template-columns:repeat(6,1fr);
+      display:grid;grid-template-columns:repeat(2,1fr);
       column-gap:8px;row-gap:10px;
       align-items:start;
     }
 
-    /* por defecto (fila de arriba, 3 tarjetas pequenas): cada una 2 columnas. */
+    /* por defecto (tarjetas 1,2,4,5 verticales): cada una 1 columna. */
     .hg-tarjeta{
       flex-direction:column;height:auto;border-radius:14px;
-      grid-column:span 2;
+      grid-column:span 1;
     }
-    /* 4a y 5a tarjetas (fila de abajo, 2 "grandecitas"): cada una 3 columnas. */
-    .hg-tarjeta:nth-child(4),
-    .hg-tarjeta:nth-child(5){
-      grid-column:span 3;
+    /* 3a tarjeta (centro): ocupa las 2 columnas y se vuelve HORIZONTAL
+       (foto a la izquierda + texto a la derecha). */
+    .hg-tarjeta:nth-child(3){
+      grid-column:1 / -1;
+      flex-direction:row;height:160px;
     }
 
     .hg-foto{flex:none;height:150px}
-    /* las "grandecitas" de abajo muestran un poco mas de detalle: foto mas alta. */
-    .hg-tarjeta:nth-child(4) .hg-foto,
-    .hg-tarjeta:nth-child(5) .hg-foto{height:190px}
-    .hg-tarjeta:nth-child(4) .hg-foto img,
-    .hg-tarjeta:nth-child(5) .hg-foto img{max-height:170px}
     .hg-foto img{max-height:130px;max-width:80%}
+    /* foto de la central horizontal: mitad izquierda aprox, separador VERTICAL
+       (border-right) en lugar del border-bottom que apila foto sobre texto. */
+    .hg-tarjeta:nth-child(3) .hg-foto{
+      width:44%;height:100%;
+      border-bottom:0;border-right:1px solid var(--ml-borde);
+    }
+    /* texto de la central: ocupa el resto y se centra verticalmente respecto
+       a la foto de al lado. Tipografia sobria, coherente con el resto. */
+    .hg-tarjeta:nth-child(3) .hg-cont{
+      flex:1;justify-content:center;
+    }
+    .hg-tarjeta:nth-child(3) .hg-nom{font-size:15.5px}
+    .hg-tarjeta:nth-child(3) .hg-meta{font-size:12px}
     .hg-foto__ph{width:84px;height:84px;border-radius:18px}
     .hg-foto__ph svg{width:38px;height:38px}
     .hg-medalla{
