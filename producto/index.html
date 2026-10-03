@@ -4,12 +4,10 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Producto · MAGANDHI</title>
-<meta name="description" content="Producto escogido y revisado por el equipo de MAGANDHI.">
-<!-- Se MANTIENE noindex: el titulo, precio, descripcion y ficha vienen EN VIVO
-     de Campanas (catalogo_publico) segun el ?slug= o ?id= de la URL, pero las
-     resenas siguen siendo de EJEMPLO (igual que en la pagina del Grisi).
-     Indexar resenas inventadas seria incoherente con "nada inventado". QUITAR el
-     noindex cuando las resenas sean reales. -->
+<meta name="description" content="Producto elegido y revisado por el equipo de MAGANDHI.">
+<!-- Se mantiene noindex mientras la ficha dinámica completa su etapa de
+     estabilización y todavía no existe metadata/canonical por producto. Las
+     opiniones de ejemplo fueron retiradas: solo se publicarán datos reales. -->
 <meta name="robots" content="noindex, nofollow">
 <link rel="icon" type="image/png" href="../favicon.png?v=4">
 <meta name="theme-color" content="#A6332E">
@@ -25,8 +23,8 @@
   de la URL (magandhi.com/producto/?slug=... o magandhi.com/producto/?id=...).
   DATOS: titulo, subtitulo, precio, descripcion, "Por que esta en MAGANDHI",
   "Sobre este producto", la ficha y la GALERIA se rellenan EN VIVO desde Campanas
-  (ver el script del final). Las resenas siguen siendo de ejemplo, por eso se
-  mantiene el noindex (ver arriba): se quitara cuando las resenas sean reales.
+  (ver el script del final). Las opiniones permanecen en estado vacío hasta
+  que exista una fuente de compras verificadas; no se publican ejemplos.
   · Esta pagina vive en magandhi/producto/ (UN nivel bajo la raiz): los assets se
     referencian con '../' (la del Grisi usa '../../' por estar dos niveles) y el
     import es '../supabase-config.js'.
@@ -46,9 +44,8 @@
 <style>
   *{box-sizing:border-box}
   :root{
-    /* MARCA UNIFICADA: el rojo de la pagina de producto ahora es el terracota de
-       marca #A6332E (antes vivia el rojo viejo #D32F2F, incoherente con el home
-       y marca.css). "Nuestra marca es roja". */
+    /* Identidad comercial vigente; estos alias locales preservan el blanco puro
+       de superficies de producto mientras marca.css aporta los tokens globales. */
     --rojo:#A6332E;
     --rojo-osc:#7A2A26;
     --terracota:#A6332E;
@@ -90,6 +87,7 @@
     line-height:1.65;-webkit-font-smoothing:antialiased;
   }
   a{color:inherit}
+  [hidden]{display:none!important}
 
   /* ---------- barra de confianza ---------- */
   /* .mg-barra: franja negra de confianza. SOLO visible en MOVIL (fija arriba, con
@@ -172,7 +170,6 @@
   }
 
   .mg-word{font-weight:600;font-size:20px;letter-spacing:.16em;color:var(--negro);line-height:1}
-  .mg-word i{color:var(--terracota);font-style:normal}
   .mg-nav{display:flex;gap:24px;font-size:14px;font-weight:500}
   .mg-nav a{text-decoration:none;color:var(--tinta);opacity:.8}
   .mg-nav a:hover{opacity:1;color:var(--rojo)}
@@ -346,6 +343,11 @@
   }
   .mg-nodisp[data-visible="true"]{display:inline-flex}
   .mg-nodisp svg{width:16px;height:16px;flex:none;color:var(--acento)}
+  body.mg-sin-producto .mg-ficha{grid-template-columns:1fr;max-width:720px}
+  body.mg-sin-producto .mg-galeria,
+  body.mg-sin-producto .mg-info > :not(.mg-nodisp),
+  body.mg-sin-producto .mg-detalle,
+  body.mg-sin-producto .mg-resenas{display:none!important}
 
   .mg-estrellas{display:flex;align-items:center;gap:8px;font-size:13px;color:var(--gris);margin:0 0 22px}
   .mg-estrellas .s{display:inline-flex;color:var(--acento)}
@@ -394,53 +396,18 @@
   .mg-detalle h2{font-size:19px;font-weight:600;margin:0 0 14px}
   .mg-detalle p{font-size:14.5px;color:#333;margin:0 0 14px}
   .mg-tabla{width:100%;border-collapse:collapse;font-size:14px}
-  .mg-tabla td{padding:11px 4px;border-bottom:1px solid var(--linea)}
-  .mg-tabla td:first-child{color:var(--gris);width:44%}
-  .mg-tabla td:last-child{font-weight:500}
+  .mg-tabla th,.mg-tabla td{padding:11px 4px;border-bottom:1px solid var(--linea)}
+  .mg-tabla th{color:var(--gris);width:44%;font-weight:400;text-align:left}
+  .mg-tabla td{font-weight:500}
 
-  /* ---------- reseñas ---------- */
+  /* ---------- opiniones ---------- */
   .mg-resenas{max-width:1120px;margin:56px auto 0;padding:0 24px}
-  .mg-resenas__cab{display:flex;align-items:flex-end;justify-content:space-between;gap:16px;flex-wrap:wrap;margin-bottom:20px}
+  .mg-resenas__cab{margin-bottom:20px}
   .mg-resenas h2{font-size:22px;font-weight:600;margin:0}
-  .mg-prom{display:flex;align-items:center;gap:14px}
-  .mg-prom b{font-size:34px;font-weight:600;line-height:1}
-  .mg-prom .s{display:inline-flex;color:var(--acento)}
-  .mg-prom .s svg{width:18px;height:18px}
-  .mg-prom span{font-size:13px;color:var(--gris)}
-  .mg-grid-r{display:grid;grid-template-columns:repeat(2,1fr);gap:16px}
-  @media(max-width:720px){.mg-grid-r{grid-template-columns:1fr}}
-  /* contorno de la tarjeta de resena = color de la CATEGORIA del producto
-     (via --acento-cl). Las estrellas NO cambian (ver abajo). */
-  .mg-resena{background:var(--blanco);border:1px solid var(--acento-cl);border-radius:14px;padding:18px 20px;
-    transition:transform .12s ease, box-shadow .12s ease, border-color .12s ease}
-  /* eleva sutilmente al pasar el cursor */
-  .mg-resena:hover{transform:translateY(-3px);box-shadow:0 10px 26px rgba(17,17,17,.09);border-color:var(--acento-cl)}
-  .mg-resena__top{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px}
-  .mg-resena__pers{display:flex;align-items:center;gap:11px}
-  .mg-avatar{width:38px;height:38px;border-radius:50%;background:var(--acento-sombra);color:var(--acento);
-    display:flex;align-items:center;justify-content:center;font-weight:600;font-size:15px}
-  .mg-resena__nom{font-size:14px;font-weight:600;line-height:1.1}
-  .mg-resena__ver{font-size:11.5px;color:var(--verde);display:flex;align-items:center;gap:4px}
-  .mg-resena__ver svg{width:13px;height:13px}
-  .mg-resena .s{display:inline-flex;color:var(--acento)}
-  .mg-resena .s svg{width:14px;height:14px}
-  .mg-resena p{font-size:14px;color:#333;margin:8px 0 0}
-  .mg-resena__fecha{font-size:12px;color:var(--gris-cl);margin-top:10px}
+  .mg-grid-r{display:grid;grid-template-columns:1fr;gap:16px}
+  .mg-resena{background:var(--blanco);border:1px solid var(--acento-cl);border-radius:14px;padding:18px 20px}
   .mg-resena--vacia{border-style:dashed;text-align:center;color:var(--gris);font-size:14px;display:flex;flex-direction:column;gap:10px;align-items:center;justify-content:center;padding:30px}
   .mg-resena--vacia svg{width:28px;height:28px;color:var(--acento)}
-  /* boton 'ver todas las opiniones' bajo el grid de resenas */
-  .mg-vertodas{display:flex;justify-content:center;margin-top:24px}
-  .mg-vertodas a{
-    display:inline-flex;align-items:center;gap:8px;
-    font-size:14px;font-weight:600;color:var(--tinta);text-decoration:none;
-    /* borde mas definido (antes var(--linea) al 10% se perdia sobre el hueso):
-       gris medio visible + sombra sutil para que el boton se note e invite. */
-    background:#fff;border:1px solid rgba(17,17,17,.22);border-radius:12px;padding:12px 24px;
-    box-shadow:0 1px 3px rgba(17,17,17,.06);
-    transition:border-color .15s,color .15s,box-shadow .15s,transform .08s;
-  }
-  .mg-vertodas a:hover{border-color:var(--rojo);color:var(--rojo);box-shadow:0 6px 16px rgba(17,17,17,.10);transform:translateY(-1px)}
-  .mg-vertodas svg{width:16px;height:16px}
 
   /* ---------- footer ---------- */
   footer{margin-top:70px;border-top:1px solid var(--linea);background:#fff}
@@ -634,13 +601,13 @@
     </a>
     <a class="mg-marca" href="../index.html">
       <img src="../logo-mark-terracota.png" alt="MAGANDHI">
-      <span class="mg-word">MAG<i>A</i>NDHI</span>
+      <span class="mg-word">MAGANDHI</span>
     </a>
   </div>
   <nav class="mg-nav">
-    <a href="#">Productos</a>
-    <a href="#">Cómo trabajamos</a>
-    <a href="#">Contacto</a>
+    <a href="../index.html#descubrir">Productos</a>
+    <a href="../index.html#historia">Cómo trabajamos</a>
+    <a href="../index.html#contacto">Contacto</a>
   </nav>
 </header>
 
@@ -655,7 +622,7 @@
       <div class="mg-foto__contenido" id="mg-foto-contenido" aria-live="polite">
         <div class="mg-foto__ph">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="9" cy="9" r="2"/><path d="m21 15-3.09-3.09a2 2 0 0 0-2.82 0L6 21"/></svg>
-          Aquí va la foto real del producto<br><small>(la sube el equipo)</small>
+          Imagen no disponible
         </div>
       </div>
       <button type="button" class="mg-galeria-flecha mg-galeria-flecha--prev" id="mg-galeria-prev" aria-label="Imagen anterior" hidden>
@@ -679,13 +646,13 @@
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 8v4"/><path d="M12 16h.01"/></svg>
       Este producto no está disponible por ahora.
     </div>
-    <!-- El sello "Escogido por MAGANDHI" se MUESTRA u OCULTA segun sello_elegido
+    <!-- El sello "Elegido por MAGANDHI" se MUESTRA u OCULTA segun sello_elegido
          de la fila (coherente con el home). La estrella opcional (segun fila.estrella)
          la inserta el script al inicio del sello. Marcado/clases mg- INTACTOS;
          solo alterna visibilidad y la estrella segun el dato. -->
     <span class="mg-sello" id="mg-sello" hidden>
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m9 12 2 2 4-4"/><circle cx="12" cy="12" r="10"/></svg>
-      Escogido por MAGANDHI
+      Elegido por MAGANDHI
     </span>
     <h1 class="mg-titulo" id="mg-titulo">Producto</h1>
     <p class="mg-sub" id="mg-sub">Cargando información del producto…</p>
@@ -704,25 +671,15 @@
       Agotado por ahora
     </div>
 
-    <div class="mg-estrellas">
-      <span class="s">
-        <svg viewBox="0 0 24 24" fill="currentColor"><path d="m12 2 3 6.3 6.9 1-5 4.9 1.2 6.8L12 17.8 5.9 21l1.2-6.8-5-4.9 6.9-1z"/></svg>
-        <svg viewBox="0 0 24 24" fill="currentColor"><path d="m12 2 3 6.3 6.9 1-5 4.9 1.2 6.8L12 17.8 5.9 21l1.2-6.8-5-4.9 6.9-1z"/></svg>
-        <svg viewBox="0 0 24 24" fill="currentColor"><path d="m12 2 3 6.3 6.9 1-5 4.9 1.2 6.8L12 17.8 5.9 21l1.2-6.8-5-4.9 6.9-1z"/></svg>
-        <svg viewBox="0 0 24 24" fill="currentColor"><path d="m12 2 3 6.3 6.9 1-5 4.9 1.2 6.8L12 17.8 5.9 21l1.2-6.8-5-4.9 6.9-1z"/></svg>
-        <svg viewBox="0 0 24 24" fill="currentColor"><path d="m12 2 3 6.3 6.9 1-5 4.9 1.2 6.8L12 17.8 5.9 21l1.2-6.8-5-4.9 6.9-1z"/></svg>
-      </span>
-      4.8 · <a href="#resenas">12 opiniones</a>
+    <div class="mg-estrellas mg-estrellas--vacia" aria-label="Este producto aún no tiene opiniones">
+      Aún no hay opiniones verificadas.
     </div>
 
-    <p class="mg-desc" id="mg-desc">
-      Producto escogido y revisado por el equipo de MAGANDHI antes de ofrecerlo.
-    </p>
+    <p class="mg-desc" id="mg-desc" hidden></p>
 
-    <div class="mg-curaduria">
+    <div class="mg-curaduria" id="mg-curaduria-bloque" hidden>
       <h3><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z"/></svg> Por qué está en MAGANDHI</h3>
-      <p id="mg-curaduria">El equipo revisó este producto antes de ofrecerlo: verificamos que sea original, que esté
-      dentro de su fecha y que la presentación llegue en buen estado. Si algo no cumple, no entra.</p>
+      <p id="mg-curaduria"></p>
     </div>
 
     <div class="mg-cta">
@@ -738,21 +695,15 @@
   </div>
 </section>
 
-<!-- detalle -->
-<section class="mg-detalle">
-  <div>
+<!-- detalle: cada bloque aparece solo si Campañas aporta contenido real -->
+<section class="mg-detalle" id="mg-detalle" hidden>
+  <div id="mg-sobre-bloque" hidden>
     <h2>Sobre este producto</h2>
-    <div id="mg-sobre">
-      <p>MAGANDHI describe el producto tal como es: te contamos qué contiene y para qué tipo de uso
-      está pensado, sin prometer resultados que no podamos sostener. La información de ingredientes y
-      modo de uso viene del fabricante y está impresa en el envase.</p>
-    </div>
+    <div id="mg-sobre"></div>
   </div>
-  <div>
+  <div id="mg-ficha-bloque" hidden>
     <h2>Ficha</h2>
-    <table class="mg-tabla" id="mg-ficha">
-      <tr><td>Disponibilidad</td><td>Entrega local</td></tr>
-    </table>
+    <table class="mg-tabla" id="mg-ficha"></table>
   </div>
 </section>
 
@@ -760,112 +711,17 @@
 <section class="mg-resenas" id="resenas">
   <div class="mg-resenas__cab">
     <h2>Opiniones de quienes compraron</h2>
-    <div class="mg-prom">
-      <b>4.8</b>
-      <div>
-        <span class="s">
-          <svg viewBox="0 0 24 24" fill="currentColor"><path d="m12 2 3 6.3 6.9 1-5 4.9 1.2 6.8L12 17.8 5.9 21l1.2-6.8-5-4.9 6.9-1z"/></svg>
-          <svg viewBox="0 0 24 24" fill="currentColor"><path d="m12 2 3 6.3 6.9 1-5 4.9 1.2 6.8L12 17.8 5.9 21l1.2-6.8-5-4.9 6.9-1z"/></svg>
-          <svg viewBox="0 0 24 24" fill="currentColor"><path d="m12 2 3 6.3 6.9 1-5 4.9 1.2 6.8L12 17.8 5.9 21l1.2-6.8-5-4.9 6.9-1z"/></svg>
-          <svg viewBox="0 0 24 24" fill="currentColor"><path d="m12 2 3 6.3 6.9 1-5 4.9 1.2 6.8L12 17.8 5.9 21l1.2-6.8-5-4.9 6.9-1z"/></svg>
-          <svg viewBox="0 0 24 24" fill="currentColor"><path d="m12 2 3 6.3 6.9 1-5 4.9 1.2 6.8L12 17.8 5.9 21l1.2-6.8-5-4.9 6.9-1z"/></svg>
-        </span>
-        <span>basado en 12 opiniones verificadas</span>
-      </div>
-    </div>
   </div>
   <div class="mg-grid-r">
-    <div class="mg-resena">
-      <div class="mg-resena__top">
-        <div class="mg-resena__pers">
-          <div class="mg-avatar">L</div>
-          <div>
-            <div class="mg-resena__nom">Laura M.</div>
-            <div class="mg-resena__ver"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="m9 12 2 2 4-4"/></svg> Compra verificada</div>
-          </div>
-        </div>
-        <span class="s">
-          <svg viewBox="0 0 24 24" fill="currentColor"><path d="m12 2 3 6.3 6.9 1-5 4.9 1.2 6.8L12 17.8 5.9 21l1.2-6.8-5-4.9 6.9-1z"/></svg>
-          <svg viewBox="0 0 24 24" fill="currentColor"><path d="m12 2 3 6.3 6.9 1-5 4.9 1.2 6.8L12 17.8 5.9 21l1.2-6.8-5-4.9 6.9-1z"/></svg>
-          <svg viewBox="0 0 24 24" fill="currentColor"><path d="m12 2 3 6.3 6.9 1-5 4.9 1.2 6.8L12 17.8 5.9 21l1.2-6.8-5-4.9 6.9-1z"/></svg>
-          <svg viewBox="0 0 24 24" fill="currentColor"><path d="m12 2 3 6.3 6.9 1-5 4.9 1.2 6.8L12 17.8 5.9 21l1.2-6.8-5-4.9 6.9-1z"/></svg>
-          <svg viewBox="0 0 24 24" fill="currentColor"><path d="m12 2 3 6.3 6.9 1-5 4.9 1.2 6.8L12 17.8 5.9 21l1.2-6.8-5-4.9 6.9-1z"/></svg>
-        </span>
-      </div>
-      <p>Llegó bien empacado y en el día que acordamos. El trato por WhatsApp fue muy cercano.</p>
-      <div class="mg-resena__fecha">Hace 2 semanas</div>
+    <div class="mg-resena mg-resena--vacia">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 15a4 4 0 0 1-4 4H8l-5 3V7a4 4 0 0 1 4-4h10a4 4 0 0 1 4 4z"/></svg>
+      <strong>Aún no hay opiniones verificadas.</strong>
+      <span>Cuando lleguen compras reales, aparecerán aquí.</span>
     </div>
-    <div class="mg-resena">
-      <div class="mg-resena__top">
-        <div class="mg-resena__pers">
-          <div class="mg-avatar">J</div>
-          <div>
-            <div class="mg-resena__nom">Julián R.</div>
-            <div class="mg-resena__ver"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="m9 12 2 2 4-4"/></svg> Compra verificada</div>
-          </div>
-        </div>
-        <span class="s">
-          <svg viewBox="0 0 24 24" fill="currentColor"><path d="m12 2 3 6.3 6.9 1-5 4.9 1.2 6.8L12 17.8 5.9 21l1.2-6.8-5-4.9 6.9-1z"/></svg>
-          <svg viewBox="0 0 24 24" fill="currentColor"><path d="m12 2 3 6.3 6.9 1-5 4.9 1.2 6.8L12 17.8 5.9 21l1.2-6.8-5-4.9 6.9-1z"/></svg>
-          <svg viewBox="0 0 24 24" fill="currentColor"><path d="m12 2 3 6.3 6.9 1-5 4.9 1.2 6.8L12 17.8 5.9 21l1.2-6.8-5-4.9 6.9-1z"/></svg>
-          <svg viewBox="0 0 24 24" fill="currentColor"><path d="m12 2 3 6.3 6.9 1-5 4.9 1.2 6.8L12 17.8 5.9 21l1.2-6.8-5-4.9 6.9-1z"/></svg>
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m12 2 3 6.3 6.9 1-5 4.9 1.2 6.8L12 17.8 5.9 21l1.2-6.8-5-4.9 6.9-1z"/></svg>
-        </span>
-      </div>
-      <p>Buen producto y original. Me gustó que revisan antes de vender, se nota el cuidado.</p>
-      <div class="mg-resena__fecha">Hace 1 mes</div>
-    </div>
-    <div class="mg-resena">
-      <div class="mg-resena__top">
-        <div class="mg-resena__pers">
-          <div class="mg-avatar">C</div>
-          <div>
-            <div class="mg-resena__nom">Carolina P.</div>
-            <div class="mg-resena__ver"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="m9 12 2 2 4-4"/></svg> Compra verificada</div>
-          </div>
-        </div>
-        <span class="s">
-          <svg viewBox="0 0 24 24" fill="currentColor"><path d="m12 2 3 6.3 6.9 1-5 4.9 1.2 6.8L12 17.8 5.9 21l1.2-6.8-5-4.9 6.9-1z"/></svg>
-          <svg viewBox="0 0 24 24" fill="currentColor"><path d="m12 2 3 6.3 6.9 1-5 4.9 1.2 6.8L12 17.8 5.9 21l1.2-6.8-5-4.9 6.9-1z"/></svg>
-          <svg viewBox="0 0 24 24" fill="currentColor"><path d="m12 2 3 6.3 6.9 1-5 4.9 1.2 6.8L12 17.8 5.9 21l1.2-6.8-5-4.9 6.9-1z"/></svg>
-          <svg viewBox="0 0 24 24" fill="currentColor"><path d="m12 2 3 6.3 6.9 1-5 4.9 1.2 6.8L12 17.8 5.9 21l1.2-6.8-5-4.9 6.9-1z"/></svg>
-          <svg viewBox="0 0 24 24" fill="currentColor"><path d="m12 2 3 6.3 6.9 1-5 4.9 1.2 6.8L12 17.8 5.9 21l1.2-6.8-5-4.9 6.9-1z"/></svg>
-        </span>
-      </div>
-      <p>Muy buena atención y el envío llegó a tiempo. Repetiré la compra sin duda.</p>
-      <div class="mg-resena__fecha">Hace 1 mes</div>
-    </div>
-    <div class="mg-resena">
-      <div class="mg-resena__top">
-        <div class="mg-resena__pers">
-          <div class="mg-avatar">A</div>
-          <div>
-            <div class="mg-resena__nom">Andrés V.</div>
-            <div class="mg-resena__ver"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="m9 12 2 2 4-4"/></svg> Compra verificada</div>
-          </div>
-        </div>
-        <span class="s">
-          <svg viewBox="0 0 24 24" fill="currentColor"><path d="m12 2 3 6.3 6.9 1-5 4.9 1.2 6.8L12 17.8 5.9 21l1.2-6.8-5-4.9 6.9-1z"/></svg>
-          <svg viewBox="0 0 24 24" fill="currentColor"><path d="m12 2 3 6.3 6.9 1-5 4.9 1.2 6.8L12 17.8 5.9 21l1.2-6.8-5-4.9 6.9-1z"/></svg>
-          <svg viewBox="0 0 24 24" fill="currentColor"><path d="m12 2 3 6.3 6.9 1-5 4.9 1.2 6.8L12 17.8 5.9 21l1.2-6.8-5-4.9 6.9-1z"/></svg>
-          <svg viewBox="0 0 24 24" fill="currentColor"><path d="m12 2 3 6.3 6.9 1-5 4.9 1.2 6.8L12 17.8 5.9 21l1.2-6.8-5-4.9 6.9-1z"/></svg>
-          <svg viewBox="0 0 24 24" fill="currentColor"><path d="m12 2 3 6.3 6.9 1-5 4.9 1.2 6.8L12 17.8 5.9 21l1.2-6.8-5-4.9 6.9-1z"/></svg>
-        </span>
-      </div>
-      <p>Producto tal cual lo describen. Se agradece la honestidad en la ficha.</p>
-      <div class="mg-resena__fecha">Hace 2 meses</div>
-    </div>
-  </div>
-  <!-- limite de 4 en la pagina; el resto en la vista completa de opiniones -->
-  <div class="mg-vertodas">
-    <a href="#">
-      Ver todas las opiniones
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
-    </a>
   </div>
 </section>
 
-<!-- modal: por qué Wompi (el texto final lo define el equipo) -->
+<!-- modal: por qué MAGANDHI usa Wompi -->
 <div class="mg-modal" id="mg-modal-wompi" role="dialog" aria-modal="true" aria-labelledby="mg-modal-wompi-tit" aria-hidden="true">
   <div class="mg-modal__caja">
     <button type="button" class="mg-modal__x" id="mg-cerrar-wompi" aria-label="Cerrar">
@@ -875,7 +731,7 @@
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="5" width="20" height="14" rx="2"/><path d="M2 10h20"/></svg>
     </div>
     <h2 id="mg-modal-wompi-tit">Pagos seguros con Wompi</h2>
-    <p><!-- TEXTO PROVISIONAL -->
+    <p>
       Wompi es la pasarela de pagos de Bancolombia. Tus pagos se procesan en su
       plataforma, con el respaldo de una de las entidades financieras más
       grandes del país.</p>
@@ -1099,9 +955,9 @@
   <div class="mg-foot">
     <p class="mg-foot-marca"><b style="color:var(--negro)">MAGANDHI</b> · www.magandhi.com</p>
     <nav class="mg-foot-links">
-      <a href="#">Entregas</a>
-      <a href="#">Privacidad</a>
-      <a href="#">Condiciones</a>
+      <a href="../index.html#descubrir">Productos</a>
+      <a href="mailto:contacto@magandhi.com?subject=PQRS%20MAGANDHI">PQRS</a>
+      <a href="../index.html#contacto">Contacto</a>
     </nav>
   </div>
 </footer>
@@ -1128,7 +984,8 @@
        el aviso de urgencia (el chip Agotado manda).
      · Si no hay slug/id o la fila no existe (producto despublicado / placeholder
        no publicado), muestra un aviso sobrio de no disponible sin romper la
-       pagina. Las resenas quedan como ejemplo.
+       pagina. Las opiniones permanecen en estado vacío hasta conectar datos
+       reales de compras verificadas.
      ============================================================ -->
 <script type="module">
   import { supabase } from '../supabase-config.js';
@@ -1154,6 +1011,21 @@
     if(el) el.textContent = texto;
   }
 
+  function setVisible(id, texto){
+    const el = document.getElementById(id);
+    if(!el) return;
+    const valor = texto === null || texto === undefined ? '' : String(texto).trim();
+    el.textContent = valor;
+    el.hidden = !valor;
+  }
+
+  function actualizarDetalle(){
+    const detalle = document.getElementById('mg-detalle');
+    const sobre = document.getElementById('mg-sobre-bloque');
+    const ficha = document.getElementById('mg-ficha-bloque');
+    if(detalle) detalle.hidden = !((sobre && !sobre.hidden) || (ficha && !ficha.hidden));
+  }
+
   // PALETA REDUCIDA: el acento es FIJO (ámbar de marca, definido en el :root de
   // esta pagina). Ya NO se sobreescribe con el color de la categoria. La vista
   // catalogo_publico aun manda color_fuerte/claro/sombra, pero la tienda los
@@ -1165,7 +1037,7 @@
   // del sello via .mg-sello svg). Reproduce el simbolo del home sin tocar clases.
   const ICONO_ESTRELLA = '<svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="m12 2 3 6.3 6.9 1-5 4.9 1.2 6.8L12 17.8 5.9 21l1.2-6.8-5-4.9 6.9-1z"/></svg>';
 
-  // Muestra u oculta el sello "Escogido por MAGANDHI" segun sello_elegido, y
+  // Muestra u oculta el sello "Elegido por MAGANDHI" segun sello_elegido, y
   // antepone la estrella si estrella=true. Si el sello esta apagado para ese
   // producto, la pagina deja de mostrarlo (igual que el home).
   function pintarSello(fila){
@@ -1219,20 +1091,28 @@
   // parte por saltos de linea y se pinta un <p> por parrafo (escapado).
   function pintarSobre(texto){
     const cont = document.getElementById('mg-sobre');
-    if(!cont || !texto) return;
-    const parrafos = String(texto).split(/\n+/).map(function(t){ return t.trim(); })
+    const bloque = document.getElementById('mg-sobre-bloque');
+    if(!cont || !bloque) return;
+    const parrafos = String(texto || '').split(/\n+/).map(function(t){ return t.trim(); })
       .filter(function(t){ return t.length > 0; });
-    if(parrafos.length === 0) return;
+    bloque.hidden = parrafos.length === 0;
     cont.innerHTML = parrafos.map(function(p){ return '<p>' + esc(p) + '</p>'; }).join('');
+    actualizarDetalle();
   }
 
   // Rellena la ficha (jsonb arreglo de {clave, valor}) como filas de la tabla.
   function pintarFicha(ficha){
     const tabla = document.getElementById('mg-ficha');
-    if(!tabla || !Array.isArray(ficha) || ficha.length === 0) return;
-    tabla.innerHTML = ficha.map(function(par){
-      return '<tr><td>' + esc(par && par.clave) + '</td><td>' + esc(par && par.valor) + '</td></tr>';
+    const bloque = document.getElementById('mg-ficha-bloque');
+    if(!tabla || !bloque) return;
+    const filas = Array.isArray(ficha) ? ficha.filter(function(par){
+      return par && (String(par.clave || '').trim() || String(par.valor || '').trim());
+    }) : [];
+    bloque.hidden = filas.length === 0;
+    tabla.innerHTML = filas.map(function(par){
+      return '<tr><th scope="row">' + esc(par.clave || '') + '</th><td>' + esc(par.valor || '') + '</td></tr>';
     }).join('');
+    actualizarDetalle();
   }
 
   // Resuelve la URL publica de un path del bucket 'campanas'. Si el path ya es una
@@ -1313,6 +1193,18 @@
       const actual = fotos[indiceActivo];
       contenido.innerHTML = '<img class="mg-foto__img" src="' + esc(actual.grande) + '" alt="' +
         esc(alt + ' — imagen ' + (indiceActivo + 1) + ' de ' + total) + '" decoding="async" draggable="false">';
+      const principal = contenido.querySelector('.mg-foto__img');
+      if(principal){
+        let intentoLiviana = false;
+        principal.addEventListener('error', function(){
+          if(!intentoLiviana && actual.liviana && actual.liviana !== actual.grande){
+            intentoLiviana = true;
+            principal.src = actual.liviana;
+            return;
+          }
+          contenido.innerHTML = '<div class="mg-foto__ph">Imagen no disponible</div>';
+        });
+      }
       foto.setAttribute('aria-label','Galería de ' + alt + '. Imagen ' + (indiceActivo + 1) + ' de ' + total);
 
       if(tiras){
@@ -1390,11 +1282,12 @@
   }
 
   function mostrarNoDisponible(){
+    document.body.classList.add('mg-sin-producto');
     const el = document.getElementById('mg-nodisp');
     if(el) el.setAttribute('data-visible', 'true');
-    // Sin producto valido no hay compra posible: apaga el boton.
     const btn = document.getElementById('mg-comprar');
     if(btn) btn.disabled = true;
+    set('mg-titulo', 'Producto no disponible');
     set('mg-sub', '');
   }
 
@@ -1417,7 +1310,13 @@
     }
 
     try{
-      let consulta = supabase.from('catalogo_publico').select('*');
+      const campos = [
+        'id','nombre','slug','categoria_nombre','caracteristica_adicional','precio_venta',
+        'hook_largo','por_que_magandhi','sobre_este_producto','ficha_tecnica',
+        'imagenes','imagen_banner_path','sello_elegido','estrella','agotado',
+        'aviso_urgencia_activo','aviso_urgencia_cantidad'
+      ].join(',');
+      let consulta = supabase.from('catalogo_publico').select(campos);
       // El slug es la clave publica preferida; el id (uuid) es el respaldo.
       consulta = slug ? consulta.eq('slug', slug) : consulta.eq('id', id);
       const { data, error } = await consulta.maybeSingle();
@@ -1440,8 +1339,11 @@
       if(data.caracteristica_adicional) set('mg-sub', data.caracteristica_adicional);
       else set('mg-sub', '');
       set('mg-precio', formatearPrecio(data.precio_venta));
-      if(data.hook_largo) set('mg-desc', data.hook_largo);
-      if(data.por_que_magandhi) set('mg-curaduria', data.por_que_magandhi);
+      setVisible('mg-desc', data.hook_largo);
+      const textoCuraduria = String(data.por_que_magandhi || '').trim();
+      set('mg-curaduria', textoCuraduria);
+      const bloqueCuraduria = document.getElementById('mg-curaduria-bloque');
+      if(bloqueCuraduria) bloqueCuraduria.hidden = !textoCuraduria;
       pintarSobre(data.sobre_este_producto);
       pintarFicha(data.ficha_tecnica);
       pintarGaleria(data);

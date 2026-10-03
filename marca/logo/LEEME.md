@@ -1,28 +1,26 @@
 # Logo oficial de MAGANDHI
 
-Esta carpeta guarda el **logo vectorial** de la tienda (la fuente de todos los íconos).
+## Fuente maestra
 
-## Archivos
+`logo-magandhi.svg` es el logo vectorial oficial y vigente de MAGANDHI. Usa terracota `#A6332E` sobre transparencia y es la única fuente autorizada para generar derivados.
 
-- **`logo-magandhi.svg`** — el logo oficial, color de marca **terracota `#A6332E`**.
-  Es la FUENTE: de aquí se generan todos los PNG del sitio.
-- `Rebranding Magandhi.svg` — el vector original tal como se subió (venía en
-  `#A8332C`). Se conserva como referencia; el que manda es `logo-magandhi.svg`.
+No existe otro SVG maestro en esta carpeta. Los JPG históricos de `marca/` documentan etapas anteriores, pero no sustituyen este archivo.
 
-## Cómo regenerar los íconos del sitio
+## Regenerar los assets públicos
 
-Si se edita el logo o su color, se vuelven a generar los PNG corriendo, **desde la
-raíz del repo**:
+Desde la raíz del repositorio:
 
-```
-pip install cairosvg Pillow
+```bash
+python3 -m pip install CairoSVG Pillow
 python3 marca/generar_assets.py
 ```
 
-Eso regenera, con el mismo nombre/tamaño que usa la tienda:
-`favicon.png`, `icono-app-180.png`, `icono-app.png`, `logo.png` y
-`logo-mark-terracota.png`.
+El script genera, con dimensiones estables:
 
-> Al cambiar los íconos, subir el `?v=N` en los `<link>` de `index.html`,
-> `producto/index.html` y en `site.webmanifest` para que los navegadores dejen de
-> servir la versión cacheada vieja.
+- `logo-mark-terracota.png` — 797×797;
+- `logo.png` — 512×512;
+- `favicon.png` — 96×96;
+- `icono-app-180.png` — 180×180;
+- `icono-app.png` — 512×512.
+
+Después de regenerar, verificar tamaños y actualizar `?v=N` en `index.html`, `producto/index.html` y `site.webmanifest`. No sobrescribir derivados publicados sin actualizar su versión de caché.

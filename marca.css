@@ -1,12 +1,10 @@
 /* ============================================================
-   MAGANDHI · TOKENS DE MARCA (fuente única de la paleta)
+   MAGANDHI · TOKENS VIGENTES DE MARCA (tienda pública)
    ------------------------------------------------------------
-   Este archivo define los colores del sistema. Todas las páginas
-   lo enlazan. Cambiar un tono aquí = cambiarlo en toda la tienda.
-
-   PALETA EN PRUEBA: "terracota" — rojo desaturado + fondo crema.
-   (Evolución de la paleta del manual #D32F2F hacia un tono más
-   cálido/boutique. Si no convence, se revierte editando solo este archivo.)
+   Fuente única de color para magandhi.com. La identidad aprobada usa
+   terracota, negro, dorado y arena cálida. Los componentes consumen estos
+   tokens por función; no deben volver a colores históricos ni inventar
+   variantes por categoría.
    ============================================================ */
 :root{
   /* ---- Rojo de marca (escala) ---- */

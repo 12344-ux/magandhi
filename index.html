@@ -109,6 +109,11 @@
   .hg-vitrina{
     max-width:1200px;margin:34px auto 0;padding:0 24px;
   }
+  .hg-vacio{
+    grid-column:1/-1;margin:18px 0;padding:34px 22px;text-align:center;
+    color:var(--gris);background:var(--ml-panel);border:1px solid var(--ml-borde);
+    border-radius:16px;box-shadow:var(--ml-sombra);
+  }
   /* GRID PC: 5 columnas (tarjetas verticales iguales, mismo tamano). */
   .hg-grid{
     display:grid;grid-template-columns:repeat(5,1fr);gap:22px;
@@ -558,8 +563,6 @@
     display:flex;align-items:center;justify-content:space-between;gap:12px 20px;flex-wrap:wrap;
     font-size:12px;color:var(--gris-cl);
   }
-  .hg-footer__legal-in a{color:var(--gris-cl);text-decoration:none}
-  .hg-footer__legal-in a:hover{color:var(--rojo)}
   @media(max-width:760px){
     /* footer compacto en movil: marca (izq) y social (der) comparten la
        primera fila; la nav salta a una fila completa debajo. Asi desaparece
@@ -596,9 +599,9 @@
      ------------------------------------------------------------
      Estructura de banner con dos recortes de imagen (PC 1600x600 ~8:3 y movil
      1080x1080 1:1), elegidos por CSS segun el ancho. El TEXTO va en HTML (no
-     quemado en la imagen): editable, nitido y con tildes correctas. Los banners
-     de banners/ son de RELLENO con la marca; se reemplazan por los reales mas
-     adelante (misma medida).
+     quemado en la imagen): editable, nitido y con tildes correctas. Los assets
+     de banners/ son las campañas vigentes y cada espacio conserva las medidas
+     inmutables documentadas en .kiro/steering/estandar-banners-magandhi.md.
      ============================================================ -->
 <section class="hg-hero" aria-label="Destacados">
   <div class="hg-carrusel" id="hg-carrusel">
@@ -669,9 +672,8 @@
      ------------------------------------------------------------
      · Lee SOLO la vista publica catalogo_publico (productos publicados y
        campos publicos). Solo datos publicos.
-     · Sistema color=categoria (variables inline --acento/--acento-cl/
-       --acento-sombra), sello condicional, estrella condicional, sello-abajo
-       (movil), placeholder cuando no hay imagen.
+     · Paleta publica fija: tarjetas blancas, terracota estructural y acento
+       dorado. La categoria clasifica; no cambia el color de la tarjeta.
      · Aviso de urgencia "Solo X disponibles": aviso honesto que aparece cuando
        quedan pocas unidades reales.
      · Si la consulta falla o no hay datos, degrada sobrio sin romper la pagina.
@@ -758,16 +760,12 @@
   // Ahora existe UNA plantilla generica (producto/index.html) que se llena sola
   // leyendo catalogo_publico por el ?slug= o ?id= de la URL. Por eso TODAS las
   // tarjetas (incluido el Grisi) enlazan a la generica: 'producto/?slug=<slug>'
-  // si la fila trae slug, si no 'producto/?id=<uuid>'. Ninguna queda en '#'.
-  // DECISION: apuntar tambien el Grisi a la generica es lo mas simple y coherente
-  // (una sola pagina que mantener); su carpeta antigua
-  // (producto/grisi-manzanilla-gold/) se conserva como compatibilidad para que su
-  // URL actual NO de 404. El id (uuid) es la clave ESTABLE de respaldo: el nombre
-  // puede cambiar desde el panel de Campanas, el id no.
+  // Solo se renderizan filas con slug o id; una tarjeta nunca queda como enlace
+  // falso. El id UUID sigue siendo la clave estable de respaldo.
   function hrefProducto(fila){
     if(fila.slug) return 'producto/?slug=' + encodeURIComponent(fila.slug);
     if(fila.id)   return 'producto/?id=' + encodeURIComponent(fila.id);
-    return '#';
+    return '';
   }
 
   // Icono neutral para el kicker de categoria (el diseno usa un simbolo pequeno;
@@ -867,22 +865,28 @@
   async function pintarVitrina(){
     const grid = document.getElementById('hg-grid');
     if(!grid) return;
+    const campos = [
+      'id','nombre','slug','categoria_nombre','detalle_presentacion','hook_corto',
+      'imagen_banner_path','precio_venta','imagenes','sello_elegido','estrella',
+      'agotado','aviso_urgencia_activo','aviso_urgencia_cantidad','orden'
+    ].join(',');
     try{
       const { data, error } = await supabase
         .from('catalogo_publico')
-        .select('*')
+        .select(campos)
         .order('orden', { ascending: true });
       if(error) throw error;
-      if(!data || data.length === 0){
-        // Sin datos: degradar sobrio, sin romper la pagina.
-        grid.innerHTML = '';
+      const filas = (data || []).filter(function(f){
+        return f && f.nombre && (f.slug || f.id);
+      });
+      if(filas.length === 0){
+        grid.innerHTML = '<p class="hg-vacio" role="status">No hay productos disponibles en este momento.</p>';
         return;
       }
-      grid.innerHTML = data.map(tarjeta).join('');
+      grid.innerHTML = filas.map(tarjeta).join('');
     }catch(e){
-      // Falla de red/consulta: no romper el home; dejar la vitrina vacia.
-      console.error('No se pudo cargar la vitrina desde Campanas:', e);
-      grid.innerHTML = '';
+      console.error('No se pudo cargar la vitrina desde Campañas:', e);
+      grid.innerHTML = '<p class="hg-vacio" role="status">No pudimos cargar la selección. Inténtalo de nuevo más tarde.</p>';
     }
   }
 
@@ -928,7 +932,7 @@
   </div>
   <div class="hg-gar">
     <span class="hg-gar__ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 1 0 2.6-6.4L3 8"/><path d="M3 3v5h5"/></svg></span>
-    <div><div class="hg-gar__t">Cambios y devoluciones</div><div class="hg-gar__d">Según nuestras políticas.</div></div>
+    <div><div class="hg-gar__t">Cambios y devoluciones</div><div class="hg-gar__d">Te orientamos por nuestros canales.</div></div>
   </div>
 </section>
 
@@ -947,7 +951,7 @@
     <nav class="hg-footer__nav" aria-label="Navegación">
       <a href="index.html">Inicio</a>
       <a href="#descubrir">Productos</a>
-      <a href="#historia">PQRS</a>
+      <a href="mailto:contacto@magandhi.com?subject=PQRS%20MAGANDHI">PQRS</a>
       <a href="#contacto">Contacto</a>
     </nav>
     <div class="hg-footer__social">
@@ -962,7 +966,7 @@
   <div class="hg-footer__legal">
     <div class="hg-footer__legal-in">
       <span>© 2026 MAGANDHI</span>
-      <span><a href="#">Términos y condiciones</a> · <a href="#">Política de privacidad</a></span>
+      <span>Tunja · Envíos nacionales</span>
     </div>
   </div>
 </footer>
