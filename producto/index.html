@@ -647,11 +647,11 @@
       Este producto no está disponible por ahora.
     </div>
     <!-- El sello "Elegido por MAGANDHI" se MUESTRA u OCULTA segun sello_elegido
-         de la fila (coherente con el home). La estrella opcional (segun fila.estrella)
-         la inserta el script al inicio del sello. Marcado/clases mg- INTACTOS;
-         solo alterna visibilidad y la estrella segun el dato. -->
+         de la fila (coherente con el home). Su simbolo es la ESTRELLA de marca,
+         ya embebida en el SVG de abajo. Marcado/clases mg- INTACTOS; el script
+         solo alterna su visibilidad. -->
     <span class="mg-sello" id="mg-sello" hidden>
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m9 12 2 2 4-4"/><circle cx="12" cy="12" r="10"/></svg>
+      <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="m12 2 3 6.3 6.9 1-5 4.9 1.2 6.8L12 17.8 5.9 21l1.2-6.8-5-4.9 6.9-1z"/></svg>
       Elegido por MAGANDHI
     </span>
     <h1 class="mg-titulo" id="mg-titulo">Producto</h1>
@@ -1033,25 +1033,14 @@
   // Campañas). Si mas adelante se limpia el back-office, esos campos se podran
   // retirar sin afectar esta pagina.
 
-  // Estrella opcional dentro del sello (SVG de estrella rellena; hereda el color
-  // del sello via .mg-sello svg). Reproduce el simbolo del home sin tocar clases.
-  const ICONO_ESTRELLA = '<svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="m12 2 3 6.3 6.9 1-5 4.9 1.2 6.8L12 17.8 5.9 21l1.2-6.8-5-4.9 6.9-1z"/></svg>';
-
-  // Muestra u oculta el sello "Elegido por MAGANDHI" segun sello_elegido, y
-  // antepone la estrella si estrella=true. Si el sello esta apagado para ese
-  // producto, la pagina deja de mostrarlo (igual que el home).
+  // Muestra u oculta el sello "Elegido por MAGANDHI" segun sello_elegido. El
+  // simbolo de marca es la ESTRELLA (ya embebida en el marcado del sello); el
+  // antiguo dato 'estrella' quedo jubilado y ya no agrega nada. Si el sello
+  // esta apagado para ese producto, la pagina deja de mostrarlo (igual que el home).
   function pintarSello(fila){
     const el = document.getElementById('mg-sello');
     if(!el) return;
-    if(!fila.sello_elegido){
-      el.hidden = true;
-      return;
-    }
-    // Estrella dentro del sello solo si el dato lo pide (y no estaba ya).
-    if(fila.estrella && !el.querySelector('svg[fill="currentColor"]')){
-      el.insertAdjacentHTML('afterbegin', ICONO_ESTRELLA);
-    }
-    el.hidden = false;
+    el.hidden = !fila.sello_elegido;
   }
 
   function pintarUrgencia(fila){
@@ -1313,7 +1302,7 @@
       const campos = [
         'id','nombre','slug','categoria_nombre','caracteristica_adicional','precio_venta',
         'hook_largo','por_que_magandhi','sobre_este_producto','ficha_tecnica',
-        'imagenes','imagen_banner_path','sello_elegido','estrella','agotado',
+        'imagenes','imagen_banner_path','sello_elegido','agotado',
         'aviso_urgencia_activo','aviso_urgencia_cantidad'
       ].join(',');
       let consulta = supabase.from('catalogo_publico').select(campos);
