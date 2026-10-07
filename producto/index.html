@@ -1717,6 +1717,12 @@
       pintarAgotado(data);
       // Opiniones verificadas: se leen por SLUG de las vistas publicas.
       cargarResenas(data.slug || null);
+      // Llegada desde el correo de "Entregado": abre el formulario con el codigo
+      // ya escrito, solo cuando el producto ya cargo (el envio necesita el slug).
+      if(codigoDesdeCorreo && abrirResenaConCodigo){
+        const cod = codigoDesdeCorreo; codigoDesdeCorreo = null;
+        abrirResenaConCodigo(cod);
+      }
     }catch(e){
       // Falla de red/consulta: no se pudo confirmar el producto ni su stock, asi
       // que se muestra el aviso sobrio de no disponible y se DESHABILITA la
@@ -2256,6 +2262,19 @@
     }
   }
 
+  // --- Codigo de reseña que llega desde el correo de "Entregado" --------------
+  // El enlace del correo trae el codigo en el FRAGMENTO (#resena=MG-...): el
+  // fragmento nunca viaja a ningun servidor ni queda en el Referer. Se lee una
+  // vez y se BORRA de la barra de direcciones de inmediato (no queda en el
+  // historial ni se comparte por accidente al copiar el enlace).
+  let abrirResenaConCodigo = null;
+  let codigoDesdeCorreo = (function(){
+    const m = /(?:^#|&)resena=([A-Za-z0-9-]{4,24})(?:&|$)/.exec(window.location.hash || '');
+    if(!m) return null;
+    try{ history.replaceState(null, '', window.location.pathname + window.location.search + '#resenas'); }catch(_){}
+    return decodeURIComponent(m[1]).toUpperCase();
+  })();
+
   // --- Modal "Dejar una reseña": selector de estrellas + envio por Edge Function
   function configurarResena(){
     const btn    = document.getElementById('mg-dejar-resena');
@@ -2314,6 +2333,19 @@
       if(ultimoFoco && typeof ultimoFoco.focus === 'function') ultimoFoco.focus(); else btn.focus();
     }
     function abierto(){ return modal.getAttribute('aria-hidden') === 'false'; }
+
+    // Apertura con el codigo ya escrito (enlace del correo de "Entregado"): se
+    // lleva la vista a las opiniones y el foco a las estrellas, que es lo unico
+    // que falta elegir.
+    abrirResenaConCodigo = (codigo) => {
+      const sec = document.getElementById('resenas');
+      if(sec) sec.scrollIntoView({ block: 'start' });
+      abrir();
+      const c = document.getElementById('mg-rf-codigo');
+      if(c) c.value = codigo;
+      const primera = caja.querySelector('button');
+      if(primera) primera.focus();
+    };
 
     btn.addEventListener('click', abrir);
     cerrar.addEventListener('click', ocultar);
