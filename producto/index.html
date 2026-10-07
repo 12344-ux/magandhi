@@ -521,10 +521,15 @@
   .mg-rf-campo textarea{min-height:84px;resize:vertical}
   .mg-rf-campo input:focus,.mg-rf-campo textarea:focus{outline:0;border-color:var(--acento);box-shadow:0 0 0 3px var(--acento-sombra)}
   .mg-rf-campo input.cod{text-transform:uppercase;letter-spacing:.08em}
-  .mg-estrellas-input{display:inline-flex;gap:4px}
-  .mg-estrellas-input button{background:0;border:0;padding:2px;cursor:pointer;color:var(--acento-cl);line-height:0;transition:color .1s}
-  .mg-estrellas-input button svg{width:30px;height:30px}
+  /* selector de estrellas: HUECO (gris) vs RELLENO (dorado) = marcado evidente */
+  .mg-estrellas-fila{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+  .mg-estrellas-input{display:inline-flex;gap:6px}
+  .mg-estrellas-input button{background:0;border:0;padding:2px;cursor:pointer;color:var(--gris-cl);line-height:0;transition:color .12s,transform .08s}
+  .mg-estrellas-input button svg{width:34px;height:34px}
+  .mg-estrellas-input button:hover{transform:scale(1.1)}
   .mg-estrellas-input button.on{color:var(--acento)}
+  .mg-rf-cap{font-size:13.5px;font-weight:600;color:var(--acento);min-width:66px}
+  .mg-rf-cap:empty{display:none}
   .mg-rf-aviso{font-size:13px;display:none;margin:0}
   .mg-rf-aviso[data-visible="true"]{display:block}
   .mg-rf-aviso.err{color:var(--rojo)}
@@ -539,6 +544,49 @@
   .mg-rf-ok svg{width:46px;height:46px;color:var(--verde)}
   .mg-rf-ok h2{margin:0}
   .mg-rf-ok p{margin:0;color:var(--gris)}
+
+  /* ---------- pantalla "Todas las opiniones" (overlay con filtros) ---------- */
+  .mg-pt{position:fixed;inset:0;z-index:200;background:var(--hueso);overflow-y:auto;display:none;flex-direction:column}
+  .mg-pt[aria-hidden="false"]{display:flex}
+  .mg-pt__head{position:sticky;top:0;z-index:2;background:#fff;border-bottom:1px solid var(--linea);display:flex;align-items:center;gap:16px;padding:14px 24px}
+  .mg-pt__volver{
+    display:inline-flex;align-items:center;gap:6px;flex:none;cursor:pointer;
+    font-family:inherit;font-size:14px;font-weight:600;color:var(--tinta);
+    background:#fff;border:1px solid var(--linea);border-radius:999px;padding:9px 16px 9px 11px;
+    transition:background .15s,border-color .15s;
+  }
+  .mg-pt__volver:hover{background:var(--hueso);border-color:var(--acento-cl)}
+  .mg-pt__volver svg{width:18px;height:18px}
+  .mg-pt__tit{display:flex;flex-direction:column;gap:1px;min-width:0}
+  .mg-pt__tit h2{margin:0;font-size:17px;font-weight:600}
+  .mg-pt__prom{display:flex;align-items:center;gap:8px;font-size:13px;color:var(--gris)}
+  .mg-pt__prom b{color:var(--tinta);font-variant-numeric:tabular-nums}
+  .mg-pt__filtros{display:flex;align-items:center;justify-content:space-between;gap:12px 20px;flex-wrap:wrap;max-width:1120px;width:100%;margin:0 auto;padding:20px 24px 2px}
+  .mg-pt__chips{display:flex;gap:8px;flex-wrap:wrap}
+  .mg-chip-f{
+    display:inline-flex;align-items:center;gap:5px;cursor:pointer;
+    font-family:inherit;font-size:13px;font-weight:600;color:var(--gris);
+    background:#fff;border:1px solid var(--linea);border-radius:999px;padding:7px 14px;transition:all .12s;
+  }
+  .mg-chip-f svg{width:12px;height:12px;color:var(--acento)}
+  .mg-chip-f .c{color:var(--gris-cl);font-weight:500}
+  .mg-chip-f:hover{border-color:var(--acento-cl)}
+  .mg-chip-f.on{color:#fff;background:var(--tinta);border-color:var(--tinta)}
+  .mg-chip-f.on svg{color:var(--acento-cl)}
+  .mg-chip-f.on .c{color:rgba(255,255,255,.7)}
+  .mg-pt__orden{display:inline-flex;align-items:center;gap:8px;font-size:13px;color:var(--gris)}
+  .mg-pt__orden select{font-family:inherit;font-size:13px;color:var(--tinta);background:#fff;border:1px solid var(--linea);border-radius:10px;padding:8px 10px;cursor:pointer}
+  .mg-pt__lista{max-width:1120px;width:100%;margin:0 auto;padding:18px 24px 70px;display:grid;grid-template-columns:repeat(2,1fr);gap:16px}
+  @media(max-width:720px){.mg-pt__lista{grid-template-columns:1fr}}
+  .mg-pt__vacio{grid-column:1/-1;text-align:center;color:var(--gris);padding:46px 20px}
+
+  /* banner de "vista de ejemplo" (modo demo ?demo=1): inconfundible, no real */
+  .mg-demo-banner{max-width:1120px;margin:22px auto 0;padding:0 24px}
+  .mg-demo-banner > div{
+    display:flex;align-items:center;gap:9px;font-size:13px;color:#7a5a1e;
+    background:var(--acento-sombra);border:1px dashed var(--acento-cl);border-radius:12px;padding:10px 14px;
+  }
+  .mg-demo-banner svg{width:16px;height:16px;color:var(--acento);flex:none}
 
   /* ---------- footer ---------- */
   footer{margin-top:70px;border-top:1px solid var(--linea);background:#fff}
@@ -894,7 +942,10 @@
       <form class="mg-resena-form" id="mg-form-resena" novalidate>
         <div class="mg-rf-campo">
           <label>Tu calificación</label>
-          <span class="mg-estrellas-input" role="group" aria-label="Calificación en estrellas"></span>
+          <div class="mg-estrellas-fila">
+            <span class="mg-estrellas-input" role="group" aria-label="Calificación en estrellas"></span>
+            <span class="mg-rf-cap" id="mg-rf-cap" aria-live="polite"></span>
+          </div>
         </div>
         <div class="mg-rf-campo">
           <label for="mg-rf-comentario">Tu opinión <span style="color:var(--gris);font-weight:400">(opcional)</span></label>
@@ -922,6 +973,33 @@
       <button type="button" class="mg-dejar" id="mg-rf-ok-cerrar">Listo</button>
     </div>
   </div>
+</div>
+
+<!-- pantalla "Todas las opiniones": overlay a pantalla completa con filtros por
+     estrellas, orden y boton de retroceso. Se llena desde las opiniones ya
+     cargadas (no re-consulta). -->
+<div class="mg-pt" id="mg-opiniones-panel" aria-hidden="true" role="dialog" aria-modal="true" aria-label="Todas las opiniones">
+  <div class="mg-pt__head">
+    <button type="button" class="mg-pt__volver" id="mg-pt-volver">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"/></svg>
+      Volver
+    </button>
+    <div class="mg-pt__tit">
+      <h2>Todas las opiniones</h2>
+      <div class="mg-pt__prom" id="mg-pt-prom"></div>
+    </div>
+  </div>
+  <div class="mg-pt__filtros">
+    <div class="mg-pt__chips" id="mg-pt-chips"></div>
+    <label class="mg-pt__orden">Ordenar
+      <select id="mg-pt-orden">
+        <option value="recientes">Más recientes</option>
+        <option value="altas">Mejor calificadas</option>
+        <option value="bajas">Peor calificadas</option>
+      </select>
+    </label>
+  </div>
+  <div class="mg-pt__lista" id="mg-pt-lista"></div>
 </div>
 
 <!-- modal: por qué MAGANDHI usa Wompi -->
@@ -1996,14 +2074,56 @@
       if(ops.length > 4 && b){
         vt.hidden = false;
         b.innerHTML = 'Ver todas las opiniones ('+ops.length+')'+ICO_ARROW;
-        b.onclick = function(){ grid.innerHTML = ops.map(tarjetaResena).join(''); vt.hidden = true; };
+        b.onclick = function(){ abrirPanelTodas(); };
       } else {
         vt.hidden = true;
       }
     }
   }
 
+  // Opiniones de EJEMPLO (modo demo ?demo=1): SOLO para previsualizar el diseño.
+  // NO tocan la base de datos ni el sistema real; viven solo en el navegador y
+  // nunca se envian a ningun lado. Un banner inconfundible avisa que son muestra.
+  const DEMO_RESENAS = [
+    { estrellas:5, autor_nombre:'Laura M.',    comentario:'Llegó bien empacado y justo el día que acordamos. El trato por WhatsApp fue muy cercano.', creado:'2026-09-20', respuesta:null },
+    { estrellas:5, autor_nombre:'Julián R.',   comentario:'Producto original y de buena calidad. Se nota que lo revisan antes de vender.', creado:'2026-09-10', respuesta:'¡Gracias, Julián! Nos alegra que notaras la curaduría. Un abrazo del equipo.', respuesta_en:'2026-09-11' },
+    { estrellas:4, autor_nombre:'Carolina P.', comentario:'Muy buena atención y el envío llegó a tiempo. Repetiré la compra sin duda.', creado:'2026-08-28', respuesta:null },
+    { estrellas:5, autor_nombre:'Andrés V.',   comentario:'Tal cual lo describen. Se agradece la honestidad en la ficha del producto.', creado:'2026-08-15', respuesta:null },
+    { estrellas:3, autor_nombre:'Daniela S.',  comentario:'El producto bien; el empaque llegó un poco golpeado, pero la atención fue excelente.', creado:'2026-07-30', respuesta:null }
+  ];
+  function enModoDemo(){ try{ return new URLSearchParams(location.search).get('demo') === '1'; }catch(_){ return false; } }
+  function mostrarBannerDemo(){
+    if(document.getElementById('mg-demo-banner')) return;
+    const sec = document.getElementById('resenas');
+    if(!sec || !sec.parentNode) return;
+    const b = document.createElement('div');
+    b.className = 'mg-demo-banner'; b.id = 'mg-demo-banner';
+    b.innerHTML = '<div>'+ICO_BUBBLE+'<span><strong>Vista de ejemplo.</strong> Estas opiniones son de muestra para revisar el diseño; no son reales ni afectan el sistema.</span></div>';
+    sec.parentNode.insertBefore(b, sec);
+  }
+
+  // Pinta rating + promedio grande + tarjetas. total/prom pueden venir fijados
+  // (el promedio AUTORITATIVO de la vista) o calcularse de las opiniones (demo).
+  function pintarTodo(ops, totalOverride, promOverride){
+    const total = (totalOverride != null) ? totalOverride : ops.length;
+    const prom  = (promOverride != null) ? promOverride
+                 : (ops.length ? ops.reduce((a,o)=>a+(Number(o.estrellas)||0),0)/ops.length : 0);
+    resenasCargadas = ops;
+    pintarRating(total, prom);
+    const pb = document.getElementById('mg-prom-bloque');
+    if(pb){
+      if(total > 0){
+        pb.hidden = false;
+        pb.innerHTML = '<div class="mg-prom"><b>'+Number(prom).toFixed(1)+'</b>'+
+          '<div class="mg-prom-d">'+estrellasFrac(prom,'mg-stars--lg')+
+          '<span>basado en '+total+(total===1?' opinión verificada':' opiniones verificadas')+'</span></div></div>';
+      } else { pb.hidden = true; }
+    }
+    renderResenas(ops);
+  }
+
   async function cargarResenas(slug){
+    if(enModoDemo()){ mostrarBannerDemo(); pintarTodo(DEMO_RESENAS.slice()); return; }
     if(!slug) return; // sin slug publico no hay como consultar las vistas
     try{
       const [ratingRes, opsRes] = await Promise.all([
@@ -2015,22 +2135,7 @@
       const rating = ratingRes.data;
       const total = rating ? (Number(rating.total)||0) : 0;
       const prom  = rating ? (Number(rating.promedio)||0) : 0;
-      resenasCargadas = opsRes.data || [];
-
-      pintarRating(total, prom);
-
-      const pb = document.getElementById('mg-prom-bloque');
-      if(pb){
-        if(total > 0){
-          pb.hidden = false;
-          pb.innerHTML = '<div class="mg-prom"><b>'+prom.toFixed(1)+'</b>'+
-            '<div class="mg-prom-d">'+estrellasFrac(prom,'mg-stars--lg')+
-            '<span>basado en '+total+(total===1?' opinión verificada':' opiniones verificadas')+'</span></div></div>';
-        } else {
-          pb.hidden = true;
-        }
-      }
-      renderResenas(resenasCargadas);
+      pintarTodo(opsRes.data || [], total, prom);
     }catch(e){
       // Degradar con gracia: si falla la lectura, se conserva el estado vacio.
       console.error('No se pudieron cargar las opiniones:', e);
@@ -2053,20 +2158,28 @@
     const okCerrar= document.getElementById('mg-rf-ok-cerrar');
     let estrellas = 0, ultimoFoco = null;
 
-    // Construye las 5 estrellas clickeables (hover previo + seleccion fija).
+    // Construye las 5 estrellas clickeables. Marcado EVIDENTE: hueco (gris) para
+    // las no marcadas, relleno (dorado) para las marcadas, + etiqueta en palabra.
+    const cap = document.getElementById('mg-rf-cap');
+    const PALABRAS = ['', 'Malo', 'Regular', 'Bueno', 'Muy bueno', 'Excelente'];
     caja.innerHTML = '';
     for(let i=1;i<=5;i++){
       const b = document.createElement('button');
       b.type = 'button'; b.dataset.v = String(i);
       b.setAttribute('aria-label', i+(i===1?' estrella':' estrellas'));
-      b.innerHTML = RES_STAR_FILL;
+      b.innerHTML = RES_STAR_LINE;
       caja.appendChild(b);
     }
-    const pintar = (n) => caja.querySelectorAll('button').forEach((b)=>{ b.classList.toggle('on', Number(b.dataset.v) <= n); });
+    const pintar = (n) => caja.querySelectorAll('button').forEach((b)=>{
+      const on = Number(b.dataset.v) <= n;
+      b.classList.toggle('on', on);
+      b.innerHTML = on ? RES_STAR_FILL : RES_STAR_LINE;
+    });
+    const setCap = (n) => { if(cap) cap.textContent = PALABRAS[n] || ''; };
     caja.querySelectorAll('button').forEach((b)=>{
-      b.addEventListener('mouseenter', ()=>pintar(Number(b.dataset.v)));
-      b.addEventListener('mouseleave', ()=>pintar(estrellas));
-      b.addEventListener('click', ()=>{ estrellas = Number(b.dataset.v); pintar(estrellas); });
+      b.addEventListener('mouseenter', ()=>{ pintar(Number(b.dataset.v)); setCap(Number(b.dataset.v)); });
+      b.addEventListener('mouseleave', ()=>{ pintar(estrellas); setCap(estrellas); });
+      b.addEventListener('click', ()=>{ estrellas = Number(b.dataset.v); pintar(estrellas); setCap(estrellas); });
     });
 
     function avisoR(txt, cls){
@@ -2077,7 +2190,7 @@
     }
     function abrir(){
       ultimoFoco = document.activeElement;
-      estrellas = 0; pintar(0); form.reset(); avisoR('','');
+      estrellas = 0; pintar(0); setCap(0); form.reset(); avisoR('','');
       if(cuerpo) cuerpo.hidden = false; if(okBox) okBox.hidden = true;
       modal.setAttribute('aria-hidden','false');
       const c = document.getElementById('mg-rf-codigo'); if(c) c.focus();
@@ -2129,9 +2242,79 @@
     });
   }
 
+  // --- Pantalla "Todas las opiniones": overlay con filtros por estrellas,
+  //     orden y boton de retroceso. Se llena de resenasCargadas (no re-consulta).
+  let ptFiltro = 0;            // 0 = todas; 1..5 = por estrellas
+  let ptOrden  = 'recientes';  // recientes | altas | bajas
+
+  function construirChipsPanel(ops){
+    const cont = document.getElementById('mg-pt-chips');
+    if(!cont) return;
+    const cnt = (n) => ops.filter((o)=> Math.round(Number(o.estrellas)) === n).length;
+    const partes = ['<button type="button" class="mg-chip-f'+(ptFiltro===0?' on':'')+'" data-f="0">Todas <span class="c">('+ops.length+')</span></button>'];
+    [5,4,3,2,1].forEach((n)=>{
+      partes.push('<button type="button" class="mg-chip-f'+(ptFiltro===n?' on':'')+'" data-f="'+n+'">'+n+RES_STAR_FILL+' <span class="c">('+cnt(n)+')</span></button>');
+    });
+    cont.innerHTML = partes.join('');
+    cont.querySelectorAll('.mg-chip-f').forEach((b)=>{
+      b.addEventListener('click', ()=>{
+        ptFiltro = Number(b.dataset.f);
+        cont.querySelectorAll('.mg-chip-f').forEach((x)=> x.classList.toggle('on', x === b));
+        renderPanelLista();
+      });
+    });
+  }
+
+  function renderPanelLista(){
+    const lista = document.getElementById('mg-pt-lista');
+    if(!lista) return;
+    let arr = resenasCargadas.slice();
+    if(ptFiltro) arr = arr.filter((o)=> Math.round(Number(o.estrellas)) === ptFiltro);
+    const t = (o) => new Date(o.creado || 0).getTime() || 0;
+    if(ptOrden === 'recientes') arr.sort((a,b)=> t(b)-t(a));
+    else if(ptOrden === 'altas') arr.sort((a,b)=> (b.estrellas-a.estrellas) || (t(b)-t(a)));
+    else if(ptOrden === 'bajas') arr.sort((a,b)=> (a.estrellas-b.estrellas) || (t(b)-t(a)));
+    lista.innerHTML = arr.length
+      ? arr.map(tarjetaResena).join('')
+      : '<div class="mg-pt__vacio">No hay opiniones con este filtro.</div>';
+  }
+
+  function abrirPanelTodas(){
+    const ops = resenasCargadas;
+    if(!ops.length) return;
+    const total = ops.length;
+    const prom = ops.reduce((a,o)=>a+(Number(o.estrellas)||0),0)/total;
+    const pr = document.getElementById('mg-pt-prom');
+    if(pr) pr.innerHTML = estrellasFrac(prom)+'<b>'+prom.toFixed(1)+'</b> · '+total+(total===1?' opinión':' opiniones');
+    ptFiltro = 0; ptOrden = 'recientes';
+    const sel = document.getElementById('mg-pt-orden'); if(sel) sel.value = 'recientes';
+    construirChipsPanel(ops);
+    renderPanelLista();
+    const panel = document.getElementById('mg-opiniones-panel');
+    panel.setAttribute('aria-hidden','false');
+    document.body.style.overflow = 'hidden';
+    const v = document.getElementById('mg-pt-volver'); if(v) v.focus();
+  }
+  function cerrarPanelTodas(){
+    const panel = document.getElementById('mg-opiniones-panel');
+    if(panel) panel.setAttribute('aria-hidden','true');
+    document.body.style.overflow = '';
+    const vt = document.getElementById('mg-vertodas');
+    const b = vt ? vt.querySelector('button') : null; if(b) b.focus();
+  }
+  function configurarPanelTodas(){
+    const volver = document.getElementById('mg-pt-volver');
+    const sel = document.getElementById('mg-pt-orden');
+    const panel = document.getElementById('mg-opiniones-panel');
+    if(volver) volver.addEventListener('click', cerrarPanelTodas);
+    if(sel) sel.addEventListener('change', ()=>{ ptOrden = sel.value; renderPanelLista(); });
+    document.addEventListener('keydown', (e)=>{ if(e.key === 'Escape' && panel && panel.getAttribute('aria-hidden') === 'false') cerrarPanelTodas(); });
+  }
+
   configurarCompra();
   configurarWhatsApp();
   configurarResena();
+  configurarPanelTodas();
   cargarProducto();
 </script>
 
