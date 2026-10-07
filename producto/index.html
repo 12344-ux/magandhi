@@ -476,14 +476,18 @@
   .mg-prom .mg-prom-d{display:flex;flex-direction:column;gap:3px}
   .mg-prom span{font-size:13px;color:var(--gris)}
 
-  .mg-grid-r{display:grid;grid-template-columns:repeat(2,1fr);gap:16px;align-items:start}
+  /* en la ficha las 4 tarjetas van EN GRILLA con alturas iguales por fila
+     (stretch); el texto se recorta a 3 lineas para que queden del mismo tamano */
+  .mg-grid-r{display:grid;grid-template-columns:repeat(2,1fr);gap:16px}
   @media(max-width:720px){.mg-grid-r{grid-template-columns:1fr}}
-  /* contorno DORADO de marca en todas las tarjetas de opinion (edicion curada) */
+  /* contorno DORADO de marca en todas las tarjetas de opinion (edicion curada).
+     Sin efecto de "levantar" al pasar el cursor (evita ruido). */
   .mg-resena{
     background:var(--blanco);border:1px solid var(--acento-cl);border-radius:14px;padding:18px 20px;
-    transition:transform .12s ease, box-shadow .12s ease, border-color .12s ease;
+    transition:box-shadow .2s ease, border-color .2s ease;
   }
-  .mg-resena:hover{transform:translateY(-3px);box-shadow:0 10px 26px rgba(17,17,17,.09);border-color:var(--acento-cl)}
+  /* resaltado breve al llegar desde "Ver opinión completa" */
+  .mg-resena--foco{box-shadow:0 0 0 3px var(--acento-sombra);border-color:var(--acento)}
   .mg-resena__top{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:8px}
   .mg-resena__pers{display:flex;align-items:center;gap:11px;min-width:0}
   .mg-avatar{width:38px;height:38px;border-radius:50%;flex:none;background:var(--acento-sombra);color:var(--acento);display:flex;align-items:center;justify-content:center;font-weight:600;font-size:15px}
@@ -492,6 +496,20 @@
   .mg-resena__ver svg{width:13px;height:13px}
   .mg-resena > p{font-size:14px;color:#333;margin:8px 0 0;white-space:pre-wrap;word-wrap:break-word}
   .mg-resena__fecha{font-size:12px;color:var(--gris-cl);margin-top:10px}
+  /* tarjeta COMPACTA (las 4 de la ficha): mismo tamano, sin respuesta, texto a
+     3 lineas con "Ver opinión completa" si se recorta. Flex para fijar la fecha
+     abajo y que todas queden iguales al estirarse en su fila. */
+  .mg-resena--compacta{display:flex;flex-direction:column}
+  .mg-resena--compacta .mg-resena__texto--clamp{
+    display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden;
+    min-height:calc(1.45em * 3);margin-bottom:0;
+  }
+  .mg-resena--compacta .mg-resena__fecha{margin-top:auto}
+  .mg-vermas{
+    align-self:flex-start;margin-top:9px;background:0;border:0;padding:0;cursor:pointer;
+    font-family:inherit;font-size:13px;font-weight:600;color:var(--acento);
+  }
+  .mg-vermas:hover{text-decoration:underline}
   /* respuesta de la marca dentro de una tarjeta */
   .mg-resena__resp{margin:12px 0 0;padding:11px 13px;border-radius:10px;background:var(--hueso);border-left:3px solid var(--acento)}
   .mg-resena__resp .q{display:flex;align-items:center;gap:6px;font-size:11px;font-weight:600;letter-spacing:.04em;text-transform:uppercase;color:var(--acento);margin-bottom:4px}
@@ -1017,6 +1035,7 @@
         <label class="mg-pt__orden">Ordenar
           <select id="mg-pt-orden">
             <option value="recientes">Más recientes</option>
+            <option value="antiguas">Más antiguas</option>
             <option value="altas">Mejor calificadas</option>
             <option value="bajas">Peor calificadas</option>
           </select>
@@ -2062,13 +2081,26 @@
     const a = Math.floor(dias/365); return 'hace ' + a + (a===1?' año':' años');
   }
 
-  function tarjetaResena(o){
+  // Tarjeta de opinion. opts.compacta = las 4 de la ficha (mismo tamano, SIN
+  // respuesta de marca, texto a 3 lineas + "Ver opinión completa"). Sin compacta
+  // = tarjeta completa del panel "ver todas" (texto completo + respuesta).
+  function tarjetaResena(o, opts){
+    opts = opts || {};
+    const compacta = !!opts.compacta;
     const inicial = (String(o.autor_nombre||'·').trim()[0] || '·').toUpperCase();
-    const texto = o.comentario ? '<p>'+escaparHTMLr(o.comentario)+'</p>' : '';
-    const resp = o.respuesta
+    const cls = compacta ? 'mg-resena__texto mg-resena__texto--clamp' : 'mg-resena__texto';
+    const texto = o.comentario ? '<p class="'+cls+'">'+escaparHTMLr(o.comentario)+'</p>'
+                 : (compacta ? '<p class="'+cls+'"></p>' : '');
+    // La respuesta de MAGANDHI SOLO aparece en el panel completo, nunca en las 4
+    // de la ficha (asi las 4 casillas quedan del mismo tamano).
+    const resp = (!compacta && o.respuesta)
       ? '<div class="mg-resena__resp"><div class="q">'+ICO_RESP+'Respuesta de MAGANDHI</div><p>'+escaparHTMLr(o.respuesta)+'</p></div>'
       : '';
-    return '<div class="mg-resena">'+
+    const verMas = compacta
+      ? '<button type="button" class="mg-vermas" data-idx="'+(o._idx!=null?o._idx:'')+'" hidden>Ver opinión completa</button>'
+      : '';
+    const idxAttr = (o._idx!=null) ? ' data-idx="'+o._idx+'"' : '';
+    return '<div class="mg-resena'+(compacta?' mg-resena--compacta':'')+'"'+idxAttr+'>'+
         '<div class="mg-resena__top">'+
           '<div class="mg-resena__pers"><div class="mg-avatar">'+escaparHTMLr(inicial)+'</div>'+
             '<div><div class="mg-resena__nom">'+escaparHTMLr(o.autor_nombre||'Cliente')+'</div>'+
@@ -2077,9 +2109,21 @@
           estrellasDisc(o.estrellas)+
         '</div>'+
         texto+
+        verMas+
         resp+
         '<div class="mg-resena__fecha" title="'+escaparHTMLr(fechaResena(o.creado))+'">'+escaparHTMLr(fechaRelativa(o.creado))+'</div>'+
       '</div>';
+  }
+
+  // Elige las 4 opiniones DESTACADAS para la ficha: si hay 4 o menos, esas
+  // (mas recientes primero); si hay mas, las 4 MEJOR calificadas, desempatando
+  // por mas recientes. (Todas siguen accesibles en "Ver todas".)
+  function elegirDestacadas(ops){
+    const d = (o)=> new Date(o.creado||0).getTime() || 0;
+    const arr = ops.slice();
+    if(arr.length <= 4){ arr.sort((a,b)=> d(b)-d(a)); return arr; }
+    arr.sort((a,b)=> (b.estrellas-a.estrellas) || (d(b)-d(a)));
+    return arr.slice(0,4);
   }
 
   function pintarRating(total, prom){
@@ -2107,7 +2151,17 @@
       if(vt) vt.hidden = true;
       return;
     }
-    grid.innerHTML = ops.slice(0,4).map(tarjetaResena).join('');
+    const destacadas = elegirDestacadas(ops);
+    grid.innerHTML = destacadas.map((o)=> tarjetaResena(o, { compacta:true })).join('');
+    // Mostrar "Ver opinión completa" SOLO si el texto se recorto (3+ lineas).
+    grid.querySelectorAll('.mg-resena--compacta').forEach((card)=>{
+      const p  = card.querySelector('.mg-resena__texto');
+      const vm = card.querySelector('.mg-vermas');
+      if(p && vm && p.scrollHeight > p.clientHeight + 2) vm.hidden = false;
+    });
+    grid.querySelectorAll('.mg-vermas').forEach((b)=>{
+      b.addEventListener('click', ()=>{ const i = b.dataset.idx; abrirPanelTodas(i === '' ? null : Number(i)); });
+    });
     if(vt){
       const b = vt.querySelector('button');
       if(ops.length > 4 && b){
@@ -2147,6 +2201,7 @@
     const total = (totalOverride != null) ? totalOverride : ops.length;
     const prom  = (promOverride != null) ? promOverride
                  : (ops.length ? ops.reduce((a,o)=>a+(Number(o.estrellas)||0),0)/ops.length : 0);
+    ops.forEach((o, i)=>{ o._idx = i; }); // indice estable para "Ver opinión completa"
     resenasCargadas = ops;
     pintarRating(total, prom);
     const pb = document.getElementById('mg-prom-bloque');
@@ -2311,14 +2366,15 @@
     if(ptFiltro) arr = arr.filter((o)=> Math.round(Number(o.estrellas)) === ptFiltro);
     const t = (o) => new Date(o.creado || 0).getTime() || 0;
     if(ptOrden === 'recientes') arr.sort((a,b)=> t(b)-t(a));
+    else if(ptOrden === 'antiguas') arr.sort((a,b)=> t(a)-t(b));
     else if(ptOrden === 'altas') arr.sort((a,b)=> (b.estrellas-a.estrellas) || (t(b)-t(a)));
     else if(ptOrden === 'bajas') arr.sort((a,b)=> (a.estrellas-b.estrellas) || (t(b)-t(a)));
     lista.innerHTML = arr.length
-      ? arr.map(tarjetaResena).join('')
+      ? arr.map((o)=> tarjetaResena(o)).join('')
       : '<div class="mg-pt__vacio">No hay opiniones con este filtro.</div>';
   }
 
-  function abrirPanelTodas(){
+  function abrirPanelTodas(targetIdx){
     const ops = resenasCargadas;
     if(!ops.length) return;
     const total = ops.length;
@@ -2332,7 +2388,20 @@
     const panel = document.getElementById('mg-opiniones-panel');
     panel.setAttribute('aria-hidden','false');
     document.body.style.overflow = 'hidden';
-    const v = document.getElementById('mg-pt-volver'); if(v) v.focus();
+
+    // Si se llego desde "Ver opinión completa", saltar a ESA opinion y resaltarla.
+    if(targetIdx != null){
+      requestAnimationFrame(()=>{
+        const el = document.querySelector('#mg-pt-lista .mg-resena[data-idx="'+targetIdx+'"]');
+        if(el){
+          el.scrollIntoView({ block:'center', behavior:'auto' });
+          el.classList.add('mg-resena--foco');
+          setTimeout(()=> el.classList.remove('mg-resena--foco'), 1800);
+        }
+      });
+    } else {
+      const v = document.getElementById('mg-pt-volver'); if(v) v.focus();
+    }
   }
   function cerrarPanelTodas(){
     const panel = document.getElementById('mg-opiniones-panel');
