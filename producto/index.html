@@ -2051,10 +2051,29 @@
   let resenasCargadas = []; // cache para "ver todas"
 
   function escaparHTMLr(s){ return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+  // Estrellas SOLIDAS directas (mismo metodo que SI funciona en las tarjetas):
+  // doradas las llenas, grises las vacias, y UNA parcial con degradado para el
+  // decimal exacto (4.4 -> 4 doradas + 40% de la quinta). Sin capas superpuestas.
+  const ESTRELLA_D = 'm12 2 3 6.3 6.9 1-5 4.9 1.2 6.8L12 17.8 5.9 21l1.2-6.8-5-4.9 6.9-1z';
+  const STAR_GOLD = '<svg viewBox="0 0 24 24" fill="#C28A3A" aria-hidden="true"><path d="'+ESTRELLA_D+'"/></svg>';
+  const STAR_GRAY = '<svg viewBox="0 0 24 24" fill="#DBD4C8" aria-hidden="true"><path d="'+ESTRELLA_D+'"/></svg>';
+  function estrellaParcial(frac){
+    const pct = Math.max(0, Math.min(100, Math.round(frac*100)));
+    const id = 'gr'+Math.random().toString(36).slice(2,9);
+    return '<svg viewBox="0 0 24 24" aria-hidden="true"><defs><linearGradient id="'+id+'">'+
+      '<stop offset="'+pct+'%" stop-color="#C28A3A"/><stop offset="'+pct+'%" stop-color="#DBD4C8"/>'+
+      '</linearGradient></defs><path fill="url(#'+id+')" d="'+ESTRELLA_D+'"/></svg>';
+  }
   function estrellasFrac(valor, extra){
-    const pct = Math.max(0, Math.min(5, Number(valor)||0)) / 5 * 100;
-    return '<span class="mg-stars '+(extra||'')+'"><span class="mg-stars-bg">'+RES_STAR_FILL.repeat(5)+'</span>'+
-      '<span class="mg-stars-fg" style="width:'+pct+'%">'+RES_STAR_FILL.repeat(5)+'</span></span>';
+    const v = Math.max(0, Math.min(5, Number(valor)||0));
+    const llenas = Math.floor(v);
+    const frac = v - llenas;
+    let html = '';
+    for(let i=0;i<llenas;i++) html += STAR_GOLD;
+    let usadas = llenas;
+    if(frac > 0.001 && usadas < 5){ html += estrellaParcial(frac); usadas++; }
+    for(let i=usadas;i<5;i++) html += STAR_GRAY;
+    return '<span class="mg-stars '+(extra||'')+'">'+html+'</span>';
   }
   function estrellasDisc(n){
     const k = Math.max(0, Math.min(5, Math.round(Number(n)||0)));
