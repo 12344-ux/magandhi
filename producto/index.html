@@ -457,15 +457,17 @@
   .mg-dejar svg{width:17px;height:17px;color:var(--acento)}
 
   /* estrellas con relleno fraccional exacto (dorado) — headline y promedio */
+  /* estrellas SOLIDAS: gris (vacio) con relleno dorado proporcional (estilo ML).
+     Asi un 4.5 se ve 4 estrellas y media DORADAS, nunca grises. */
   .mg-stars{position:relative;display:inline-flex;vertical-align:middle;line-height:0}
-  .mg-stars-bg{display:inline-flex;color:var(--acento-cl);opacity:.5}
+  .mg-stars-bg{display:inline-flex;color:#DBD4C8}
   .mg-stars-fg{position:absolute;left:0;top:0;overflow:hidden;white-space:nowrap;display:inline-flex;color:var(--acento)}
   .mg-stars svg{width:16px;height:16px;flex:none}
   .mg-stars--lg svg{width:19px;height:19px}
-  /* estrellas discretas por tarjeta (n rellenas + resto huecas) */
+  /* estrellas discretas por tarjeta (n doradas + resto gris, todas solidas) */
   .mg-rst{display:inline-flex;line-height:0;flex:none}
   .mg-rst .f{display:inline-flex;color:var(--acento)}
-  .mg-rst .h{display:inline-flex;color:var(--acento-cl);opacity:.55}
+  .mg-rst .h{display:inline-flex;color:#DBD4C8}
   .mg-rst svg{width:14px;height:14px}
 
   /* promedio grande */
@@ -474,10 +476,11 @@
   .mg-prom .mg-prom-d{display:flex;flex-direction:column;gap:3px}
   .mg-prom span{font-size:13px;color:var(--gris)}
 
-  .mg-grid-r{display:grid;grid-template-columns:repeat(2,1fr);gap:16px}
+  .mg-grid-r{display:grid;grid-template-columns:repeat(2,1fr);gap:16px;align-items:start}
   @media(max-width:720px){.mg-grid-r{grid-template-columns:1fr}}
+  /* contorno DORADO de marca en todas las tarjetas de opinion (edicion curada) */
   .mg-resena{
-    background:var(--blanco);border:1px solid var(--linea);border-radius:14px;padding:18px 20px;
+    background:var(--blanco);border:1px solid var(--acento-cl);border-radius:14px;padding:18px 20px;
     transition:transform .12s ease, box-shadow .12s ease, border-color .12s ease;
   }
   .mg-resena:hover{transform:translateY(-3px);box-shadow:0 10px 26px rgba(17,17,17,.09);border-color:var(--acento-cl)}
@@ -503,10 +506,10 @@
   .mg-vertodas button{
     display:inline-flex;align-items:center;gap:8px;cursor:pointer;
     font-family:inherit;font-size:14px;font-weight:600;color:var(--tinta);
-    background:#fff;border:1px solid var(--linea);border-radius:12px;padding:12px 24px;
+    background:#fff;border:1px solid var(--acento-cl);border-radius:12px;padding:12px 24px;
     transition:background .15s,border-color .15s;
   }
-  .mg-vertodas button:hover{background:var(--hueso);border-color:var(--acento-cl)}
+  .mg-vertodas button:hover{background:var(--acento-sombra);border-color:var(--acento)}
   .mg-vertodas button svg{width:16px;height:16px}
 
   /* ---------- formulario "Dejar una resena" (en el modal) ---------- */
@@ -545,23 +548,27 @@
   .mg-rf-ok h2{margin:0}
   .mg-rf-ok p{margin:0;color:var(--gris)}
 
-  /* ---------- pantalla "Todas las opiniones" (overlay con filtros) ---------- */
-  .mg-pt{position:fixed;inset:0;z-index:200;background:var(--hueso);overflow-y:auto;display:none;flex-direction:column}
+  /* ---------- pantalla "Todas las opiniones" ----------
+     PC: modal centrado estilo Mercado Libre (caja con cabecera + scroll interno).
+     Movil: pantalla completa (filtros arriba, boton volver, opiniones abajo). */
+  .mg-pt{position:fixed;inset:0;z-index:200;background:rgba(17,17,17,.5);display:none;align-items:center;justify-content:center;padding:24px}
   .mg-pt[aria-hidden="false"]{display:flex}
-  .mg-pt__head{position:sticky;top:0;z-index:2;background:#fff;border-bottom:1px solid var(--linea);display:flex;align-items:center;gap:16px;padding:14px 24px}
-  .mg-pt__volver{
-    display:inline-flex;align-items:center;gap:6px;flex:none;cursor:pointer;
-    font-family:inherit;font-size:14px;font-weight:600;color:var(--tinta);
-    background:#fff;border:1px solid var(--linea);border-radius:999px;padding:9px 16px 9px 11px;
-    transition:background .15s,border-color .15s;
+  .mg-pt__caja{
+    display:flex;flex-direction:column;width:100%;max-width:820px;max-height:86vh;
+    background:#fff;border:1px solid var(--acento-cl);border-radius:16px;overflow:hidden;
+    box-shadow:0 24px 60px rgba(17,17,17,.3);
   }
-  .mg-pt__volver:hover{background:var(--hueso);border-color:var(--acento-cl)}
-  .mg-pt__volver svg{width:18px;height:18px}
-  .mg-pt__tit{display:flex;flex-direction:column;gap:1px;min-width:0}
+  .mg-pt__head{flex:none;display:flex;align-items:center;gap:14px;padding:16px 20px;border-bottom:1px solid var(--linea)}
+  .mg-pt__tit{flex:1;min-width:0;display:flex;flex-direction:column;gap:2px}
   .mg-pt__tit h2{margin:0;font-size:17px;font-weight:600}
   .mg-pt__prom{display:flex;align-items:center;gap:8px;font-size:13px;color:var(--gris)}
   .mg-pt__prom b{color:var(--tinta);font-variant-numeric:tabular-nums}
-  .mg-pt__filtros{display:flex;align-items:center;justify-content:space-between;gap:12px 20px;flex-wrap:wrap;max-width:1120px;width:100%;margin:0 auto;padding:20px 24px 2px}
+  .mg-pt__x{flex:none;width:36px;height:36px;border-radius:10px;border:0;background:var(--hueso);color:var(--tinta);cursor:pointer;display:flex;align-items:center;justify-content:center;transition:background .15s,color .15s}
+  .mg-pt__x:hover{background:var(--acento-sombra);color:var(--acento)}
+  .mg-pt__x svg{width:18px;height:18px}
+  .mg-pt__volver{display:none} /* visible solo en movil */
+  .mg-pt__scroll{overflow-y:auto;flex:1}
+  .mg-pt__filtros{position:sticky;top:0;z-index:1;background:#fff;display:flex;align-items:center;justify-content:space-between;gap:12px 16px;flex-wrap:wrap;padding:16px 20px 12px;border-bottom:1px solid var(--linea)}
   .mg-pt__chips{display:flex;gap:8px;flex-wrap:wrap}
   .mg-chip-f{
     display:inline-flex;align-items:center;gap:5px;cursor:pointer;
@@ -574,11 +581,22 @@
   .mg-chip-f.on{color:#fff;background:var(--tinta);border-color:var(--tinta)}
   .mg-chip-f.on svg{color:var(--acento-cl)}
   .mg-chip-f.on .c{color:rgba(255,255,255,.7)}
-  .mg-pt__orden{display:inline-flex;align-items:center;gap:8px;font-size:13px;color:var(--gris)}
+  .mg-pt__orden{display:inline-flex;align-items:center;gap:8px;font-size:13px;color:var(--gris);white-space:nowrap}
   .mg-pt__orden select{font-family:inherit;font-size:13px;color:var(--tinta);background:#fff;border:1px solid var(--linea);border-radius:10px;padding:8px 10px;cursor:pointer}
-  .mg-pt__lista{max-width:1120px;width:100%;margin:0 auto;padding:18px 24px 70px;display:grid;grid-template-columns:repeat(2,1fr);gap:16px}
-  @media(max-width:720px){.mg-pt__lista{grid-template-columns:1fr}}
-  .mg-pt__vacio{grid-column:1/-1;text-align:center;color:var(--gris);padding:46px 20px}
+  .mg-pt__lista{display:flex;flex-direction:column;gap:14px;padding:16px 20px 24px}
+  .mg-pt__vacio{text-align:center;color:var(--gris);padding:46px 20px}
+  @media(max-width:720px){
+    .mg-pt{padding:0;background:var(--hueso);align-items:stretch;justify-content:stretch}
+    .mg-pt__caja{max-width:none;max-height:none;height:100%;border:0;border-radius:0;box-shadow:none}
+    .mg-pt__x{display:none}
+    .mg-pt__volver{
+      display:inline-flex;align-items:center;gap:6px;flex:none;cursor:pointer;
+      font-family:inherit;font-size:14px;font-weight:600;color:var(--tinta);
+      background:#fff;border:1px solid var(--acento-cl);border-radius:999px;padding:8px 14px 8px 10px;
+    }
+    .mg-pt__volver svg{width:18px;height:18px}
+    .mg-pt__tit h2{font-size:16px}
+  }
 
   /* banner de "vista de ejemplo" (modo demo ?demo=1): inconfundible, no real */
   .mg-demo-banner{max-width:1120px;margin:22px auto 0;padding:0 24px}
@@ -978,28 +996,35 @@
 <!-- pantalla "Todas las opiniones": overlay a pantalla completa con filtros por
      estrellas, orden y boton de retroceso. Se llena desde las opiniones ya
      cargadas (no re-consulta). -->
-<div class="mg-pt" id="mg-opiniones-panel" aria-hidden="true" role="dialog" aria-modal="true" aria-label="Todas las opiniones">
-  <div class="mg-pt__head">
-    <button type="button" class="mg-pt__volver" id="mg-pt-volver">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"/></svg>
-      Volver
-    </button>
-    <div class="mg-pt__tit">
-      <h2>Todas las opiniones</h2>
-      <div class="mg-pt__prom" id="mg-pt-prom"></div>
+<div class="mg-pt" id="mg-opiniones-panel" aria-hidden="true" role="dialog" aria-modal="true" aria-label="Opiniones del producto">
+  <div class="mg-pt__caja">
+    <div class="mg-pt__head">
+      <button type="button" class="mg-pt__volver" id="mg-pt-volver" aria-label="Volver">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"/></svg>
+        <span>Volver</span>
+      </button>
+      <div class="mg-pt__tit">
+        <h2>Opiniones del producto</h2>
+        <div class="mg-pt__prom" id="mg-pt-prom"></div>
+      </div>
+      <button type="button" class="mg-pt__x" id="mg-pt-x" aria-label="Cerrar">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18M6 6l12 12"/></svg>
+      </button>
+    </div>
+    <div class="mg-pt__scroll">
+      <div class="mg-pt__filtros">
+        <div class="mg-pt__chips" id="mg-pt-chips"></div>
+        <label class="mg-pt__orden">Ordenar
+          <select id="mg-pt-orden">
+            <option value="recientes">Más recientes</option>
+            <option value="altas">Mejor calificadas</option>
+            <option value="bajas">Peor calificadas</option>
+          </select>
+        </label>
+      </div>
+      <div class="mg-pt__lista" id="mg-pt-lista"></div>
     </div>
   </div>
-  <div class="mg-pt__filtros">
-    <div class="mg-pt__chips" id="mg-pt-chips"></div>
-    <label class="mg-pt__orden">Ordenar
-      <select id="mg-pt-orden">
-        <option value="recientes">Más recientes</option>
-        <option value="altas">Mejor calificadas</option>
-        <option value="bajas">Peor calificadas</option>
-      </select>
-    </label>
-  </div>
-  <div class="mg-pt__lista" id="mg-pt-lista"></div>
 </div>
 
 <!-- modal: por qué MAGANDHI usa Wompi -->
@@ -2009,18 +2034,32 @@
   function escaparHTMLr(s){ return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
   function estrellasFrac(valor, extra){
     const pct = Math.max(0, Math.min(5, Number(valor)||0)) / 5 * 100;
-    return '<span class="mg-stars '+(extra||'')+'"><span class="mg-stars-bg">'+RES_STAR_LINE.repeat(5)+'</span>'+
+    return '<span class="mg-stars '+(extra||'')+'"><span class="mg-stars-bg">'+RES_STAR_FILL.repeat(5)+'</span>'+
       '<span class="mg-stars-fg" style="width:'+pct+'%">'+RES_STAR_FILL.repeat(5)+'</span></span>';
   }
   function estrellasDisc(n){
     const k = Math.max(0, Math.min(5, Math.round(Number(n)||0)));
-    return '<span class="mg-rst"><span class="f">'+RES_STAR_FILL.repeat(k)+'</span><span class="h">'+RES_STAR_LINE.repeat(5-k)+'</span></span>';
+    return '<span class="mg-rst"><span class="f">'+RES_STAR_FILL.repeat(k)+'</span><span class="h">'+RES_STAR_FILL.repeat(5-k)+'</span></span>';
   }
   function fechaResena(iso){
     if(!iso) return '';
     const d = new Date(iso); if(isNaN(d.getTime())) return '';
     const m = ['ene','feb','mar','abr','may','jun','jul','ago','sep','oct','nov','dic'];
     return String(d.getDate()).padStart(2,'0')+' '+m[d.getMonth()]+' '+d.getFullYear();
+  }
+  // Fecha RELATIVA ("hace X"): cuenta los dias desde que se registro la opinion
+  // (opiniones.creado) hasta hoy. La fecha exacta queda en el title (tooltip).
+  function fechaRelativa(iso){
+    if(!iso) return '';
+    const d = new Date(iso); if(isNaN(d.getTime())) return '';
+    let dias = Math.floor((Date.now() - d.getTime()) / 86400000);
+    if(dias < 0) dias = 0;
+    if(dias === 0) return 'Hoy';
+    if(dias === 1) return 'Ayer';
+    if(dias < 7)  return 'hace ' + dias + ' días';
+    if(dias < 31){ const s = Math.round(dias/7);  return 'hace ' + s + (s===1?' semana':' semanas'); }
+    if(dias < 365){ const me = Math.round(dias/30); return 'hace ' + me + (me===1?' mes':' meses'); }
+    const a = Math.floor(dias/365); return 'hace ' + a + (a===1?' año':' años');
   }
 
   function tarjetaResena(o){
@@ -2039,7 +2078,7 @@
         '</div>'+
         texto+
         resp+
-        '<div class="mg-resena__fecha">'+escaparHTMLr(fechaResena(o.creado))+'</div>'+
+        '<div class="mg-resena__fecha" title="'+escaparHTMLr(fechaResena(o.creado))+'">'+escaparHTMLr(fechaRelativa(o.creado))+'</div>'+
       '</div>';
   }
 
@@ -2304,9 +2343,13 @@
   }
   function configurarPanelTodas(){
     const volver = document.getElementById('mg-pt-volver');
+    const equis  = document.getElementById('mg-pt-x');
     const sel = document.getElementById('mg-pt-orden');
     const panel = document.getElementById('mg-opiniones-panel');
     if(volver) volver.addEventListener('click', cerrarPanelTodas);
+    if(equis)  equis.addEventListener('click', cerrarPanelTodas);
+    // Clic en el fondo oscuro (fuera de la caja) cierra en PC.
+    if(panel) panel.addEventListener('click', (e)=>{ if(e.target === panel) cerrarPanelTodas(); });
     if(sel) sel.addEventListener('change', ()=>{ ptOrden = sel.value; renderPanelLista(); });
     document.addEventListener('keydown', (e)=>{ if(e.key === 'Escape' && panel && panel.getAttribute('aria-hidden') === 'false') cerrarPanelTodas(); });
   }
