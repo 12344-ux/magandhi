@@ -286,13 +286,43 @@
 
   /* info */
   .mg-info{padding-top:4px}
+  /* SELLO "Elegido por MAGANDHI": el simbolo de marca es la ESTRELLA. Para dar
+     peso a la curaduria, al abrir el producto la estrella "se expande" y revela
+     el texto; tras una pausa se recoge y queda SOLO la estrella. Es una sola
+     pasada (no bucle). La animacion la dispara el JS al cargar agregando la
+     clase .animar; sin ella, el sello queda en reposo mostrando solo la estrella. */
   .mg-sello{
-    display:inline-flex;align-items:center;gap:7px;
+    display:inline-flex;align-items:center;
     font-size:11.5px;font-weight:600;letter-spacing:.12em;text-transform:uppercase;
     color:var(--acento);background:var(--acento-sombra);
     border:1px solid var(--acento-cl);border-radius:999px;padding:5px 13px;
+    overflow:hidden;white-space:nowrap;
   }
-  .mg-sello svg{width:14px;height:14px}
+  .mg-sello svg{width:14px;height:14px;flex:none}
+  /* El texto se mide con un ancho maximo animable. En REPOSO esta recogido
+     (max-width 0, sin margen ni opacidad): el pill queda ajustado a la estrella.
+     La separacion estrella<->texto la da el propio margin-left del texto, que
+     tambien se anima, para que en reposo no quede un hueco a la derecha. */
+  .mg-sello__txt{
+    display:inline-block;overflow:hidden;
+    max-width:0;opacity:0;margin-left:0;
+  }
+  .mg-sello.animar .mg-sello__txt{
+    animation:mg-sello-abrir 4.4s ease both;
+  }
+  @keyframes mg-sello-abrir{
+    0%        {max-width:0;   opacity:0; margin-left:0}
+    14%       {max-width:0;   opacity:0; margin-left:0}
+    32%,72%   {max-width:280px; opacity:1; margin-left:7px}
+    100%      {max-width:0;   opacity:0; margin-left:0}
+  }
+  /* RESPETO A "REDUCIR MOVIMIENTO": si la persona pidio menos animacion, no se
+     anima nada; el texto queda SIEMPRE visible junto a la estrella (sin perder
+     informacion ni mostrar movimiento que pueda marear). */
+  @media (prefers-reduced-motion: reduce){
+    .mg-sello__txt{max-width:280px;opacity:1;margin-left:7px}
+    .mg-sello.animar .mg-sello__txt{animation:none}
+  }
   /* El atributo HTML `hidden` debe ganar sobre el display:inline-flex de autor
      (la regla [hidden] del user-agent no prevalece por si sola). Mismo patron
      robusto que .mg-nodisp: cuando pintarSello() pone el.hidden=true, el sello
@@ -652,7 +682,7 @@
          solo alterna su visibilidad. -->
     <span class="mg-sello" id="mg-sello" hidden>
       <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="m12 2 3 6.3 6.9 1-5 4.9 1.2 6.8L12 17.8 5.9 21l1.2-6.8-5-4.9 6.9-1z"/></svg>
-      Elegido por MAGANDHI
+      <span class="mg-sello__txt">Elegido por MAGANDHI</span>
     </span>
     <h1 class="mg-titulo" id="mg-titulo">Producto</h1>
     <p class="mg-sub" id="mg-sub">Cargando información del producto…</p>
@@ -1037,10 +1067,19 @@
   // simbolo de marca es la ESTRELLA (ya embebida en el marcado del sello); el
   // antiguo dato 'estrella' quedo jubilado y ya no agrega nada. Si el sello
   // esta apagado para ese producto, la pagina deja de mostrarlo (igual que el home).
+  //
+  // DETALLE PREMIUM: al mostrarlo, dispara UNA sola pasada de la animacion
+  // (estrella -> revela "Elegido por MAGANDHI" -> se recoge a solo estrella),
+  // tras un pequeno retraso para que el ojo llegue. Si la persona activo
+  // "reducir movimiento", el CSS deja el texto fijo y la clase no anima nada.
   function pintarSello(fila){
     const el = document.getElementById('mg-sello');
     if(!el) return;
     el.hidden = !fila.sello_elegido;
+    if(fila.sello_elegido){
+      // Pequena espera: el producto termina de pintar y luego el sello respira.
+      setTimeout(function(){ el.classList.add('animar'); }, 650);
+    }
   }
 
   function pintarUrgencia(fila){
