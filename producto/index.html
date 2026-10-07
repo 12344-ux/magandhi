@@ -226,6 +226,40 @@
 
   /* galería con el ACENTO del producto */
   .mg-galeria{position:relative}
+
+  /* ---------- SELLO "Elegido por MAGANDHI" sobre la galeria (SOLO PC) ----------
+     Vive en la esquina superior derecha del MARCO de la galeria, asi permanece
+     al cambiar de imagen. Por defecto esta oculto: solo se activa en PC
+     (min-width:861px) via la clase .activo que pone el script, y SOLO cuando el
+     usuario NO pidio reducir movimiento. En reposo final queda SOLO la estrella;
+     la animacion (una pasada) abre el texto, lo mantiene ~3s y lo recoge. */
+  .mg-sello-galeria{display:none}
+  @media(min-width:861px){
+    .mg-sello-galeria.activo{
+      position:absolute;top:12px;right:12px;z-index:4;
+      display:inline-flex;align-items:center;
+      font-size:11px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;
+      color:var(--acento);background:#FFFDF9;
+      border:1px solid var(--acento-cl);border-radius:999px;padding:6px 12px;
+      box-shadow:0 4px 14px rgba(17,17,17,.12);
+      overflow:hidden;white-space:nowrap;max-width:100%;
+    }
+    .mg-sello-galeria.activo svg{width:15px;height:15px;flex:none}
+    .mg-sello-galeria__txt{
+      display:inline-block;overflow:hidden;max-width:0;opacity:0;margin-left:0;
+    }
+    /* La animacion la enciende el script agregando .animar (una sola pasada). */
+    .mg-sello-galeria.activo.animar .mg-sello-galeria__txt{
+      animation:mg-sello-galeria-abrir 6.4s ease both;
+    }
+    /* Ventana desplegada ~3s: abre 10%->24%, se mantiene 24%->71% (~3s de 6.4s)
+       y se recoge 71%->88%, dejando solo la estrella el resto del tiempo. */
+    @keyframes mg-sello-galeria-abrir{
+      0%,10%    {max-width:0;    opacity:0; margin-left:0}
+      24%,71%   {max-width:260px;opacity:1; margin-left:7px}
+      88%,100%  {max-width:0;    opacity:0; margin-left:0}
+    }
+  }
   .mg-foto{
     position:relative;border-radius:18px;overflow:hidden;
     /* GALERIA EN BLANCO estilo Mercado Libre: el producto se exhibe sobre fondo
@@ -286,43 +320,21 @@
 
   /* info */
   .mg-info{padding-top:4px}
-  /* SELLO "Elegido por MAGANDHI": el simbolo de marca es la ESTRELLA. Para dar
-     peso a la curaduria, al abrir el producto la estrella "se expande" y revela
-     el texto; tras una pausa se recoge y queda SOLO la estrella. Es una sola
-     pasada (no bucle). La animacion la dispara el JS al cargar agregando la
-     clase .animar; sin ella, el sello queda en reposo mostrando solo la estrella. */
+  /* SELLO "Elegido por MAGANDHI" ARRIBA DEL TITULO (chip fijo, texto siempre
+     visible). Es la variante que se usa cuando NO corresponde la estrella sobre
+     la galeria: es decir, en pantallas que no son PC, y en PC cuando la persona
+     pidio "reducir movimiento". En PC con movimiento normal, el script lo oculta
+     agregando .mg-sello--cede y manda la estrella animada de la galeria. */
   .mg-sello{
-    display:inline-flex;align-items:center;
+    display:inline-flex;align-items:center;gap:7px;
     font-size:11.5px;font-weight:600;letter-spacing:.12em;text-transform:uppercase;
     color:var(--acento);background:var(--acento-sombra);
     border:1px solid var(--acento-cl);border-radius:999px;padding:5px 13px;
-    overflow:hidden;white-space:nowrap;
   }
   .mg-sello svg{width:14px;height:14px;flex:none}
-  /* El texto se mide con un ancho maximo animable. En REPOSO esta recogido
-     (max-width 0, sin margen ni opacidad): el pill queda ajustado a la estrella.
-     La separacion estrella<->texto la da el propio margin-left del texto, que
-     tambien se anima, para que en reposo no quede un hueco a la derecha. */
-  .mg-sello__txt{
-    display:inline-block;overflow:hidden;
-    max-width:0;opacity:0;margin-left:0;
-  }
-  .mg-sello.animar .mg-sello__txt{
-    animation:mg-sello-abrir 4.4s ease both;
-  }
-  @keyframes mg-sello-abrir{
-    0%        {max-width:0;   opacity:0; margin-left:0}
-    14%       {max-width:0;   opacity:0; margin-left:0}
-    32%,72%   {max-width:280px; opacity:1; margin-left:7px}
-    100%      {max-width:0;   opacity:0; margin-left:0}
-  }
-  /* RESPETO A "REDUCIR MOVIMIENTO": si la persona pidio menos animacion, no se
-     anima nada; el texto queda SIEMPRE visible junto a la estrella (sin perder
-     informacion ni mostrar movimiento que pueda marear). */
-  @media (prefers-reduced-motion: reduce){
-    .mg-sello__txt{max-width:280px;opacity:1;margin-left:7px}
-    .mg-sello.animar .mg-sello__txt{animation:none}
-  }
+  /* Cuando PC-con-movimiento toma el relevo, este sello de arriba cede su lugar
+     a la estrella de la galeria. */
+  .mg-sello--cede{display:none}
   /* El atributo HTML `hidden` debe ganar sobre el display:inline-flex de autor
      (la regla [hidden] del user-agent no prevalece por si sola). Mismo patron
      robusto que .mg-nodisp: cuando pintarSello() pone el.hidden=true, el sello
@@ -648,6 +660,16 @@
 <section class="mg-ficha">
   <!-- galería -->
   <div class="mg-galeria">
+    <!-- Sello "Elegido por MAGANDHI" para PC, anclado a la esquina superior
+         derecha del MARCO de la galeria (no de una foto puntual), para que al
+         cambiar de imagen la estrella permanezca. Oculto por defecto; el script
+         lo muestra y dispara UNA animacion al entrar. En movil este sello no se
+         usa (el distintivo movil ya vive en el home/escaparate), y con
+         "reducir movimiento" manda el sello fijo de arriba del titulo. -->
+    <span class="mg-sello-galeria" id="mg-sello-galeria" hidden aria-hidden="true">
+      <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="m12 2 3 6.3 6.9 1-5 4.9 1.2 6.8L12 17.8 5.9 21l1.2-6.8-5-4.9 6.9-1z"/></svg>
+      <span class="mg-sello-galeria__txt">Elegido por MAGANDHI</span>
+    </span>
     <div class="mg-foto" id="mg-foto" tabindex="0" aria-label="Galería del producto">
       <div class="mg-foto__contenido" id="mg-foto-contenido" aria-live="polite">
         <div class="mg-foto__ph">
@@ -682,7 +704,7 @@
          solo alterna su visibilidad. -->
     <span class="mg-sello" id="mg-sello" hidden>
       <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="m12 2 3 6.3 6.9 1-5 4.9 1.2 6.8L12 17.8 5.9 21l1.2-6.8-5-4.9 6.9-1z"/></svg>
-      <span class="mg-sello__txt">Elegido por MAGANDHI</span>
+      Elegido por MAGANDHI
     </span>
     <h1 class="mg-titulo" id="mg-titulo">Producto</h1>
     <p class="mg-sub" id="mg-sub">Cargando información del producto…</p>
@@ -1063,22 +1085,45 @@
   // Campañas). Si mas adelante se limpia el back-office, esos campos se podran
   // retirar sin afectar esta pagina.
 
-  // Muestra u oculta el sello "Elegido por MAGANDHI" segun sello_elegido. El
-  // simbolo de marca es la ESTRELLA (ya embebida en el marcado del sello); el
-  // antiguo dato 'estrella' quedo jubilado y ya no agrega nada. Si el sello
-  // esta apagado para ese producto, la pagina deja de mostrarlo (igual que el home).
+  // Muestra el sello "Elegido por MAGANDHI" segun sello_elegido. El simbolo de
+  // marca es la ESTRELLA. Hay DOS presentaciones y el script elige una:
   //
-  // DETALLE PREMIUM: al mostrarlo, dispara UNA sola pasada de la animacion
-  // (estrella -> revela "Elegido por MAGANDHI" -> se recoge a solo estrella),
-  // tras un pequeno retraso para que el ojo llegue. Si la persona activo
-  // "reducir movimiento", el CSS deja el texto fijo y la clase no anima nada.
+  //  (1) PC (>=861px) con movimiento normal: la estrella vive en la ESQUINA
+  //      superior derecha de la galeria (.mg-sello-galeria). Al entrar, hace UNA
+  //      pasada: estrella -> revela "Elegido por MAGANDHI" (~3s) -> se recoge y
+  //      queda SOLO la estrella, de forma permanente, en todas las imagenes de
+  //      la galeria. En este caso el sello de arriba del titulo CEDE (se oculta).
+  //
+  //  (2) El resto (pantallas no-PC, o PC con "reducir movimiento" activo): se
+  //      usa el sello FIJO de arriba del titulo, con el texto siempre visible y
+  //      sin animacion (no se pierde informacion ni se mueve nada).
   function pintarSello(fila){
-    const el = document.getElementById('mg-sello');
-    if(!el) return;
-    el.hidden = !fila.sello_elegido;
-    if(fila.sello_elegido){
-      // Pequena espera: el producto termina de pintar y luego el sello respira.
-      setTimeout(function(){ el.classList.add('animar'); }, 650);
+    const arriba = document.getElementById('mg-sello');
+    const galeria = document.getElementById('mg-sello-galeria');
+    if(!arriba) return;
+
+    if(!fila.sello_elegido){
+      arriba.hidden = true;
+      if(galeria) galeria.hidden = true;
+      return;
+    }
+
+    // Es PC (ancho de escritorio) y la persona NO pidio reducir movimiento?
+    const esPC = window.matchMedia('(min-width: 861px)').matches;
+    const reduceMovimiento = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+    if(esPC && !reduceMovimiento && galeria){
+      // Camino (1): la estrella animada toma el relevo sobre la galeria.
+      arriba.hidden = false;              // sigue en el DOM...
+      arriba.classList.add('mg-sello--cede'); // ...pero cede su lugar (display:none)
+      galeria.hidden = false;
+      galeria.classList.add('activo');
+      // Pequena espera para que el ojo llegue; luego, una sola pasada.
+      setTimeout(function(){ galeria.classList.add('animar'); }, 650);
+    } else {
+      // Camino (2): sello fijo de arriba del titulo, texto siempre visible.
+      arriba.hidden = false;
+      if(galeria) galeria.hidden = true;
     }
   }
 
