@@ -1,6 +1,6 @@
 # MAGANDHI · estado actual de la tienda pública
 
-**Corte:** 2 de octubre de 2026
+**Corte:** 7 de octubre de 2026
 **Producción:** `https://magandhi.com`
 **Repositorio:** `12344-ux/magandhi`
 
@@ -43,7 +43,23 @@ Los JPG de `marca/` son referencias históricas. No gobiernan la identidad ni de
 - Estado agotado deshabilita la compra.
 - Checkout Wompi iniciado mediante `crear-intencion-pago`.
 - WhatsApp contextual por producto.
-- Opiniones en estado vacío hasta disponer de compras verificadas reales.
+- Opiniones verificadas en vivo (ver sección siguiente). Estado vacío honesto mientras un producto no tenga opiniones.
+
+### Opiniones verificadas — `producto/index.html`
+
+Sistema aprobado el 7 de octubre de 2026. Es el esquema que siguen **todos** los productos.
+
+- Calificación bajo el precio: estrellas + promedio real + número de opiniones, enlazando a `#resenas`.
+- Promedio **real** (`avg`) a un decimal, **siempre acompañado del total**. Una sola opinión de cinco estrellas muestra `5.0 · 1 opinión`; no se suaviza ni se infla.
+- Estrellas sólidas: doradas las llenas, grises las vacías y una parcial con degradado para el decimal exacto.
+- En la ficha se muestran **cuatro** opiniones, todas del mismo tamaño: sin respuesta de marca, texto recortado a tres líneas y `Ver opinión completa` cuando se recorta.
+- Selección de esas cuatro: con cuatro o menos, las más recientes; con más, las cuatro mejor calificadas desempatando por recencia.
+- `Ver todas las opiniones` aparece solo con más de cuatro y abre el panel completo: modal centrado en computador, pantalla completa en móvil.
+- Panel: filtros por estrellas con conteo (solo computador), orden por recientes, antiguas, mejor y peor calificadas, y respuesta de marca visible.
+- Fechas relativas desde el registro de la opinión; la fecha exacta queda en el título emergente.
+- Realce al pasar el cursor únicamente en las cuatro de la ficha.
+- `Dejar una reseña` exige estrellas; el comentario es opcional. Envía el código del pedido a `enviar-opinion`.
+- Contorno dorado de marca en las tarjetas y en el botón de ver todas.
 
 La ruta `producto/grisi-manzanilla-gold/` es un redirect histórico de compatibilidad y no debe volver a convertirse en una ficha duplicada.
 
@@ -52,6 +68,8 @@ La ruta `producto/grisi-manzanilla-gold/` es un redirect histórico de compatibi
 - Proyecto Supabase compartido con el back-office.
 - La tienda anónima solo debe leer la vista con lista blanca `catalogo_publico`.
 - Las tablas base de Inventario, Campañas, Ventas y Finanzas no son públicas.
+- Opiniones: la tienda anónima solo lee las vistas con lista blanca `producto_rating_publico` (total y promedio por slug) y `opiniones_publicas` (tarjetas). La tabla `opiniones` no es pública.
+- Escribir una opinión ocurre únicamente a través de la Edge Function `enviar-opinion`, que valida el código del pedido server-side. La tienda nunca escribe la tabla.
 - `campana_producto.precio_venta` es el precio comercial mostrado y firmado para checkout.
 - El stock real proviene de `movimientos_inventario`; la tienda recibe únicamente `agotado`.
 - `imagenes` conserva paths grandes; la variante liviana se deriva como `<base>-sm.<ext>`.
@@ -79,13 +97,14 @@ Todavía no existe F2 en producción: persistencia de intención, webhook idempo
 
 ## Pendientes reales
 
-1. Wompi F2 y, después, activación controlada de producción.
-2. Políticas reales: privacidad, condiciones, entregas, cambios/devoluciones y tratamiento de datos.
-3. Canal/página formal de PQRS; mientras tanto se usa el correo real.
-4. Sistema de opiniones vinculado a compras verificadas.
-5. Metadata/canonical/OG por producto; mantener `noindex` hasta resolverlo.
-6. Definir cómo escala el grid móvil más allá de los cinco espacios actuales.
-7. Revisar accesibilidad completa de carrusel y modales antes del lanzamiento público definitivo.
+1. Entrega del código de reseña al cliente en el último correo de seguimiento. Requiere montar el envío de correos de MAGANDHI, que todavía no existe. **Hasta cerrarlo no entran opiniones reales**, aunque el motor ya esté desplegado y probado.
+2. Wompi F2 y, después, activación controlada de producción.
+3. Políticas reales: privacidad, condiciones, entregas, cambios/devoluciones y tratamiento de datos.
+4. Canal/página formal de PQRS; mientras tanto se usa el correo real.
+5. Repaso de textos de la sección de opiniones. El diseño quedó aprobado; solo falta pulir copias.
+6. Metadata/canonical/OG por producto; mantener `noindex` hasta resolverlo.
+7. Definir cómo escala el grid móvil más allá de los cinco espacios actuales.
+8. Revisar accesibilidad completa de carrusel y modales antes del lanzamiento público definitivo.
 
 ## Fuentes de verdad
 

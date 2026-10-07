@@ -627,14 +627,6 @@
     .mg-pt__lista{padding:14px 14px 26px}
   }
 
-  /* banner de "vista de ejemplo" (modo demo ?demo=1): inconfundible, no real */
-  .mg-demo-banner{max-width:1120px;margin:22px auto 0;padding:0 24px}
-  .mg-demo-banner > div{
-    display:flex;align-items:center;gap:9px;font-size:13px;color:#7a5a1e;
-    background:var(--acento-sombra);border:1px dashed var(--acento-cl);border-radius:12px;padding:10px 14px;
-  }
-  .mg-demo-banner svg{width:16px;height:16px;color:var(--acento);flex:none}
-
   /* ---------- footer ---------- */
   footer{margin-top:70px;border-top:1px solid var(--linea);background:#fff}
   /* en PC el .mg-prefooter negro ya aporta su propio margen superior justo antes
@@ -2213,29 +2205,11 @@
     }
   }
 
-  // Opiniones de EJEMPLO (modo demo ?demo=1): SOLO para previsualizar el diseño.
-  // NO tocan la base de datos ni el sistema real; viven solo en el navegador y
-  // nunca se envian a ningun lado. Un banner inconfundible avisa que son muestra.
-  const DEMO_RESENAS = [
-    { estrellas:5, autor_nombre:'Laura M.',    comentario:'Llegó bien empacado y justo el día que acordamos. El trato por WhatsApp fue muy cercano.', creado:'2026-09-20', respuesta:null },
-    { estrellas:5, autor_nombre:'Julián R.',   comentario:'Producto original y de buena calidad. Se nota que lo revisan antes de vender.', creado:'2026-09-10', respuesta:'¡Gracias, Julián! Nos alegra que notaras la curaduría. Un abrazo del equipo.', respuesta_en:'2026-09-11' },
-    { estrellas:4, autor_nombre:'Carolina P.', comentario:'Muy buena atención y el envío llegó a tiempo. Repetiré la compra sin duda.', creado:'2026-08-28', respuesta:null },
-    { estrellas:5, autor_nombre:'Andrés V.',   comentario:'Tal cual lo describen. Se agradece la honestidad en la ficha del producto.', creado:'2026-08-15', respuesta:null },
-    { estrellas:3, autor_nombre:'Daniela S.',  comentario:'El producto bien; el empaque llegó un poco golpeado, pero la atención fue excelente.', creado:'2026-07-30', respuesta:null }
-  ];
-  function enModoDemo(){ try{ return new URLSearchParams(location.search).get('demo') === '1'; }catch(_){ return false; } }
-  function mostrarBannerDemo(){
-    if(document.getElementById('mg-demo-banner')) return;
-    const sec = document.getElementById('resenas');
-    if(!sec || !sec.parentNode) return;
-    const b = document.createElement('div');
-    b.className = 'mg-demo-banner'; b.id = 'mg-demo-banner';
-    b.innerHTML = '<div>'+ICO_BUBBLE+'<span><strong>Vista de ejemplo.</strong> Estas opiniones son de muestra para revisar el diseño; no son reales ni afectan el sistema.</span></div>';
-    sec.parentNode.insertBefore(b, sec);
-  }
-
-  // Pinta rating + promedio grande + tarjetas. total/prom pueden venir fijados
-  // (el promedio AUTORITATIVO de la vista) o calcularse de las opiniones (demo).
+  // Pinta rating + promedio grande + tarjetas. total/prom llegan de la vista
+  // producto_rating_publico (el promedio AUTORITATIVO, calculado en la base con
+  // avg(estrellas) sobre las opiniones visibles). Si por alguna razon la vista no
+  // devolviera fila pero si hay opiniones, se calcula localmente como respaldo
+  // para no mostrar un cero enganoso.
   function pintarTodo(ops, totalOverride, promOverride){
     const total = (totalOverride != null) ? totalOverride : ops.length;
     const prom  = (promOverride != null) ? promOverride
@@ -2256,7 +2230,6 @@
   }
 
   async function cargarResenas(slug){
-    if(enModoDemo()){ mostrarBannerDemo(); pintarTodo(DEMO_RESENAS.slice()); return; }
     if(!slug) return; // sin slug publico no hay como consultar las vistas
     try{
       const [ratingRes, opsRes] = await Promise.all([
