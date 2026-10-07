@@ -444,12 +444,101 @@
 
   /* ---------- opiniones ---------- */
   .mg-resenas{max-width:1120px;margin:56px auto 0;padding:0 24px}
-  .mg-resenas__cab{margin-bottom:20px}
+  .mg-resenas__cab{display:flex;align-items:flex-end;justify-content:space-between;gap:16px 20px;flex-wrap:wrap;margin-bottom:20px}
   .mg-resenas h2{font-size:22px;font-weight:600;margin:0}
-  .mg-grid-r{display:grid;grid-template-columns:1fr;gap:16px}
-  .mg-resena{background:var(--blanco);border:1px solid var(--acento-cl);border-radius:14px;padding:18px 20px}
-  .mg-resena--vacia{border-style:dashed;text-align:center;color:var(--gris);font-size:14px;display:flex;flex-direction:column;gap:10px;align-items:center;justify-content:center;padding:30px}
+  /* boton "Dejar una resena" (contorno dorado, acento de marca) */
+  .mg-dejar{
+    display:inline-flex;align-items:center;gap:8px;flex:none;
+    font-family:inherit;font-size:14px;font-weight:600;cursor:pointer;
+    color:var(--tinta);background:#fff;border:1px solid var(--acento-cl);border-radius:12px;
+    padding:11px 20px;transition:background .15s,border-color .15s;
+  }
+  .mg-dejar:hover{background:var(--acento-sombra);border-color:var(--acento)}
+  .mg-dejar svg{width:17px;height:17px;color:var(--acento)}
+
+  /* estrellas con relleno fraccional exacto (dorado) — headline y promedio */
+  .mg-stars{position:relative;display:inline-flex;vertical-align:middle;line-height:0}
+  .mg-stars-bg{display:inline-flex;color:var(--acento-cl);opacity:.5}
+  .mg-stars-fg{position:absolute;left:0;top:0;overflow:hidden;white-space:nowrap;display:inline-flex;color:var(--acento)}
+  .mg-stars svg{width:16px;height:16px;flex:none}
+  .mg-stars--lg svg{width:19px;height:19px}
+  /* estrellas discretas por tarjeta (n rellenas + resto huecas) */
+  .mg-rst{display:inline-flex;line-height:0;flex:none}
+  .mg-rst .f{display:inline-flex;color:var(--acento)}
+  .mg-rst .h{display:inline-flex;color:var(--acento-cl);opacity:.55}
+  .mg-rst svg{width:14px;height:14px}
+
+  /* promedio grande */
+  .mg-prom{display:flex;align-items:center;gap:14px;margin:0 0 18px}
+  .mg-prom b{font-size:34px;font-weight:600;line-height:1;color:var(--negro);font-variant-numeric:tabular-nums}
+  .mg-prom .mg-prom-d{display:flex;flex-direction:column;gap:3px}
+  .mg-prom span{font-size:13px;color:var(--gris)}
+
+  .mg-grid-r{display:grid;grid-template-columns:repeat(2,1fr);gap:16px}
+  @media(max-width:720px){.mg-grid-r{grid-template-columns:1fr}}
+  .mg-resena{
+    background:var(--blanco);border:1px solid var(--linea);border-radius:14px;padding:18px 20px;
+    transition:transform .12s ease, box-shadow .12s ease, border-color .12s ease;
+  }
+  .mg-resena:hover{transform:translateY(-3px);box-shadow:0 10px 26px rgba(17,17,17,.09);border-color:var(--acento-cl)}
+  .mg-resena__top{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:8px}
+  .mg-resena__pers{display:flex;align-items:center;gap:11px;min-width:0}
+  .mg-avatar{width:38px;height:38px;border-radius:50%;flex:none;background:var(--acento-sombra);color:var(--acento);display:flex;align-items:center;justify-content:center;font-weight:600;font-size:15px}
+  .mg-resena__nom{font-size:14px;font-weight:600;line-height:1.1}
+  .mg-resena__ver{font-size:11.5px;color:var(--verde);display:flex;align-items:center;gap:4px}
+  .mg-resena__ver svg{width:13px;height:13px}
+  .mg-resena > p{font-size:14px;color:#333;margin:8px 0 0;white-space:pre-wrap;word-wrap:break-word}
+  .mg-resena__fecha{font-size:12px;color:var(--gris-cl);margin-top:10px}
+  /* respuesta de la marca dentro de una tarjeta */
+  .mg-resena__resp{margin:12px 0 0;padding:11px 13px;border-radius:10px;background:var(--hueso);border-left:3px solid var(--acento)}
+  .mg-resena__resp .q{display:flex;align-items:center;gap:6px;font-size:11px;font-weight:600;letter-spacing:.04em;text-transform:uppercase;color:var(--acento);margin-bottom:4px}
+  .mg-resena__resp .q svg{width:12px;height:12px}
+  .mg-resena__resp p{font-size:13px;color:#333;margin:0;white-space:pre-wrap}
+  .mg-resena--vacia{grid-column:1/-1;border-style:dashed;border-color:var(--linea);background:var(--blanco);text-align:center;color:var(--gris);font-size:14px;display:flex;flex-direction:column;gap:8px;align-items:center;justify-content:center;padding:34px}
   .mg-resena--vacia svg{width:28px;height:28px;color:var(--acento)}
+  .mg-resena--vacia strong{color:var(--tinta)}
+
+  /* boton "ver todas" */
+  .mg-vertodas{display:flex;justify-content:center;margin-top:24px}
+  .mg-vertodas button{
+    display:inline-flex;align-items:center;gap:8px;cursor:pointer;
+    font-family:inherit;font-size:14px;font-weight:600;color:var(--tinta);
+    background:#fff;border:1px solid var(--linea);border-radius:12px;padding:12px 24px;
+    transition:background .15s,border-color .15s;
+  }
+  .mg-vertodas button:hover{background:var(--hueso);border-color:var(--acento-cl)}
+  .mg-vertodas button svg{width:16px;height:16px}
+
+  /* ---------- formulario "Dejar una resena" (en el modal) ---------- */
+  .mg-resena-form{display:flex;flex-direction:column;gap:14px;text-align:left}
+  .mg-rf-campo{display:flex;flex-direction:column;gap:6px}
+  .mg-rf-campo > label{font-size:12.5px;font-weight:600;color:var(--tinta)}
+  .mg-rf-campo .ayuda{font-size:11.5px;color:var(--gris);line-height:1.4}
+  .mg-rf-campo input,.mg-rf-campo textarea{
+    font-family:inherit;font-size:14px;color:var(--tinta);background:#fff;
+    border:1px solid var(--linea);border-radius:10px;padding:11px 12px;width:100%;
+  }
+  .mg-rf-campo textarea{min-height:84px;resize:vertical}
+  .mg-rf-campo input:focus,.mg-rf-campo textarea:focus{outline:0;border-color:var(--acento);box-shadow:0 0 0 3px var(--acento-sombra)}
+  .mg-rf-campo input.cod{text-transform:uppercase;letter-spacing:.08em}
+  .mg-estrellas-input{display:inline-flex;gap:4px}
+  .mg-estrellas-input button{background:0;border:0;padding:2px;cursor:pointer;color:var(--acento-cl);line-height:0;transition:color .1s}
+  .mg-estrellas-input button svg{width:30px;height:30px}
+  .mg-estrellas-input button.on{color:var(--acento)}
+  .mg-rf-aviso{font-size:13px;display:none;margin:0}
+  .mg-rf-aviso[data-visible="true"]{display:block}
+  .mg-rf-aviso.err{color:var(--rojo)}
+  .mg-rf-aviso.ok{color:var(--verde)}
+  .mg-rf-enviar{
+    font-family:inherit;font-size:15px;font-weight:600;cursor:pointer;border:0;border-radius:12px;
+    padding:13px 24px;background:var(--rojo);color:#fff;transition:background .15s;
+  }
+  .mg-rf-enviar:hover{background:var(--rojo-osc)}
+  .mg-rf-enviar:disabled{opacity:.6;cursor:not-allowed}
+  .mg-rf-ok{text-align:center;display:flex;flex-direction:column;gap:12px;align-items:center;padding:10px 0}
+  .mg-rf-ok svg{width:46px;height:46px;color:var(--verde)}
+  .mg-rf-ok h2{margin:0}
+  .mg-rf-ok p{margin:0;color:var(--gris)}
 
   /* ---------- footer ---------- */
   footer{margin-top:70px;border-top:1px solid var(--linea);background:#fff}
@@ -723,7 +812,10 @@
       Agotado por ahora
     </div>
 
-    <div class="mg-estrellas mg-estrellas--vacia" aria-label="Este producto aún no tiene opiniones">
+    <!-- Calificacion: el script la rellena con el promedio REAL + N opiniones
+         (producto_rating_publico por slug). Mientras no haya datos o sean 0,
+         muestra el aviso honesto de "aun no hay opiniones". -->
+    <div class="mg-estrellas mg-estrellas--vacia" id="mg-rating" aria-label="Calificación del producto">
       Aún no hay opiniones verificadas.
     </div>
 
@@ -759,19 +851,78 @@
   </div>
 </section>
 
-<!-- reseñas -->
+<!-- reseñas: el script rellena rating/promedio/tarjetas desde las vistas
+     publicas opiniones_publicas y producto_rating_publico (por slug). El boton
+     "Dejar una reseña" abre el modal que envia el codigo del pedido a la Edge
+     Function enviar-opinion (verificacion server-side). -->
 <section class="mg-resenas" id="resenas">
   <div class="mg-resenas__cab">
     <h2>Opiniones de quienes compraron</h2>
+    <button type="button" class="mg-dejar" id="mg-dejar-resena">
+      <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="m12 2 3 6.3 6.9 1-5 4.9 1.2 6.8L12 17.8 5.9 21l1.2-6.8-5-4.9 6.9-1z"/></svg>
+      Dejar una reseña
+    </button>
   </div>
-  <div class="mg-grid-r">
+  <!-- promedio grande (oculto hasta que haya al menos una opinion) -->
+  <div id="mg-prom-bloque" hidden></div>
+  <!-- grilla de opiniones (el script la rellena; por defecto, estado vacio) -->
+  <div class="mg-grid-r" id="mg-grid-r">
     <div class="mg-resena mg-resena--vacia">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 15a4 4 0 0 1-4 4H8l-5 3V7a4 4 0 0 1 4-4h10a4 4 0 0 1 4 4z"/></svg>
       <strong>Aún no hay opiniones verificadas.</strong>
       <span>Cuando lleguen compras reales, aparecerán aquí.</span>
     </div>
   </div>
+  <!-- "ver todas": aparece solo si hay mas de 4 opiniones -->
+  <div class="mg-vertodas" id="mg-vertodas" hidden><button type="button"></button></div>
 </section>
+
+<!-- modal: Dejar una reseña -->
+<div class="mg-modal" id="mg-modal-resena" role="dialog" aria-modal="true" aria-labelledby="mg-rf-tit" aria-hidden="true">
+  <div class="mg-modal__caja mg-modal__caja--form">
+    <button type="button" class="mg-modal__x" id="mg-cerrar-resena" aria-label="Cerrar">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18M6 6l12 12"/></svg>
+    </button>
+
+    <div id="mg-rf-cuerpo">
+      <div class="mg-modal__ico">
+        <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="m12 2 3 6.3 6.9 1-5 4.9 1.2 6.8L12 17.8 5.9 21l1.2-6.8-5-4.9 6.9-1z"/></svg>
+      </div>
+      <h2 id="mg-rf-tit">Deja tu opinión</h2>
+      <p>Las opiniones de MAGANDHI son verificadas: solo quien compró puede dejarlas, con el código que llega por correo al recibir el pedido. Así todas son reales.</p>
+
+      <form class="mg-resena-form" id="mg-form-resena" novalidate>
+        <div class="mg-rf-campo">
+          <label>Tu calificación</label>
+          <span class="mg-estrellas-input" role="group" aria-label="Calificación en estrellas"></span>
+        </div>
+        <div class="mg-rf-campo">
+          <label for="mg-rf-comentario">Tu opinión <span style="color:var(--gris);font-weight:400">(opcional)</span></label>
+          <textarea id="mg-rf-comentario" maxlength="1000" placeholder="¿Cómo te pareció el producto y la entrega?"></textarea>
+        </div>
+        <div class="mg-rf-campo">
+          <label for="mg-rf-autor">¿Cómo quieres aparecer?</label>
+          <input id="mg-rf-autor" type="text" maxlength="40" placeholder="Tu primer nombre, por ejemplo" autocomplete="off">
+          <span class="ayuda">Así te verán las demás personas junto a tu opinión.</span>
+        </div>
+        <div class="mg-rf-campo">
+          <label for="mg-rf-codigo">Código de reseña</label>
+          <input id="mg-rf-codigo" class="cod" type="text" maxlength="20" placeholder="MG-XXXXXXXXXX" autocomplete="off">
+          <span class="ayuda">Lo recibes por correo cuando te entregamos tu pedido.</span>
+        </div>
+        <p class="mg-rf-aviso" id="mg-rf-aviso" data-visible="false"></p>
+        <button type="submit" class="mg-rf-enviar" id="mg-rf-enviar">Enviar opinión</button>
+      </form>
+    </div>
+
+    <div id="mg-rf-ok" class="mg-rf-ok" hidden>
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m9 12 2 2 4-4"/><circle cx="12" cy="12" r="10"/></svg>
+      <h2>¡Gracias por tu opinión!</h2>
+      <p>Ya quedó publicada. Ayuda a que otras personas compren con confianza.</p>
+      <button type="button" class="mg-dejar" id="mg-rf-ok-cerrar">Listo</button>
+    </div>
+  </div>
+</div>
 
 <!-- modal: por qué MAGANDHI usa Wompi -->
 <div class="mg-modal" id="mg-modal-wompi" role="dialog" aria-modal="true" aria-labelledby="mg-modal-wompi-tit" aria-hidden="true">
@@ -1422,6 +1573,8 @@
       pintarGaleria(data);
       pintarUrgencia(data);
       pintarAgotado(data);
+      // Opiniones verificadas: se leen por SLUG de las vistas publicas.
+      cargarResenas(data.slug || null);
     }catch(e){
       // Falla de red/consulta: no se pudo confirmar el producto ni su stock, asi
       // que se muestra el aviso sobrio de no disponible y se DESHABILITA la
@@ -1754,8 +1907,231 @@
     });
   }
 
+  // ==========================================================================
+  //  OPINIONES (reseñas verificadas): lectura publica + "Dejar una reseña"
+  //  --------------------------------------------------------------------------
+  //  · Lee EN VIVO las vistas publicas producto_rating_publico (promedio REAL +
+  //    total) y opiniones_publicas (tarjetas) por SLUG; ambas tienen grant a
+  //    anon y SOLO exponen columnas publicas (nunca pedido/producto internos).
+  //  · El promedio es el real y SIEMPRE va con el numero de opiniones; una sola
+  //    opinion de 5 se ve "5.0 · 1 opinion" (coherencia, no se infla).
+  //  · "Dejar una reseña" envia el CODIGO del pedido a la Edge Function
+  //    enviar-opinion, que valida server-side (codigo + pedido entregado +
+  //    producto comprado). La tienda NUNCA escribe la tabla opiniones directo.
+  // ==========================================================================
+  const RES_STAR_FILL = '<svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="m12 2 3 6.3 6.9 1-5 4.9 1.2 6.8L12 17.8 5.9 21l1.2-6.8-5-4.9 6.9-1z"/></svg>';
+  const RES_STAR_LINE = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round" aria-hidden="true"><path d="m12 2 3 6.3 6.9 1-5 4.9 1.2 6.8L12 17.8 5.9 21l1.2-6.8-5-4.9 6.9-1z"/></svg>';
+  const ICO_RESP = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 17V11a4 4 0 0 1 4-4h8"/><path d="m21 7-4-4M21 7l-4 4"/></svg>';
+  const ICO_VERIF = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="m9 12 2 2 4-4"/></svg>';
+  const ICO_BUBBLE = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 15a4 4 0 0 1-4 4H8l-5 3V7a4 4 0 0 1 4-4h10a4 4 0 0 1 4 4z"/></svg>';
+  const ICO_ARROW = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg>';
+
+  let resenasCargadas = []; // cache para "ver todas"
+
+  function escaparHTMLr(s){ return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+  function estrellasFrac(valor, extra){
+    const pct = Math.max(0, Math.min(5, Number(valor)||0)) / 5 * 100;
+    return '<span class="mg-stars '+(extra||'')+'"><span class="mg-stars-bg">'+RES_STAR_LINE.repeat(5)+'</span>'+
+      '<span class="mg-stars-fg" style="width:'+pct+'%">'+RES_STAR_FILL.repeat(5)+'</span></span>';
+  }
+  function estrellasDisc(n){
+    const k = Math.max(0, Math.min(5, Math.round(Number(n)||0)));
+    return '<span class="mg-rst"><span class="f">'+RES_STAR_FILL.repeat(k)+'</span><span class="h">'+RES_STAR_LINE.repeat(5-k)+'</span></span>';
+  }
+  function fechaResena(iso){
+    if(!iso) return '';
+    const d = new Date(iso); if(isNaN(d.getTime())) return '';
+    const m = ['ene','feb','mar','abr','may','jun','jul','ago','sep','oct','nov','dic'];
+    return String(d.getDate()).padStart(2,'0')+' '+m[d.getMonth()]+' '+d.getFullYear();
+  }
+
+  function tarjetaResena(o){
+    const inicial = (String(o.autor_nombre||'·').trim()[0] || '·').toUpperCase();
+    const texto = o.comentario ? '<p>'+escaparHTMLr(o.comentario)+'</p>' : '';
+    const resp = o.respuesta
+      ? '<div class="mg-resena__resp"><div class="q">'+ICO_RESP+'Respuesta de MAGANDHI</div><p>'+escaparHTMLr(o.respuesta)+'</p></div>'
+      : '';
+    return '<div class="mg-resena">'+
+        '<div class="mg-resena__top">'+
+          '<div class="mg-resena__pers"><div class="mg-avatar">'+escaparHTMLr(inicial)+'</div>'+
+            '<div><div class="mg-resena__nom">'+escaparHTMLr(o.autor_nombre||'Cliente')+'</div>'+
+            '<div class="mg-resena__ver">'+ICO_VERIF+' Compra verificada</div></div>'+
+          '</div>'+
+          estrellasDisc(o.estrellas)+
+        '</div>'+
+        texto+
+        resp+
+        '<div class="mg-resena__fecha">'+escaparHTMLr(fechaResena(o.creado))+'</div>'+
+      '</div>';
+  }
+
+  function pintarRating(total, prom){
+    const el = document.getElementById('mg-rating');
+    if(!el) return;
+    if(!total || total <= 0){
+      el.classList.add('mg-estrellas--vacia');
+      el.textContent = 'Aún no hay opiniones verificadas.';
+      return;
+    }
+    el.classList.remove('mg-estrellas--vacia');
+    el.innerHTML = estrellasFrac(prom) +
+      '<b style="color:var(--tinta);font-weight:600;font-variant-numeric:tabular-nums">'+Number(prom).toFixed(1)+'</b> · '+
+      '<a href="#resenas">'+total+(total===1?' opinión':' opiniones')+'</a>';
+  }
+
+  function renderResenas(ops){
+    const grid = document.getElementById('mg-grid-r');
+    const vt   = document.getElementById('mg-vertodas');
+    if(!grid) return;
+    if(!ops.length){
+      grid.innerHTML = '<div class="mg-resena--vacia">'+ICO_BUBBLE+
+        '<strong>Aún no hay opiniones verificadas.</strong>'+
+        '<span>Cuando lleguen compras reales, aparecerán aquí.</span></div>';
+      if(vt) vt.hidden = true;
+      return;
+    }
+    grid.innerHTML = ops.slice(0,4).map(tarjetaResena).join('');
+    if(vt){
+      const b = vt.querySelector('button');
+      if(ops.length > 4 && b){
+        vt.hidden = false;
+        b.innerHTML = 'Ver todas las opiniones ('+ops.length+')'+ICO_ARROW;
+        b.onclick = function(){ grid.innerHTML = ops.map(tarjetaResena).join(''); vt.hidden = true; };
+      } else {
+        vt.hidden = true;
+      }
+    }
+  }
+
+  async function cargarResenas(slug){
+    if(!slug) return; // sin slug publico no hay como consultar las vistas
+    try{
+      const [ratingRes, opsRes] = await Promise.all([
+        supabase.from('producto_rating_publico').select('total,promedio').eq('slug', slug).maybeSingle(),
+        supabase.from('opiniones_publicas')
+          .select('estrellas,comentario,autor_nombre,respuesta,respuesta_en,creado')
+          .eq('slug', slug).order('creado', { ascending:false }).limit(60)
+      ]);
+      const rating = ratingRes.data;
+      const total = rating ? (Number(rating.total)||0) : 0;
+      const prom  = rating ? (Number(rating.promedio)||0) : 0;
+      resenasCargadas = opsRes.data || [];
+
+      pintarRating(total, prom);
+
+      const pb = document.getElementById('mg-prom-bloque');
+      if(pb){
+        if(total > 0){
+          pb.hidden = false;
+          pb.innerHTML = '<div class="mg-prom"><b>'+prom.toFixed(1)+'</b>'+
+            '<div class="mg-prom-d">'+estrellasFrac(prom,'mg-stars--lg')+
+            '<span>basado en '+total+(total===1?' opinión verificada':' opiniones verificadas')+'</span></div></div>';
+        } else {
+          pb.hidden = true;
+        }
+      }
+      renderResenas(resenasCargadas);
+    }catch(e){
+      // Degradar con gracia: si falla la lectura, se conserva el estado vacio.
+      console.error('No se pudieron cargar las opiniones:', e);
+    }
+  }
+
+  // --- Modal "Dejar una reseña": selector de estrellas + envio por Edge Function
+  function configurarResena(){
+    const btn    = document.getElementById('mg-dejar-resena');
+    const modal  = document.getElementById('mg-modal-resena');
+    const cerrar = document.getElementById('mg-cerrar-resena');
+    const form   = document.getElementById('mg-form-resena');
+    if(!btn || !modal || !cerrar || !form) return;
+
+    const caja    = modal.querySelector('.mg-estrellas-input');
+    const aviso   = document.getElementById('mg-rf-aviso');
+    const enviar  = document.getElementById('mg-rf-enviar');
+    const cuerpo  = document.getElementById('mg-rf-cuerpo');
+    const okBox   = document.getElementById('mg-rf-ok');
+    const okCerrar= document.getElementById('mg-rf-ok-cerrar');
+    let estrellas = 0, ultimoFoco = null;
+
+    // Construye las 5 estrellas clickeables (hover previo + seleccion fija).
+    caja.innerHTML = '';
+    for(let i=1;i<=5;i++){
+      const b = document.createElement('button');
+      b.type = 'button'; b.dataset.v = String(i);
+      b.setAttribute('aria-label', i+(i===1?' estrella':' estrellas'));
+      b.innerHTML = RES_STAR_FILL;
+      caja.appendChild(b);
+    }
+    const pintar = (n) => caja.querySelectorAll('button').forEach((b)=>{ b.classList.toggle('on', Number(b.dataset.v) <= n); });
+    caja.querySelectorAll('button').forEach((b)=>{
+      b.addEventListener('mouseenter', ()=>pintar(Number(b.dataset.v)));
+      b.addEventListener('mouseleave', ()=>pintar(estrellas));
+      b.addEventListener('click', ()=>{ estrellas = Number(b.dataset.v); pintar(estrellas); });
+    });
+
+    function avisoR(txt, cls){
+      if(!aviso) return;
+      aviso.textContent = txt || '';
+      aviso.className = 'mg-rf-aviso' + (cls ? ' '+cls : '');
+      aviso.setAttribute('data-visible', txt ? 'true' : 'false');
+    }
+    function abrir(){
+      ultimoFoco = document.activeElement;
+      estrellas = 0; pintar(0); form.reset(); avisoR('','');
+      if(cuerpo) cuerpo.hidden = false; if(okBox) okBox.hidden = true;
+      modal.setAttribute('aria-hidden','false');
+      const c = document.getElementById('mg-rf-codigo'); if(c) c.focus();
+    }
+    function ocultar(){
+      modal.setAttribute('aria-hidden','true');
+      if(ultimoFoco && typeof ultimoFoco.focus === 'function') ultimoFoco.focus(); else btn.focus();
+    }
+    function abierto(){ return modal.getAttribute('aria-hidden') === 'false'; }
+
+    btn.addEventListener('click', abrir);
+    cerrar.addEventListener('click', ocultar);
+    if(okCerrar) okCerrar.addEventListener('click', ocultar);
+    modal.addEventListener('click', (e)=>{ if(e.target === modal) ocultar(); });
+    document.addEventListener('keydown', (e)=>{ if(e.key === 'Escape' && abierto()) ocultar(); });
+
+    form.addEventListener('submit', async (e)=>{
+      e.preventDefault();
+      const slug = (filaProducto && filaProducto.slug) || '';
+      const codigo = (document.getElementById('mg-rf-codigo').value || '').trim();
+      const autor  = (document.getElementById('mg-rf-autor').value || '').trim();
+      const comentario = (document.getElementById('mg-rf-comentario').value || '').trim();
+
+      if(!codigo){ avisoR('Escribe el código de reseña que te llegó por correo.','err'); return; }
+      if(!estrellas){ avisoR('Elige cuántas estrellas das (de 1 a 5).','err'); return; }
+      if(!autor){ avisoR('Dinos cómo quieres aparecer (por ejemplo, tu primer nombre).','err'); return; }
+      if(!slug){ avisoR('No pudimos identificar el producto. Recarga la página.','err'); return; }
+
+      const txtOrig = enviar.textContent;
+      enviar.disabled = true; enviar.textContent = 'Enviando…'; avisoR('','');
+      try{
+        const { data: resp, error } = await supabase.functions.invoke('enviar-opinion', {
+          body: { codigo: codigo, slug: slug, estrellas: estrellas, autor: autor, comentario: comentario }
+        });
+        enviar.disabled = false; enviar.textContent = txtOrig;
+        if(error || !resp || resp.error){
+          avisoR((resp && resp.error) || 'No pudimos registrar tu opinión. Inténtalo de nuevo.', 'err');
+          return;
+        }
+        // Exito: pantalla de agradecimiento + recarga de opiniones.
+        if(cuerpo) cuerpo.hidden = true;
+        if(okBox) okBox.hidden = false;
+        await cargarResenas(slug);
+      }catch(err){
+        console.error('No se pudo enviar la opinión:', err);
+        enviar.disabled = false; enviar.textContent = txtOrig;
+        avisoR('No pudimos conectar. Revisa tu conexión e inténtalo de nuevo.', 'err');
+      }
+    });
+  }
+
   configurarCompra();
   configurarWhatsApp();
+  configurarResena();
   cargarProducto();
 </script>
 
