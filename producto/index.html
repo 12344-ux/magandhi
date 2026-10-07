@@ -480,6 +480,14 @@
      (stretch); el texto se recorta a 3 lineas para que queden del mismo tamano */
   .mg-grid-r{display:grid;grid-template-columns:repeat(2,1fr);gap:16px}
   @media(max-width:720px){.mg-grid-r{grid-template-columns:1fr}}
+  /* NUMEROS IMPARES SIN HUECO (solo escritorio): con 2 columnas, 1 o 3 opiniones
+     dejaban media fila vacia -- justo el caso de la PRIMERA opinion real. La
+     ultima tarjeta, si queda sola en su fila, ocupa el ancho completo:
+     1 -> una a ancho completo; 3 -> dos arriba + una completa abajo; 2 y 4 sin
+     cambios. En movil la grilla ya es de una sola columna, asi que no aplica. */
+  @media(min-width:721px){
+    .mg-grid-r > .mg-resena:last-child:nth-child(odd){grid-column:1 / -1}
+  }
   /* contorno DORADO de marca en todas las tarjetas de opinion (edicion curada).
      Sin efecto de "levantar" al pasar el cursor (evita ruido). */
   .mg-resena{
