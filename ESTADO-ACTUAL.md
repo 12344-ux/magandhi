@@ -61,6 +61,13 @@ Los JPG de `marca/` son referencias históricas. No gobiernan la identidad ni de
 - Doble confirmación: `suscripcion/confirmar/#t=<token>`. El token va en el fragmento y la página lo borra de la barra; `noindex` + `no-referrer`.
 - Copy provisional.
 
+### Analítica propia — `analitica/` (EM7 · Métricas M1, 8-oct-2026)
+
+- `analitica/analitica.js` + `analitica.css` (prefijo `an-`), cargado en el home y en el producto.
+- Solo actúa si el back-office encendió la analítica **y** la persona aceptó el aviso «Tú decides». Rechazar es igual de fácil y no deja identificador.
+- Sin Meta ni Google. Envía a `tienda-eventos`: página vista, producto visto, clic en «Comprar» (gancho en el botón), inicio del pago (antes de redirigir a Wompi) y llegada desde una campaña. Origen solo como categoría; nunca la URL de procedencia.
+- `window.mgCookies()` reabre el aviso («Preferencias de cookies» en el footer). Copy provisional.
+
 ### Opiniones verificadas — `producto/index.html`
 
 Sistema aprobado el 7 de octubre de 2026. Es el esquema que siguen **todos** los productos.
