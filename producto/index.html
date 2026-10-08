@@ -1918,9 +1918,35 @@
       try{
         // El navegador NO envia precio: el servidor lo relee de la base y calcula
         // la firma. cantidad = 1 en esta etapa.
+        //
+        // F2: ademas de identificar el producto, se envian los DATOS DEL
+        // COMPRADOR (los que acaba de escribir y ya quedaron validados arriba)
+        // y la PROCEDENCIA de la visita. El servidor los guarda en la intencion
+        // de pago, y cuando Wompi confirme el pago el pedido se creara con
+        // ESTOS datos: Wompi solo confirma la plata, no dicta quien compro.
+        //
+        // La procedencia tiene dos niveles (ver window.mgProcedencia):
+        // utm_campaign viaja siempre (es el id de NUESTRA campana, no identifica
+        // a nadie) y mg_vid solo si la persona acepto la analitica.
+        const procedencia = (typeof window.mgProcedencia === 'function')
+          ? window.mgProcedencia() : {};
         const { data: pago, error } = await supabase.functions.invoke(
           'crear-intencion-pago',
-          { body: { producto: producto, cantidad: 1 } }
+          { body: {
+              producto: producto,
+              cantidad: 1,
+              comprador: {
+                nombre:       datos.nombre,
+                correo:       datos.correo,
+                telefono:     datos.telefono,
+                direccion:    datos.direccion,
+                ciudad:       datos.ciudad,
+                departamento: datos.departamento,
+                pais:         'CO',
+              },
+              utm_campaign: procedencia.utm_campaign,
+              mg_vid:       procedencia.mg_vid,
+            } }
         );
 
         if(error || !pago || pago.error){
