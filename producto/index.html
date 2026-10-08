@@ -1303,6 +1303,7 @@
       <a href="../index.html#descubrir">Productos</a>
       <a href="mailto:contacto@magandhi.com?subject=PQRS%20MAGANDHI">PQRS</a>
       <a href="../politicas/">Políticas</a>
+      <a href="#" onclick="window.mgCookies && window.mgCookies(); return false;">Preferencias de cookies</a>
       <a href="../index.html#contacto">Contacto</a>
     </nav>
   </div>
@@ -1828,6 +1829,8 @@
     }
 
     btnComprar.addEventListener('click', abrir);
+    // Metricas (EM7): solo se envia si la persona acepto la analitica.
+    btnComprar.addEventListener('click', function(){ if(window.mgEvento) window.mgEvento('clic_comprar', { slug: (new URLSearchParams(location.search).get('slug') || '').trim().toLowerCase() }); });
     cerrar.addEventListener('click', ocultar);
     modal.addEventListener('click', function(e){ if(e.target === modal) ocultar(); });
     document.addEventListener('keydown', function(e){
@@ -1928,6 +1931,7 @@
 
         // Se abre el pago seguro de Wompi con EXACTAMENTE los valores del servidor
         // (referencia, monto, moneda, firma, llave). Nunca se recalculan aqui.
+        if(window.mgEvento) window.mgEvento('checkout_iniciado', { slug: (new URLSearchParams(location.search).get('slug') || '').trim().toLowerCase() });
         irAWompi(pago, datos);
       }catch(err){
         console.error('No se pudo iniciar el pago:', err);
@@ -2511,5 +2515,7 @@
   })();
 </script>
 
+<!-- Analitica propia (EM7) -->
+<script type="module" src="../analitica/analitica.js?v=1"></script>
 </body>
 </html>
