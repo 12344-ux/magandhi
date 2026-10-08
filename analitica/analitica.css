@@ -1,0 +1,22 @@
+/* MAGANDHI · aviso de analítica (EM7). Prefijo an-. Copy y estilo provisionales. */
+.an-aviso{
+  position:fixed;left:20px;bottom:20px;z-index:9000;max-width:380px;
+  background:#fff;color:#111;border-radius:16px;padding:18px 18px 16px;
+  box-shadow:0 18px 48px rgba(17,17,17,.18);border:1px solid rgba(17,17,17,.06);
+  font-family:Poppins,-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;
+  opacity:0;transform:translateY(12px);transition:opacity .25s ease,transform .25s ease;
+}
+.an-aviso.visible{opacity:1;transform:none}
+.an-tit{margin:0 0 4px;font-size:15px;font-weight:600}
+.an-txt{margin:0 0 14px;font-size:13px;line-height:1.6;color:var(--gray-500,#6B6660)}
+.an-txt a{color:var(--red-500,#A6332E)}
+.an-acc{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.an-btn{font:inherit;font-size:14px;font-weight:600;border-radius:10px;padding:11px 12px;cursor:pointer}
+.an-no{background:#fff;color:#111;border:1.5px solid rgba(17,17,17,.25)}
+.an-no:hover{border-color:#111}
+.an-si{background:var(--red-500,#A6332E);color:#fff;border:1.5px solid var(--red-500,#A6332E)}
+.an-si:hover{background:var(--red-700,#7A2A26);border-color:var(--red-700,#7A2A26)}
+@media (max-width:560px){
+  .an-aviso{left:10px;right:10px;bottom:10px;max-width:none;padding:16px}
+}
+@media (prefers-reduced-motion:reduce){.an-aviso{transition:none}}

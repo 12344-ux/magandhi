@@ -943,6 +943,8 @@
      ============================================================ -->
 <section id="mg-suscripcion" hidden></section>
 <script type="module" src="suscripcion/suscripcion.js?v=1"></script>
+<!-- Analitica propia (EM7): solo con el interruptor del back-office encendido y si la persona acepta. -->
+<script type="module" src="analitica/analitica.js?v=1"></script>
 
 <!-- ============================================================
      FOOTER completo
@@ -961,6 +963,7 @@
       <a href="#descubrir">Productos</a>
       <a href="mailto:contacto@magandhi.com?subject=PQRS%20MAGANDHI">PQRS</a>
       <a href="politicas/">Políticas</a>
+      <a href="#" onclick="window.mgCookies && window.mgCookies(); return false;">Preferencias de cookies</a>
       <a href="#contacto">Contacto</a>
     </nav>
     <div class="hg-footer__social">
