@@ -1,0 +1,35 @@
+/* ============================================================
+   MAGANDHI · Suscripción (EM6). Prefijo su-. Copy provisional.
+   Mismo riel que el resto del home (1200px / padding 24px).
+   ============================================================ */
+.su-caja{max-width:1200px;margin:66px auto 0;padding:0 24px}
+.su-card{background:#fff;border-radius:16px;padding:32px 36px;display:grid;grid-template-columns:1fr 1.15fr;gap:32px;align-items:start}
+.su-k{margin:0 0 6px;font-size:11px;font-weight:600;letter-spacing:.14em;text-transform:uppercase;color:var(--acento,#C28A3A)}
+.su-tit{margin:0 0 10px;font-size:24px;line-height:1.25;font-weight:600;color:var(--black-900,#111)}
+.su-txt{margin:0;font-size:14.5px;line-height:1.65;color:var(--gray-500,#6B6660)}
+.su-form{display:flex;flex-direction:column;gap:12px}
+.su-fila{display:grid;grid-template-columns:1.3fr 1fr;gap:10px}
+.su-campo{display:flex;flex-direction:column;gap:5px;font-size:12.5px;font-weight:500;color:var(--black-900,#111)}
+.su-campo input{font:inherit;font-size:15px;font-weight:400;padding:12px 14px;border:1px solid rgba(17,17,17,.18);border-radius:10px;background:#fff;color:#111;min-width:0}
+.su-campo input:focus{outline:2px solid var(--red-500,#A6332E);outline-offset:1px;border-color:transparent}
+.su-temas{display:flex;gap:8px;flex-wrap:wrap;border:0;margin:0;padding:0}
+.su-temas legend{font-size:12.5px;font-weight:500;margin-bottom:6px;padding:0}
+.su-tema{display:inline-flex;align-items:center;gap:8px;padding:8px 12px;border:1px solid rgba(17,17,17,.14);border-radius:999px;font-size:13.5px;cursor:pointer}
+.su-tema input{accent-color:var(--red-500,#A6332E);width:16px;height:16px;margin:0}
+.su-acepto{display:flex;gap:10px;align-items:flex-start;font-size:12.5px;line-height:1.55;color:var(--gray-500,#6B6660);cursor:pointer}
+.su-acepto input{accent-color:var(--red-500,#A6332E);width:18px;height:18px;margin:1px 0 0;flex:none}
+.su-acepto a{color:var(--red-500,#A6332E)}
+.su-trampa{position:absolute!important;left:-10000px!important;width:1px;height:1px;overflow:hidden}
+.su-btn{font:inherit;font-size:15px;font-weight:600;color:#fff;background:var(--red-500,#A6332E);border:0;border-radius:10px;padding:13px 22px;cursor:pointer;align-self:flex-start}
+.su-btn:hover{background:var(--red-700,#7A2A26)}
+.su-btn:disabled{opacity:.6;cursor:default}
+.su-msg{margin:0;font-size:13.5px;min-height:1em}
+.su-msg.err{color:var(--red-500,#A6332E)}
+.su-ok{display:flex;gap:12px;align-items:flex-start;background:var(--red-50,#FBF1F0);border-radius:12px;padding:16px 18px;font-size:14.5px;line-height:1.6;color:#111}
+.su-ok svg{width:22px;height:22px;flex:none;color:var(--red-500,#A6332E);margin-top:2px}
+@media (max-width:860px){
+  .su-caja{padding:0 14px;margin-top:48px}
+  .su-card{grid-template-columns:1fr;gap:18px;padding:24px 20px}
+  .su-fila{grid-template-columns:1fr}
+  .su-btn{align-self:stretch}
+}
