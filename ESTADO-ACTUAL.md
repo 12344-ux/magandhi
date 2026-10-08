@@ -53,6 +53,14 @@ Los JPG de `marca/` son referencias históricas. No gobiernan la identidad ni de
 - Al publicar el texto real: subir la versión (meta + línea «Versión») y registrarla en el back-office (Email marketing → Resumen). Lo capturado bajo una versión `borrador-*` nunca recibirá campañas reales (regla de EM6).
 - Enlazadas desde el footer del home y del producto.
 
+### Suscripción a novedades — `suscripcion/` (EM6, 8-oct-2026)
+
+- Módulo reutilizable `suscripcion/suscripcion.js` + `suscripcion.css` (prefijo `su-`). Hoy montado en el home, arriba del footer (`<section id="mg-suscripcion" hidden>`).
+- Pregunta a la Edge Function `em-suscripcion` si está activo. **Apagado** (interruptor del back-office o política sin registrar) = la sección no aparece.
+- Casilla de autorización **desmarcada**, con el texto exacto que queda como prueba y el enlace a la política; temas Novedades/Ofertas; campo trampa.
+- Doble confirmación: `suscripcion/confirmar/#t=<token>`. El token va en el fragmento y la página lo borra de la barra; `noindex` + `no-referrer`.
+- Copy provisional.
+
 ### Opiniones verificadas — `producto/index.html`
 
 Sistema aprobado el 7 de octubre de 2026. Es el esquema que siguen **todos** los productos.
