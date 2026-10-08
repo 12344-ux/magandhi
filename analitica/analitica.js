@@ -20,6 +20,7 @@ const K_DECISION = 'mg_analitica';      // {v:'si'|'no', en:ISO}
 const K_VISITANTE = 'mg_vid';
 const K_SESION = 'mg_sid';              // sessionStorage: {id, ultimo}
 const K_CONFIG = 'mg_analitica_cfg';    // sessionStorage: {activa, t}
+const K_UTM = 'mg_utm';                 // sessionStorage: campaña de llegada de ESTA visita
 const SESION_MIN = 30;
 const raiz = new URL('../', import.meta.url);
 
@@ -112,6 +113,9 @@ function iniciar() {
   const params = new URLSearchParams(location.search);
   const utm = (params.get('utm_campaign') || '').toLowerCase();
   const utmOk = /^[a-z0-9-]{1,60}$/.test(utm) ? utm : undefined;
+  // Se recuerda la campaña de llegada durante la visita para que la COMPRA
+  // pueda atribuirse con exactitud aunque ocurra dos páginas después.
+  if (utmOk) { try { sessionStorage.setItem(K_UTM, utmOk); } catch (_) {} }
   const org = origen(params);
   const entrada = s.nueva || (org !== null && org !== 'directo');
   encolar('pagina_vista', { origen: entrada ? (org || 'directo') : undefined, entrada, utm_campaign: utmOk });
@@ -157,3 +161,37 @@ window.mgCookies = async () => { if (await configActiva()) aviso(); };
   if (dec && dec.v === 'si') iniciar();
   else if (!dec) aviso();
 })();
+
+
+// ---------------------------------------------------------------------------
+// window.mgProcedencia() · de dónde viene esta compra
+// ---------------------------------------------------------------------------
+// La usa la página de producto al iniciar el pago, para que el pedido web quede
+// atribuido con exactitud a la campaña que lo trajo (hoy la atribución de los
+// correos es aproximada) y para poder medir el embudo real hasta la compra.
+//
+// DOS NIVELES, a propósito:
+//   · utm_campaign  = el identificador de NUESTRA propia campaña, tomado de la
+//     URL que la persona abrió. No identifica a nadie y viaja siempre: es lo
+//     que permite decir con honestidad "esta venta vino de este correo".
+//   · mg_vid        = el identificador aleatorio del navegador. SOLO existe si
+//     la persona ACEPTÓ la analítica. Si la rechazó, aquí no hay nada y la
+//     compra no lleva identificador: no se crea uno para la ocasión.
+// ---------------------------------------------------------------------------
+window.mgProcedencia = function () {
+  const salida = {};
+  try {
+    const params = new URLSearchParams(location.search);
+    const dela = (params.get('utm_campaign') || '').toLowerCase();
+    const guardada = sessionStorage.getItem(K_UTM) || '';
+    const utm = /^[a-z0-9-]{1,60}$/.test(dela) ? dela
+      : (/^[a-z0-9-]{1,60}$/.test(guardada) ? guardada : '');
+    if (utm) salida.utm_campaign = utm;
+  } catch (_) { /* sin sessionStorage: se sigue sin utm */ }
+  try {
+    // Solo si la persona aceptó: este identificador no se crea aquí nunca.
+    const vid = localStorage.getItem(K_VISITANTE) || '';
+    if (/^[A-Za-z0-9_-]{16,40}$/.test(vid)) salida.mg_vid = vid;
+  } catch (_) { /* sin localStorage: se sigue sin identificador */ }
+  return salida;
+};
