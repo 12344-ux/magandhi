@@ -45,6 +45,14 @@ Los JPG de `marca/` son referencias históricas. No gobiernan la identidad ni de
 - WhatsApp contextual por producto.
 - Opiniones verificadas en vivo (ver sección siguiente). Estado vacío honesto mientras un producto no tenga opiniones.
 
+### Políticas — `politicas/` (ESTRUCTURA provisional, 8-oct-2026)
+
+- Rutas definitivas: `/politicas/` (índice), `/politicas/datos/`, `/politicas/cookies/`, `/politicas/terminos/`, `/politicas/envios/`, `/politicas/devoluciones/`.
+- Cada sección tiene su ancla estable (`#responsable`, `#derechos`, `#cookies`, `#retracto`…) para que tienda, correos y checkout las enlacen desde ya.
+- El **texto es provisional a propósito**: el equipo redactará los documentos definitivos antes de abrir la tienda. Mientras tanto: `noindex`, franja «Documento en preparación» y versión `borrador-0` (meta `politica-version`).
+- Al publicar el texto real: subir la versión (meta + línea «Versión») y registrarla en el back-office (Email marketing → Resumen). Lo capturado bajo una versión `borrador-*` nunca recibirá campañas reales (regla de EM6).
+- Enlazadas desde el footer del home y del producto.
+
 ### Opiniones verificadas — `producto/index.html`
 
 Sistema aprobado el 7 de octubre de 2026. Es el esquema que siguen **todos** los productos.
