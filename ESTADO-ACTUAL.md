@@ -1,6 +1,6 @@
 # MAGANDHI · estado actual de la tienda pública
 
-**Corte:** 7 de octubre de 2026
+**Corte:** 9 de octubre de 2026 · punto de unificación (el estado completo del proyecto vive en `CONTEXTO-MAGANDHI.md` del repo del back-office)
 **Producción:** `https://magandhi.com`
 **Repositorio:** `12344-ux/magandhi`
 
@@ -98,16 +98,16 @@ La ruta `producto/grisi-manzanilla-gold/` es un redirect histórico de compatibi
 - `imagenes` conserva paths grandes; la variante liviana se deriva como `<base>-sm.<ext>`.
 - La publishable key de `supabase-config.js` es pública por diseño; la seguridad depende de grants/RLS, no de ocultarla.
 
-## Pagos: límite actual
+## Pagos: en producción
 
-F1 está operativo en **sandbox**:
+Wompi F1 → F4 está en producción y quedó verificado con una compra real el 9-oct-2026:
 
-1. la tienda envía identificador y cantidad 1;
-2. la Edge Function relee precio/disponibilidad;
-3. calcula firma server-side;
-4. abre el checkout Wompi.
+1. La tienda envía el identificador, la cantidad 1, los datos del comprador y la procedencia.
+2. `crear-intencion-pago` relee el precio, **guarda la intención antes de firmar** y calcula la firma server-side.
+3. Se abre el checkout de Wompi. El ambiente lo elige la llave pública que devuelve el servidor.
+4. Al aprobarse el pago, el back-office crea el pedido web una sola vez, baja el stock, registra el asiento contable y envía solo el correo «Recibido».
 
-Todavía no existe F2 en producción: persistencia de intención, webhook idempotente, pedido automático, descuento transaccional de stock y recuperación de pagos. **No habilitar cobros reales hasta cerrar F2.**
+El interruptor entre pagos reales y de prueba vive en el back-office (`pagos_config.entorno`); la tienda no cambia.
 
 ## Seguridad y honestidad
 
@@ -120,8 +120,8 @@ Todavía no existe F2 en producción: persistencia de intención, webhook idempo
 
 ## Pendientes reales
 
-1. Entrega del código de reseña al cliente en el último correo de seguimiento. Requiere montar el envío de correos de MAGANDHI, que todavía no existe. **Hasta cerrarlo no entran opiniones reales**, aunque el motor ya esté desplegado y probado.
-2. Wompi F2 y, después, activación controlada de producción.
+1. **Confirmación al volver de Wompi:** hoy la ficha se ve igual y el botón queda activo, así que la persona podría pagar dos veces. Mostrar «Recibimos tu pago» cuando la URL trae `?ref=` y restaurar el botón en `pageshow`.
+2. **Detalles de entrega** (apartamento, torre) que no llegan al pedido, y **mensajes de error de pago** que siempre salen genéricos. Ver `CONTEXTO-MAGANDHI.md` §9 del back-office.
 3. Políticas reales: privacidad, condiciones, entregas, cambios/devoluciones y tratamiento de datos.
 4. Canal/página formal de PQRS; mientras tanto se usa el correo real.
 5. Repaso de textos de la sección de opiniones. El diseño quedó aprobado; solo falta pulir copias.
