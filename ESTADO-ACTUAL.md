@@ -1,6 +1,8 @@
 # MAGANDHI · estado actual de la tienda pública
 
-**Corte:** 9 de octubre de 2026 · punto de unificación (el estado completo del proyecto vive en `CONTEXTO-MAGANDHI.md` del repo del back-office)
+**Corte:** 10 de octubre de 2026 (el estado completo del proyecto vive en `CONTEXTO-MAGANDHI.md` del repo del back-office)
+
+> **Dropshipping (10-oct-2026):** en el back-office ya existen D1 y D2a: los productos de proveedor de Dropi se curan y se llevan a Campañas como **borradores**. **La tienda aún no los muestra ni los vende**: `catalogo_publico` los excluye hasta D2c, que traerá stock vivo, un estado «Temporalmente no disponible» en esta tienda y la verificación antes de Wompi. Nada de eso cambia todavía este repositorio.
 **Producción:** `https://magandhi.com`
 **Repositorio:** `12344-ux/magandhi`
 
@@ -135,7 +137,7 @@ Antes, al volver de Wompi la ficha se veía igual y «Comprar ahora» seguía ac
 
 ## Pendientes reales
 
-1. ~~Confirmación al volver de Wompi~~ · ~~detalles de entrega~~ · ~~mensajes de error de pago~~ — **cerrados el 9-oct-2026 (D0).** Ver «Vuelta del pago» arriba. Queda **desplegar** en el back-office la migración `20261021000000` y la Edge Function `estado-pago` (runbook `supabase/INSTRUCCIONES.md` §D0). Hasta que estén, la tienda degrada sola: el aviso aparece con el mensaje prudente y la compra igual queda bloqueada.
+1. ~~Confirmación al volver de Wompi~~ · ~~detalles de entrega~~ · ~~mensajes de error de pago~~ — **cerrados y desplegados (D0, 9–10-oct-2026).** Ver «Vuelta del pago» arriba. La migración `20261021000000` y la Edge Function `estado-pago` están en producción desde el 10-oct-2026.
 2. Políticas reales: privacidad, condiciones, entregas, cambios/devoluciones y tratamiento de datos.
 3. Canal/página formal de PQRS; mientras tanto se usa el correo real.
 4. Repaso de textos de la sección de opiniones. El diseño quedó aprobado; solo falta pulir copias. Los copys del aviso de vuelta del pago son provisionales y entran en el mismo repaso.
