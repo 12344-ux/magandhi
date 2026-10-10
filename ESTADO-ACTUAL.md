@@ -102,12 +102,27 @@ La ruta `producto/grisi-manzanilla-gold/` es un redirect histórico de compatibi
 
 Wompi F1 → F4 está en producción y quedó verificado con una compra real el 9-oct-2026:
 
-1. La tienda envía el identificador, la cantidad 1, los datos del comprador y la procedencia.
+1. La tienda envía el identificador, la cantidad 1, los datos del comprador y la procedencia. La **dirección viaja completa**: `dirección · detalles de entrega` unidos, para que el apartamento o la torre lleguen al pedido (los campos tienen tope 120 y 70, así que la unión cabe en los 200 que guarda el servidor). A Wompi se le siguen enviando separados, cada uno en su parámetro oficial.
 2. `crear-intencion-pago` relee el precio, **guarda la intención antes de firmar** y calcula la firma server-side.
 3. Se abre el checkout de Wompi. El ambiente lo elige la llave pública que devuelve el servidor.
 4. Al aprobarse el pago, el back-office crea el pedido web una sola vez, baja el stock, registra el asiento contable y envía solo el correo «Recibido».
 
+Si la intención falla, el aviso dice **el motivo real** (agotado, producto retirado, problema de configuración nuestro, fallo pasajero), leyendo el cuerpo de la respuesta y no el mensaje genérico de `supabase-js`. Nunca se filtra jerga técnica.
+
 El interruptor entre pagos reales y de prueba vive en el back-office (`pagos_config.entorno`); la tienda no cambia.
+
+### Vuelta del pago — `producto/index.html` (D0, 9-oct-2026)
+
+Antes, al volver de Wompi la ficha se veía igual y «Comprar ahora» seguía activo: **se podía pagar dos veces.** Ahora:
+
+- El aviso se enciende por dos caminos: `?ref=` en la URL (la vuelta oficial, que arma `crear-intencion-pago`) y la memoria de la pestaña (`sessionStorage`), que cubre volver con el botón **atrás** del navegador, donde no hay `?ref=`.
+- El estado se le pregunta al servidor con la Edge Function `estado-pago`, por referencia y **sin datos personales**. La autorización es la posesión de la referencia, igual que el código de reseña.
+- **La compra queda bloqueada mientras no haya veredicto** (`pendiente`, `revision`). Con `aprobado` se libera, porque la persona ya sabe que su pago entró; con `rechazado` también, porque no hubo cobro y reintentar es lo correcto.
+- **Si el servidor no responde, el mensaje es el prudente** («Estamos confirmando tu pago») y la compra sigue bloqueada. Nunca se afirma que un pago quedó listo sin haberlo medido. Un pago en `revision` reconoce que el dinero entró sin prometer el pedido.
+- La referencia se **borra de la barra de direcciones** en cuanto se lee: no queda en el historial, en un marcador ni en un enlace compartido. El `slug` del producto sí se conserva.
+- El aviso vive fuera de `.mg-ficha`, así que sigue visible aunque el producto no cargue o se haya despublicado.
+- Un pago recordado de más de 6 horas, o de otro producto, no avisa ni bloquea nada.
+- Copy provisional.
 
 ## Seguridad y honestidad
 
@@ -120,14 +135,13 @@ El interruptor entre pagos reales y de prueba vive en el back-office (`pagos_con
 
 ## Pendientes reales
 
-1. **Confirmación al volver de Wompi:** hoy la ficha se ve igual y el botón queda activo, así que la persona podría pagar dos veces. Mostrar «Recibimos tu pago» cuando la URL trae `?ref=` y restaurar el botón en `pageshow`.
-2. **Detalles de entrega** (apartamento, torre) que no llegan al pedido, y **mensajes de error de pago** que siempre salen genéricos. Ver `CONTEXTO-MAGANDHI.md` §9 del back-office.
-3. Políticas reales: privacidad, condiciones, entregas, cambios/devoluciones y tratamiento de datos.
-4. Canal/página formal de PQRS; mientras tanto se usa el correo real.
-5. Repaso de textos de la sección de opiniones. El diseño quedó aprobado; solo falta pulir copias.
-6. Metadata/canonical/OG por producto; mantener `noindex` hasta resolverlo.
-7. Definir cómo escala el grid móvil más allá de los cinco espacios actuales.
-8. Revisar accesibilidad completa de carrusel y modales antes del lanzamiento público definitivo.
+1. ~~Confirmación al volver de Wompi~~ · ~~detalles de entrega~~ · ~~mensajes de error de pago~~ — **cerrados el 9-oct-2026 (D0).** Ver «Vuelta del pago» arriba. Queda **desplegar** en el back-office la migración `20261021000000` y la Edge Function `estado-pago` (runbook `supabase/INSTRUCCIONES.md` §D0). Hasta que estén, la tienda degrada sola: el aviso aparece con el mensaje prudente y la compra igual queda bloqueada.
+2. Políticas reales: privacidad, condiciones, entregas, cambios/devoluciones y tratamiento de datos.
+3. Canal/página formal de PQRS; mientras tanto se usa el correo real.
+4. Repaso de textos de la sección de opiniones. El diseño quedó aprobado; solo falta pulir copias. Los copys del aviso de vuelta del pago son provisionales y entran en el mismo repaso.
+5. Metadata/canonical/OG por producto; mantener `noindex` hasta resolverlo.
+6. Definir cómo escala el grid móvil más allá de los cinco espacios actuales.
+7. Revisar accesibilidad completa de carrusel y modales antes del lanzamiento público definitivo.
 
 ## Fuentes de verdad
 

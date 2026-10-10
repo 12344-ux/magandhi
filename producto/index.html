@@ -391,6 +391,70 @@
   body.mg-sin-producto .mg-detalle,
   body.mg-sin-producto .mg-resenas{display:none!important}
 
+  /* ==========================================================================
+     VUELTA DEL PAGO
+     --------------------------------------------------------------------------
+     Aviso que aparece cuando la persona REGRESA de Wompi (la URL trae ?ref=) o
+     cuando dejo un pago en curso en esta misma pestaña y volvio con el boton
+     'atras'. Antes la ficha se veia igual que siempre y el boton 'Comprar
+     ahora' seguia activo: se podia pagar dos veces.
+
+     Vive FUERA de .mg-ficha a proposito, para que siga visible incluso si el
+     producto no se pudo cargar (body.mg-sin-producto oculta la ficha, no esto):
+     si alguien acaba de pagar, lo primero que tiene que ver es que su pago
+     esta en nuestras manos.
+
+     El color lo decide data-estado, y es honesto:
+       pendiente / revision -> ambar de marca (estamos en ello)
+       aprobado             -> verde de confianza (el mismo de 'Compra verificada')
+       rechazado            -> terracota (hay que actuar: no hubo cobro)
+     ========================================================================== */
+  .mg-vuelta{max-width:1120px;margin:14px auto 0;padding:0 24px}
+  .mg-vuelta[hidden]{display:none}
+  .mg-vuelta__card{
+    display:flex;align-items:flex-start;gap:14px;
+    background:var(--blanco);color:var(--tinta);
+    border:1px solid var(--linea);border-left:4px solid var(--acento);
+    border-radius:14px;padding:16px 18px;
+    box-shadow:0 2px 10px rgba(17,17,17,.05);
+  }
+  .mg-vuelta__ico{
+    display:inline-flex;flex:none;align-items:center;justify-content:center;
+    width:34px;height:34px;border-radius:50%;
+    background:var(--acento-sombra);color:var(--acento);
+  }
+  .mg-vuelta__ico svg{width:19px;height:19px}
+  .mg-vuelta__txt{flex:1 1 auto;min-width:0}
+  .mg-vuelta__tit{margin:0 0 4px;font-size:16px;font-weight:700;letter-spacing:-.01em}
+  .mg-vuelta__msg{margin:0;font-size:13.5px;line-height:1.55;color:var(--gris)}
+  .mg-vuelta__acciones{display:flex;flex-wrap:wrap;gap:8px;margin:11px 0 0}
+  .mg-vuelta__btn{
+    font:inherit;font-size:12.5px;font-weight:600;cursor:pointer;
+    background:transparent;color:var(--gris);
+    border:1px solid var(--linea);border-radius:999px;padding:7px 14px;
+    transition:border-color .15s, color .15s;
+  }
+  .mg-vuelta__btn:hover{border-color:var(--acento);color:var(--tinta)}
+  .mg-vuelta__btn[hidden]{display:none}
+  .mg-vuelta__btn:disabled{opacity:.55;cursor:default}
+
+  /* aprobado: verde de confianza */
+  .mg-vuelta__card[data-estado="aprobado"]{border-left-color:var(--verde)}
+  .mg-vuelta__card[data-estado="aprobado"] .mg-vuelta__ico{
+    background:var(--verde-sombra);color:var(--verde);
+  }
+  /* rechazado: no hubo cobro y hay algo que hacer */
+  .mg-vuelta__card[data-estado="rechazado"]{border-left-color:var(--rojo)}
+  .mg-vuelta__card[data-estado="rechazado"] .mg-vuelta__ico{
+    background:rgba(166,51,46,.10);color:var(--rojo);
+  }
+
+  @media (max-width:720px){
+    .mg-vuelta{padding:0 16px}
+    .mg-vuelta__card{padding:14px 15px;gap:12px}
+    .mg-vuelta__tit{font-size:15px}
+  }
+
   .mg-estrellas{display:flex;align-items:center;gap:8px;font-size:13px;color:var(--gris);margin:0 0 22px}
   .mg-estrellas .s{display:inline-flex;color:var(--acento)}
   .mg-estrellas .s svg{width:16px;height:16px}
@@ -840,6 +904,28 @@
 <!-- migas -->
 <div class="mg-migas"><a href="../index.html">Inicio</a> › <span id="mg-miga-cat">Productos</span> › <span id="mg-miga-nom">Producto</span></div>
 
+<!-- VUELTA DEL PAGO: oculto por defecto. El script lo enciende solo si la
+     persona vuelve de Wompi (?ref= en la URL) o si dejo un pago en curso en
+     esta pestaña. Mientras este encendido, 'Comprar ahora' queda bloqueado para
+     que nadie pague dos veces. aria-live para que un lector de pantalla anuncie
+     el resultado cuando llegue, sin robar el foco.
+     Copy PROVISIONAL: el equipo lo reescribe antes de abrir la tienda. -->
+<section class="mg-vuelta" id="mg-vuelta" hidden aria-live="polite">
+  <div class="mg-vuelta__card" id="mg-vuelta-card" data-estado="pendiente">
+    <span class="mg-vuelta__ico" id="mg-vuelta-ico" aria-hidden="true">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>
+    </span>
+    <div class="mg-vuelta__txt">
+      <h2 class="mg-vuelta__tit" id="mg-vuelta-tit">Estamos confirmando tu pago</h2>
+      <p class="mg-vuelta__msg" id="mg-vuelta-msg">Dale un momento: en cuanto tengamos la confirmación te escribimos a tu correo.</p>
+      <div class="mg-vuelta__acciones">
+        <button type="button" class="mg-vuelta__btn" id="mg-vuelta-refrescar">Consultar de nuevo</button>
+        <button type="button" class="mg-vuelta__btn" id="mg-vuelta-wa" hidden>Escribirnos por WhatsApp</button>
+      </div>
+    </div>
+  </div>
+</section>
+
 <!-- ficha -->
 <section class="mg-ficha">
   <!-- galería -->
@@ -1214,7 +1300,12 @@
         <div class="mg-form__fila">
           <div class="mg-campo mg-campo--full">
             <label for="mg-c-direccion">Dirección<span class="req" aria-hidden="true">*</span></label>
+            <!-- maxlength: la direccion y los detalles viajan UNIDOS a la
+                 intencion de pago ('direccion · detalles'), y el servidor
+                 recorta ese campo a 200 caracteres. 120 + 3 + 70 = 193, asi que
+                 nada se pierde por el camino. -->
             <input type="text" id="mg-c-direccion" name="direccion" autocomplete="street-address"
+                   maxlength="120"
                    placeholder="Ej. Calle 20 # 10-45" required aria-required="true">
             <span class="mg-campo__error">Escribe tu dirección.</span>
           </div>
@@ -1223,6 +1314,7 @@
           <div class="mg-campo mg-campo--full">
             <label for="mg-c-detalles">Detalles de entrega<span class="opt">(opcional)</span></label>
             <input type="text" id="mg-c-detalles" name="detalles" autocomplete="address-line2"
+                   maxlength="70"
                    placeholder="Apartamento, torre, barrio, indicaciones"
                    aria-describedby="mg-c-detalles-ayuda">
             <span class="mg-campo__ayuda" id="mg-c-detalles-ayuda">Ayuda a que el pedido llegue sin llamadas de más.</span>
@@ -1451,7 +1543,12 @@
     const urgencia = document.getElementById('mg-urgencia');
     const agotado = fila.agotado === true;
     if(chip) chip.hidden = !agotado;
-    if(btn) btn.disabled = agotado;
+    // OJO: '|| pagoEnCurso'. Esta funcion corre cuando el producto termina de
+    // cargar, que es DESPUES de que el aviso de vuelta del pago ya bloqueo la
+    // compra. Sin esta condicion, un producto con stock reactivaria el boton y
+    // quien acaba de pagar podria pagar otra vez: era exactamente el hueco que
+    // cierra D0.
+    if(btn) btn.disabled = agotado || pagoEnCurso;
     if(agotado && urgencia) urgencia.hidden = true;
   }
 
@@ -1736,6 +1833,283 @@
   }
 
   // ==========================================================================
+  //  VUELTA DEL PAGO
+  //  --------------------------------------------------------------------------
+  //  EL HUECO QUE CIERRA: al volver de Wompi, esta ficha se veia EXACTAMENTE
+  //  igual que antes y 'Comprar ahora' seguia activo. Quien acababa de pagar no
+  //  tenia forma de saber si su pago entro, y podia pagar dos veces. Con la
+  //  tienda en produccion eso es un cobro doble real.
+  //
+  //  COMO SE DETECTA, por dos caminos (los dos hacen falta):
+  //    1) ?ref= en la URL. Es la vuelta oficial: crear-intencion-pago arma
+  //       url_redireccion con la referencia del pago.
+  //    2) La memoria de la pestaña (sessionStorage). Cubre el caso que la URL
+  //       no cubre: la persona aprieta 'atras' en el navegador en vez de volver
+  //       por el enlace de Wompi. Ahi no hay ?ref= y antes no pasaba nada.
+  //
+  //  QUE SE MUESTRA: la verdad, preguntandosela al servidor por la referencia
+  //  (Edge Function 'estado-pago'). Si no hay respuesta -sin red, funcion aun
+  //  sin desplegar- se muestra el estado PRUDENTE ('estamos confirmando'), que
+  //  es honesto. Nunca se afirma que un pago quedo listo sin haberlo medido.
+  //
+  //  QUE SE BLOQUEA: 'Comprar ahora' queda apagado mientras no haya veredicto
+  //  (pendiente / revision). Con 'aprobado' se libera, porque la persona YA
+  //  sabe que su pago entro y una segunda compra seria una decision suya. Con
+  //  'rechazado' tambien se libera: no hubo cobro y reintentar es lo correcto.
+  //
+  //  PRIVACIDAD: la referencia es la llave para consultar el estado, asi que se
+  //  borra de la barra de direcciones en cuanto se lee. No queda en el
+  //  historial, en un marcador ni en un enlace compartido.
+  // ==========================================================================
+
+  // Bandera de modulo: hay un pago de ESTE producto esperando confirmacion.
+  // La lee pintarAgotado() para no reactivar el boton cuando el producto carga.
+  let pagoEnCurso = false;
+
+  // API que usa configurarCompra(). Se declaran aqui, con una version vacia por
+  // defecto, para que la compra funcione aunque el aviso no se pueda montar.
+  let marcarPagoIniciado   = function(){};
+  let revisarPagoPendiente = function(){};
+
+  function configurarVueltaDelPago(){
+    // sessionStorage y NO localStorage: el recuerdo muere con la pestaña, que es
+    // exactamente el alcance del viaje a Wompi. Esto no debe sobrevivir a cerrar
+    // el navegador.
+    const CLAVE = 'mg_pago_en_curso';
+    // Un pago mas viejo que esto ya no se consulta: si algo quedo colgado, no
+    // tiene sentido avisar de un pago de anteayer.
+    const VENTANA_MS = 6 * 60 * 60 * 1000;
+    // Reintentos automaticos: el webhook de Wompi suele tardar unos segundos.
+    // Dos intentos y para; de ahi en adelante manda el boton 'Consultar de nuevo'.
+    const ESPERAS_MS = [5000, 12000];
+
+    const seccion = document.getElementById('mg-vuelta');
+    const card    = document.getElementById('mg-vuelta-card');
+    const ico     = document.getElementById('mg-vuelta-ico');
+    const tit     = document.getElementById('mg-vuelta-tit');
+    const msg     = document.getElementById('mg-vuelta-msg');
+    const btnRef  = document.getElementById('mg-vuelta-refrescar');
+    const btnWa   = document.getElementById('mg-vuelta-wa');
+    if(!seccion || !card || !tit || !msg) return;
+
+    const ICONOS = {
+      pendiente: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>',
+      aprobado:  '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="m8 12.5 2.6 2.6L16 9.7"/></svg>',
+      rechazado: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 7.5v5"/><path d="M12 16.2h.01"/></svg>'
+    };
+
+    // Copy PROVISIONAL: el equipo lo reescribe antes de abrir la tienda.
+    // 'estilo' es la llave visual (data-estado del card + icono); 'revision'
+    // comparte el ambar de 'pendiente' porque tambien es un "estamos en ello".
+    const TEXTOS = {
+      pendiente: {
+        estilo: 'pendiente',
+        tit: 'Estamos confirmando tu pago',
+        msg: 'Dale un momento. En cuanto el banco nos confirme te escribimos a tu correo con el detalle del pedido. No necesitas pagar otra vez: si el cobro quedó hecho, ya lo tenemos.'
+      },
+      aprobado: {
+        estilo: 'aprobado',
+        tit: '¡Recibimos tu pago!',
+        msg: 'Tu pedido quedó registrado. Te escribimos a tu correo con el detalle y te vamos avisando en cada paso del envío.'
+      },
+      revision: {
+        estilo: 'pendiente',
+        tit: 'Recibimos tu pago',
+        msg: 'Estamos terminando de preparar tu pedido. Te escribimos a tu correo muy pronto; si algo no cuadra, te contactamos nosotros.'
+      },
+      rechazado: {
+        estilo: 'rechazado',
+        tit: 'El pago no se completó',
+        msg: 'No se hizo ningún cobro. Puedes intentarlo de nuevo cuando quieras, o escríbenos y te ayudamos.'
+      }
+    };
+
+    // Identidad del producto de ESTA pagina, tal como viaja en la URL. Sirve
+    // para no avisar de un pago del producto A estando en la ficha del B.
+    function claveProducto(){
+      const p = new URLSearchParams(window.location.search);
+      return ((p.get('slug') || p.get('id') || '')).trim().toLowerCase();
+    }
+
+    // --- Memoria de la pestaña ----------------------------------------------
+    function recordar(ref){
+      try{
+        sessionStorage.setItem(CLAVE, JSON.stringify({
+          ref: ref, prod: claveProducto(), ts: Date.now()
+        }));
+      }catch(_){
+        // Navegacion privada o storage lleno: no es grave. El ?ref= de la URL
+        // sigue siendo el camino principal.
+      }
+    }
+    function recordado(){
+      try{
+        const crudo = sessionStorage.getItem(CLAVE);
+        if(!crudo) return null;
+        const d = JSON.parse(crudo);
+        if(!d || typeof d.ref !== 'string' || !d.ref) return null;
+        if(!d.ts || (Date.now() - d.ts) > VENTANA_MS){ olvidar(); return null; }
+        return d;
+      }catch(_){ return null; }
+    }
+    function olvidar(){
+      try{ sessionStorage.removeItem(CLAVE); }catch(_){}
+    }
+
+    // --- Candado de la compra ------------------------------------------------
+    function bloquearCompra(){
+      pagoEnCurso = true;
+      const btn = document.getElementById('mg-comprar');
+      if(btn) btn.disabled = true;
+    }
+    function liberarCompra(){
+      pagoEnCurso = false;
+      const btn = document.getElementById('mg-comprar');
+      if(!btn) return;
+      // Se respeta la realidad del producto: si esta agotado, no cargo o se
+      // despublico, el boton sigue apagado. Solo se devuelve la compra cuando de
+      // verdad hay algo que comprar.
+      const hayProducto = !!filaProducto &&
+        !document.body.classList.contains('mg-sin-producto');
+      const agotado = !!(filaProducto && filaProducto.agotado === true);
+      btn.disabled = !hayProducto || agotado;
+    }
+
+    // --- Pintado --------------------------------------------------------------
+    function pintar(estado){
+      const t = TEXTOS[estado] || TEXTOS.pendiente;
+      card.setAttribute('data-estado', t.estilo);
+      if(ico) ico.innerHTML = ICONOS[t.estilo] || ICONOS.pendiente;
+      tit.textContent = t.tit;
+      msg.textContent = t.msg;
+      seccion.hidden = false;
+
+      // Sin veredicto (pendiente / revision) la compra queda bloqueada: es la
+      // ventana peligrosa, la persona no sabe si pago. Con veredicto se libera.
+      if(estado === 'aprobado' || estado === 'rechazado') liberarCompra();
+      else bloquearCompra();
+
+      // Rechazado: no hubo cobro, no hay nada que recordar y reintentar es lo
+      // esperado. Aprobado SI se recuerda, para que un refresco de la pagina
+      // siga mostrando la confirmacion aunque la barra ya este limpia.
+      if(estado === 'rechazado') olvidar();
+
+      // 'Consultar de nuevo' solo tiene sentido mientras no haya veredicto.
+      if(btnRef) btnRef.hidden = (estado === 'aprobado' || estado === 'rechazado');
+      // WhatsApp se ofrece cuando la persona puede necesitar ayuda humana.
+      if(btnWa) btnWa.hidden = (estado === 'aprobado');
+    }
+
+    // --- Consulta al servidor -------------------------------------------------
+    let consultando = false;
+    let reintentos  = 0;
+
+    async function consultar(ref){
+      if(consultando || !ref) return;
+      consultando = true;
+      if(btnRef){ btnRef.disabled = true; btnRef.textContent = 'Consultando…'; }
+
+      let estado = '';
+      try{
+        const { data, error } = await supabase.functions.invoke(
+          'estado-pago', { body: { referencia: ref } }
+        );
+        if(error){
+          // El motivo real viaja en el CUERPO de la respuesta, no en
+          // error.message (ver mensajeDeError mas abajo). Un 404 no trae estado:
+          // queda '' y se muestra el mensaje prudente.
+          let j = null;
+          try{ j = await error.context.json(); }catch(_){}
+          estado = (j && typeof j.estado === 'string') ? j.estado : '';
+        }else if(data && typeof data.estado === 'string'){
+          estado = data.estado;
+        }
+      }catch(_){
+        estado = '';
+      }
+
+      consultando = false;
+      if(btnRef){ btnRef.disabled = false; btnRef.textContent = 'Consultar de nuevo'; }
+
+      // Sin respuesta: estado prudente. NUNCA se afirma que el pago quedo listo.
+      pintar(estado || 'pendiente');
+
+      if((estado === 'pendiente' || estado === '') && reintentos < ESPERAS_MS.length){
+        const espera = ESPERAS_MS[reintentos];
+        reintentos += 1;
+        setTimeout(function(){ consultar(ref); }, espera);
+      }
+    }
+
+    // --- Lectura (y borrado) de ?ref= de la barra de direcciones --------------
+    function refDeLaUrl(){
+      const p = new URLSearchParams(window.location.search);
+      const ref = (p.get('ref') || '').trim();
+      if(!ref) return '';
+      // Se borra 'ref' (es la llave de consulta) y 'env' (lo agrega Wompi).
+      // NO se toca 'id': cuando una campaña no tiene slug el producto se
+      // identifica justamente con ?id=, y borrarlo romperia la carga de la ficha.
+      p.delete('ref'); p.delete('env');
+      const cola = p.toString();
+      try{
+        window.history.replaceState(
+          null, '',
+          window.location.pathname + (cola ? '?' + cola : '') + window.location.hash
+        );
+      }catch(_){ /* si el navegador no deja, el aviso igual funciona */ }
+      return ref;
+    }
+
+    // --- API para configurarCompra() -----------------------------------------
+    marcarPagoIniciado = function(ref){
+      if(typeof ref === 'string' && ref) recordar(ref);
+    };
+    revisarPagoPendiente = function(){
+      const d = recordado();
+      if(!d) return;
+      // Solo se avisa en la ficha del producto que se estaba pagando.
+      const aqui = claveProducto();
+      if(d.prod && aqui && d.prod !== aqui) return;
+      reintentos = 0;
+      pintar('pendiente');
+      consultar(d.ref);
+    };
+
+    if(btnRef){
+      btnRef.addEventListener('click', function(){
+        const d = recordado();
+        if(!d) return;
+        reintentos = 0;
+        consultar(d.ref);
+      });
+    }
+    if(btnWa){
+      btnWa.addEventListener('click', function(){
+        const nombre = (filaProducto && filaProducto.nombre) ? filaProducto.nombre : '';
+        const mensaje = nombre
+          ? 'Hola, acabo de pagar ' + nombre + ' en MAGANDHI y quiero confirmar mi pedido'
+          : 'Hola, acabo de pagar en MAGANDHI y quiero confirmar mi pedido';
+        const url = 'https://wa.me/' + WHATSAPP_NEGOCIO + '?text=' + encodeURIComponent(mensaje);
+        window.open(url, '_blank', 'noopener');
+      });
+    }
+
+    // --- Arranque -------------------------------------------------------------
+    const refUrl = refDeLaUrl();
+    if(refUrl){
+      // Vuelta oficial de Wompi: manda la URL. Se recuerda para que un refresco
+      // de la pagina siga funcionando aunque la barra ya este limpia.
+      recordar(refUrl);
+      reintentos = 0;
+      pintar('pendiente');
+      consultar(refUrl);
+    }else{
+      // Sin ?ref=: pudo haber vuelto con el boton 'atras' del navegador.
+      revisarPagoPendiente();
+    }
+  }
+
+  // ==========================================================================
   //  COMPRA (Comprar ahora) + WhatsApp
   //  --------------------------------------------------------------------------
   //  · 'Comprar ahora' abre el formulario de datos del comprador (modal). Solo
@@ -1837,6 +2211,25 @@
       if(e.key === 'Escape' && estaAbierto()) ocultar();
     });
 
+    // --- Vuelta con el boton 'atras' del navegador ---------------------------
+    // Cuando la persona se va a Wompi, esta pagina queda congelada con el modal
+    // abierto y el boton en 'Procesando…'. Si vuelve con 'atras', el navegador
+    // la restaura TAL CUAL desde su cache (bfcache): el formulario seguia
+    // bloqueado para siempre y, peor, no habia ningun aviso de que ya existia un
+    // pago en curso.
+    //
+    // 'pageshow' es el unico evento que dispara tambien en esa restauracion
+    // ('load' no). Asi que aqui se devuelve el formulario a su estado usable y
+    // se le pide al aviso de vuelta que revise si hay un pago esperando; si lo
+    // hay, el aviso vuelve a bloquear 'Comprar ahora' con su propio motivo.
+    window.addEventListener('pageshow', function(){
+      // El modal se cierra sin tocar el foco: la persona no pidio esto, no hay
+      // que saltarle el cursor a ningun lado.
+      modal.setAttribute('aria-hidden', 'true');
+      restaurarBoton();
+      revisarPagoPendiente();
+    });
+
     // Limpia el estado de error de un campo cuando quien compra lo corrige.
     // Incluye los <select> (departamento y tipo de documento), que avisan por
     // 'change'. De paso mantiene el atributo data-vacio del select para que el
@@ -1930,6 +2323,24 @@
         // a nadie) y mg_vid solo si la persona acepto la analitica.
         const procedencia = (typeof window.mgProcedencia === 'function')
           ? window.mgProcedencia() : {};
+
+        // DETALLES DE ENTREGA: hasta ahora el apartamento, la torre o el barrio
+        // se escribian en el formulario y viajaban a Wompi (como
+        // shipping-address:address-line-2), pero NO llegaban al pedido: la
+        // intencion solo guardaba 'direccion', asi que quien despacha nunca los
+        // veia y tocaba llamar al cliente.
+        //
+        // Se envian UNIDOS con ' · ' en el mismo campo, porque es el campo que
+        // pw_procesar_pago copia al snapshot de direccion del pedido. Los
+        // maxlength del formulario (120 + 70) garantizan que la union quepa en
+        // los 200 caracteres que guarda el servidor.
+        //
+        // A Wompi se siguen enviando SEPARADOS (ver irAWompi): alla cada uno
+        // tiene su parametro oficial y asi se ve mejor en el checkout.
+        const direccionCompleta = datos.detalles
+          ? (datos.direccion + ' · ' + datos.detalles)
+          : datos.direccion;
+
         const { data: pago, error } = await supabase.functions.invoke(
           'crear-intencion-pago',
           { body: {
@@ -1939,7 +2350,7 @@
                 nombre:       datos.nombre,
                 correo:       datos.correo,
                 telefono:     datos.telefono,
-                direccion:    datos.direccion,
+                direccion:    direccionCompleta,
                 ciudad:       datos.ciudad,
                 departamento: datos.departamento,
                 pais:         'CO',
@@ -1949,15 +2360,32 @@
             } }
         );
 
-        if(error || !pago || pago.error){
+        // MOTIVO REAL DEL ERROR: cuando la funcion responde con un codigo que no
+        // es 2xx, supabase-js entrega un FunctionsHttpError cuyo .message es
+        // SIEMPRE el mismo texto genarico ('Edge Function returned a non-2xx
+        // status code'). El motivo de verdad viaja en el CUERPO de la respuesta,
+        // asi que hay que leerlo: es el mismo patron de
+        // suscripcion/suscripcion.js. Sin esto, un 'Producto agotado' y una
+        // falla de configuracion del servidor se veian identicos para quien
+        // compra, y no habia forma de decirle que hacer.
+        let cuerpo = pago;
+        if(error && error.context && typeof error.context.json === 'function'){
+          try{ cuerpo = await error.context.json(); }catch(_){ cuerpo = pago; }
+        }
+
+        if(error || !cuerpo || cuerpo.error){
           restaurarBoton();
-          mostrarAviso(mensajeDeError(error, pago));
+          mostrarAviso(mensajeDeError(error, cuerpo));
           return;
         }
 
         // Se abre el pago seguro de Wompi con EXACTAMENTE los valores del servidor
         // (referencia, monto, moneda, firma, llave). Nunca se recalculan aqui.
         if(window.mgEvento) window.mgEvento('checkout_iniciado', { slug: (new URLSearchParams(location.search).get('slug') || '').trim().toLowerCase() });
+        // Se anota el pago en la memoria de la pestaña ANTES de salir. Es lo que
+        // permite avisar y bloquear la compra si la persona vuelve con el boton
+        // 'atras' del navegador, donde no hay ?ref= en la URL.
+        marcarPagoIniciado(pago.referencia);
         irAWompi(pago, datos);
       }catch(err){
         console.error('No se pudo iniciar el pago:', err);
@@ -1968,10 +2396,45 @@
   }
 
   // Traduce el error de la funcion a un mensaje sobrio (sin jerga tecnica).
-  function mensajeDeError(error, pago){
-    const texto = (pago && pago.error) || (error && error.message) || '';
-    if(/agotad/i.test(texto)) return 'Este producto se agotó. Escríbenos por WhatsApp y te avisamos cuando vuelva.';
-    if(/no encontrad/i.test(texto)) return 'No encontramos este producto. Recarga la página e inténtalo de nuevo.';
+  //
+  // 'cuerpo' es el JSON que respondio crear-intencion-pago, ya leido de
+  // error.context cuando el codigo no fue 2xx (ver el envio del formulario).
+  // Antes aqui solo llegaba error.message, que para cualquier fallo era el
+  // mismo texto genarico de supabase-js: por eso TODO error se veia igual.
+  //
+  // Los textos que se buscan son los que de verdad devuelve la funcion. Se
+  // agrupan por lo que la persona puede HACER, no por codigo HTTP:
+  //   · es del producto      -> se puede resolver mirando la ficha
+  //   · es nuestro           -> no es culpa suya; mejor que nos escriba
+  //   · es pasajero          -> reintentar tiene sentido
+  function mensajeDeError(error, cuerpo){
+    const texto = (cuerpo && cuerpo.error) || (error && error.message) || '';
+
+    // --- del producto ---
+    if(/agotad/i.test(texto)){
+      return 'Este producto se agotó mientras llenabas tus datos. Escríbenos por WhatsApp y te avisamos cuando vuelva.';
+    }
+    if(/no encontrad/i.test(texto)){
+      return 'Este producto ya no está disponible. Recarga la página para ver el catálogo al día.';
+    }
+
+    // --- nuestro: configuracion incompleta en el servidor ---
+    // 'precio valido', 'configuracion de pagos', 'Secreto de integridad',
+    // 'Configuracion del servidor incompleta'. No es culpa de quien compra y
+    // reintentar no lo va a arreglar: lo arreglamos nosotros.
+    if(/precio v|configuraci|secreto/i.test(texto)){
+      return 'No podemos cobrar este producto en este momento. Es un problema nuestro, no tuyo: escríbenos por WhatsApp y lo resolvemos de una.';
+    }
+
+    // --- nuestro: la tienda mando algo que la funcion no acepta ---
+    // 'una unidad', 'Falta producto', 'Body invalido', 'Metodo no permitido'.
+    // Si esto aparece hay un error de programacion, no del usuario.
+    if(/una unidad|falta '?producto|body invalido|metodo no permitido/i.test(texto)){
+      return 'Algo salió mal al preparar tu pago. Recarga la página e inténtalo de nuevo; si sigue igual, escríbenos por WhatsApp.';
+    }
+
+    // --- pasajero: 'No se pudo consultar el catalogo', 'No se pudo iniciar el
+    //     pago. Intenta de nuevo', o una caida de red ---
     return 'No pudimos iniciar tu pago en este momento. Inténtalo de nuevo en un momento o escríbenos por WhatsApp.';
   }
 
@@ -2510,6 +2973,14 @@
     document.addEventListener('keydown', (e)=>{ if(e.key === 'Escape' && panel && panel.getAttribute('aria-hidden') === 'false') cerrarPanelTodas(); });
   }
 
+  // El aviso de vuelta del pago va PRIMERO, y a proposito:
+  //  · lee y borra el ?ref= de la barra antes de que nada mas mire la URL;
+  //  · deja pagoEnCurso en true de forma sincronica, asi que cuando
+  //    cargarProducto() termine y llame a pintarAgotado(), el boton 'Comprar
+  //    ahora' ya no se puede reactivar por error;
+  //  · y si el producto no llegara a cargar, quien acaba de pagar igual ve que
+  //    su pago esta en nuestras manos.
+  configurarVueltaDelPago();
   configurarCompra();
   configurarWhatsApp();
   configurarResena();
