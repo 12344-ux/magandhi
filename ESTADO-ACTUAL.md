@@ -11,12 +11,21 @@
 > exacto: `cuenta/CONFIGURACION.md` y el relevo temático
 > `docs/RELEVO-CUENTAS-C2-2026-10-16.md` del back-office.
 >
+> **C2 COMERCIAL · desplegado y probado en estructura, apagado hasta C3:**
+> backend PR #278 (merge
+> `a811082cc585ad8d77a98aa346ffbd06ac2ac3f4`) y tienda PR #104
+> (implementación `90dcb6d42eabd26935743b5bae4de9bba9692e39`, merge a
+> `main` `35a104a1c12b9b9276773bc7d7c082c0733c73a9`); Pages quedó `built`
+> para ese merge. En producción están la migración `20261103000000`, preflight
+> `3/3` y postflight `10/10`. El carrito autenticado persistente fue probado
+> con activación temporal y el flag quedó finalmente en `false`. C2 no tocó
+> dinero, Wompi, pedidos ni inventario.
+>
 > **C1 COMERCIAL · desplegado y probado en estructura:** backend #276 (merge
-> `e75dc1c…`) y tienda #102 (merge `db56c4f…`). En producción están la migración
-> `20261102000000`, el postflight `9/9` y `crear-intencion-pago` redesplegada.
-> La compra inmediata admite cantidad seleccionada y conserva la compra
-> invitada. No hubo un pago real con cantidad 2: webhook, pedido, baja de 2,
-> asiento, correo e idempotencia todavía no están medidos para esa cantidad.
+> `e75dc1c…`) y tienda #102 (merge `db56c4f…`). La compra inmediata admite
+> cantidad seleccionada y conserva la compra invitada. No hubo un pago real con
+> cantidad 2: webhook, pedido, baja de 2, asiento, correo e idempotencia todavía
+> no están medidos para esa cantidad.
 >
 > **Dropshipping:** D2c está desplegado; la tienda ya puede vender productos de
 > proveedor con stock vivo y verificación antes de Wompi. El despacho posterior
@@ -52,6 +61,9 @@ Los JPG de `marca/` son referencias históricas. No gobiernan la identidad ni de
 - Vitrina dinámica desde `catalogo_publico`.
 - Tarjetas blancas, acento dorado fijo y disponibilidad derivada.
 - Enlaces hacia `producto/?slug=…` con respaldo por `?id=…`.
+- El acceso al carrito autenticado está desplegado bajo el flag C2; con el valor
+  final `false` permanece oculto y no altera la navegación ni la compra
+  invitada.
 - Contacto real por WhatsApp y `contacto@magandhi.com`.
 
 ### Producto — `producto/index.html`
@@ -70,6 +82,9 @@ Los JPG de `marca/` son referencias históricas. No gobiernan la identidad ni de
   nuevo; la tienda no recorta silenciosamente la cantidad.
 - Checkout Wompi iniciado mediante `crear-intencion-pago`, con la cantidad
   seleccionada también para compra invitada.
+- C2 incorpora «Agregar al carrito» solo para una cuenta autenticada válida y
+  mientras el flag esté encendido. El flag final está en `false`; este camino no
+  inicia checkout ni reemplaza «Comprar ahora».
 - WhatsApp contextual por producto.
 - Opiniones verificadas en vivo (ver sección siguiente). Estado vacío honesto mientras un producto no tenga opiniones.
 
@@ -94,6 +109,23 @@ Los JPG de `marca/` son referencias históricas. No gobiernan la identidad ni de
 - Apertura pendiente: redactar/revisar/publicar políticas; después activar signup
   permanentemente y completar Google Production.
 - Estado y siguiente paso exacto en `cuenta/CONFIGURACION.md`.
+
+### Carrito autenticado — `carrito/` (C2 COMERCIAL, apagado hasta C3)
+
+- Persiste una cesta activa por cuenta y consolida el mismo producto al agregarlo
+  de nuevo.
+- Permite cambiar cantidades y retirar líneas; relee la presentación vigente y
+  no guarda precio como autoridad.
+- La versión del carrito detecta conflictos entre pestañas en vez de sobrescribir
+  cambios silenciosamente.
+- La cesta persiste entre navegadores de la misma cuenta y permanece aislada
+  entre cuentas distintas.
+- Logout o cambio de cuenta retira inmediatamente la cesta visible; la compra
+  invitada continúa independiente.
+- Es una superficie estructural: no ofrece checkout multiproducto y no toca
+  dinero, Wompi, pedidos ni inventario.
+- Está desplegada, pero el flag productivo final es `false`; C3 es el siguiente
+  tramo antes de publicarla como promesa.
 
 ### Políticas — `politicas/` (ESTRUCTURA provisional, 8-oct-2026)
 
@@ -205,6 +237,28 @@ El interruptor entre pagos reales y de prueba vive en el back-office (`pagos_con
   el asiento, el correo ni la idempotencia. C1 está **desplegado y probado en
   estructura**, no cerrado end-to-end.
 
+### Evidencia C2 COMERCIAL · 16-oct-2026
+
+- Backend PR #278 fusionado en
+  `a811082cc585ad8d77a98aa346ffbd06ac2ac3f4`.
+- Tienda PR #104: implementación
+  `90dcb6d42eabd26935743b5bae4de9bba9692e39`, merge a `main`
+  `35a104a1c12b9b9276773bc7d7c082c0733c73a9`; Pages built.
+- Preflight `3/3 true`, migración máxima `20261103000000` aplicada y postflight
+  `10/10 true`.
+- Con el flag OFF se verificó que C2 no aparecía ni alteraba los caminos
+  existentes. Después se activó temporalmente para probar agregar, consolidar,
+  cambiar y retirar líneas.
+- La cesta persistió entre navegadores, quedó aislada entre dos cuentas y el
+  conflicto entre pestañas fue detectado. Logout y compra invitada conservaron
+  su comportamiento independiente.
+- Los invariantes `sin_doble_activo` y `sin_huerfanas` dieron `true`.
+- No se ejecutaron dinero, Wompi, pedidos ni movimientos de inventario.
+- El flag productivo final quedó en `false`.
+
+**Estado exacto:** **C2 Comercial desplegado y probado en estructura, apagado
+hasta C3**.
+
 ### Vuelta del pago — `producto/index.html` (D0, 9-oct-2026)
 
 Antes, al volver de Wompi la ficha se veía igual y «Comprar ahora» seguía activo: **se podía pagar dos veces.** Ahora:
@@ -240,26 +294,28 @@ Antes, al volver de Wompi la ficha se veía igual y «Comprar ahora» seguía ac
 6. Definir cómo escala el grid móvil más allá de los cinco espacios actuales.
 7. Revisar accesibilidad completa de carrusel y modales antes del lanzamiento público definitivo.
 
-## Evolución comercial · C1 desplegado y probado en estructura
+## Evolución comercial · C2 desplegado y probado en estructura, apagado hasta C3
 
 El plano aprobado el 16-oct-2026 avanza por tramos:
 
 1. **C1 COMERCIAL · cantidad en compra inmediata:** desplegado y probado en
    estructura. Admite cantidad para invitado, máximo efectivo público y monto
    autoritativo. El límite end-to-end para cantidad 2 está documentado en la
-   evidencia anterior.
-2. **C2 · carrito autenticado persistente:** es el siguiente tramo y está
-   pendiente.
-3. **C3 · checkout multiproducto:** pendiente.
+   evidencia anterior y se conserva.
+2. **C2 · carrito autenticado persistente:** desplegado y probado en estructura
+   con activación temporal; el flag productivo final está en `false`. Guarda,
+   consolida, cambia y retira líneas sin tocar checkout ni dinero.
+3. **C3 · checkout multiproducto:** es el siguiente tramo y está pendiente.
 4. **C4 · vínculo transaccional del checkout con cuenta/ciclo del carrito:**
    pendiente.
 5. **Promocionar:** pendiente completo: enlace oficial y por canal, preview
    social, textos, QR, kit visual, registro de enlaces y atribución hasta la
    venta. Meta Ads, Pixel y Conversions API quedan fuera de esta fase.
 
-C1 no desplegó carrito, checkout multiproducto, metadata/canonical, enlaces por
-canal, QR, kit visual ni atribución comercial nueva. El plano de decisiones y
-criterios vive en el back-office: `docs/PLANO-FASE-COMERCIAL.md`.
+C2 no desplegó checkout multiproducto, cambios de Wompi, pagos, pedidos,
+inventario, metadata/canonical, enlaces por canal, QR, kit visual ni atribución
+comercial nueva. El plano de decisiones y criterios vive en el back-office:
+`docs/PLANO-FASE-COMERCIAL.md`.
 
 ## Fuentes de verdad
 
@@ -269,7 +325,7 @@ criterios vive en el back-office: `docs/PLANO-FASE-COMERCIAL.md`.
 - Cuenta C2 y gates de apertura: `cuenta/CONFIGURACION.md`.
 - Esquema/RLS/RPC/Edge Functions: repositorio del back-office, carpeta `supabase/`.
 - Relevo global y punto de entrada comercial vigente:
-  `docs/RELEVO-COMERCIAL-C1-2026-10-16.md` del back-office.
+  `docs/RELEVO-COMERCIAL-C2-2026-10-16.md` del back-office.
 - Relevo temático de cuentas y sus gates:
   `docs/RELEVO-CUENTAS-C2-2026-10-16.md` del back-office.
 - Diseño y criterios de los siguientes tramos:
