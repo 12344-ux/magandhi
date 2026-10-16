@@ -1,0 +1,41 @@
+name: Cuentas C2
+
+on:
+  workflow_dispatch:
+  pull_request:
+    paths:
+      - 'cuenta/**'
+      - 'supabase-config.js'
+      - 'index.html'
+      - 'producto/index.html'
+      - '.github/workflows/cuentas-c2.yml'
+  push:
+    branches-ignore: [main]
+    paths:
+      - 'cuenta/**'
+      - 'supabase-config.js'
+      - 'index.html'
+      - 'producto/index.html'
+      - '.github/workflows/cuentas-c2.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  comprobaciones-estaticas:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Sintaxis de los módulos de cuenta
+        run: |
+          node --check cuenta/cuenta-config.js
+          node --check cuenta/cuenta-auth-helpers.js
+          node --check cuenta/cuenta.js
+          node --check cuenta/callback/callback.js
+          node --check cuenta/pruebas-cuenta.mjs
+      - name: Contratos C2 y regresión de compra invitada
+        run: node cuenta/pruebas-cuenta.mjs
