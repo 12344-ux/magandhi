@@ -8,8 +8,15 @@
 > usuario nuevo: identidades únicas y una sola cuenta activa. CAPTCHA permanece
 > activo; signup está OFF y Google sigue External/Testing. La apertura queda
 > deliberadamente pendiente hasta redactar, revisar y publicar políticas. Punto
-> exacto: `cuenta/CONFIGURACION.md` y
+> exacto: `cuenta/CONFIGURACION.md` y el relevo temático
 > `docs/RELEVO-CUENTAS-C2-2026-10-16.md` del back-office.
+>
+> **C1 COMERCIAL · desplegado y probado en estructura:** backend #276 (merge
+> `e75dc1c…`) y tienda #102 (merge `db56c4f…`). En producción están la migración
+> `20261102000000`, el postflight `9/9` y `crear-intencion-pago` redesplegada.
+> La compra inmediata admite cantidad seleccionada y conserva la compra
+> invitada. No hubo un pago real con cantidad 2: webhook, pedido, baja de 2,
+> asiento, correo e idempotencia todavía no están medidos para esa cantidad.
 >
 > **Dropshipping:** D2c está desplegado; la tienda ya puede vender productos de
 > proveedor con stock vivo y verificación antes de Wompi. El despacho posterior
@@ -55,7 +62,14 @@ Los JPG de `marca/` son referencias históricas. No gobiernan la identidad ni de
 - Foto principal grande y miniaturas `-sm` cuando existen.
 - Contenido de descripción, curaduría y ficha visible solo cuando Campañas aporta datos.
 - Estado agotado deshabilita la compra.
-- Checkout Wompi iniciado mediante `crear-intencion-pago`.
+- `catalogo_publico.max_comprable` habilita un selector accesible de cantidad
+  entre 1 y el máximo efectivo; la ficha muestra «Máximo N unidades por pedido»
+  y recalcula el total antes de continuar.
+- El máximo público está acotado a `0..20`: `0` equivale a agotado y nunca
+  revela stock exacto. Si el máximo cambia, un rechazo `409` obliga a escoger de
+  nuevo; la tienda no recorta silenciosamente la cantidad.
+- Checkout Wompi iniciado mediante `crear-intencion-pago`, con la cantidad
+  seleccionada también para compra invitada.
 - WhatsApp contextual por producto.
 - Opiniones verificadas en vivo (ver sección siguiente). Estado vacío honesto mientras un producto no tenga opiniones.
 
@@ -129,23 +143,67 @@ La ruta `producto/grisi-manzanilla-gold/` es un redirect histórico de compatibi
 - Las tablas base de Inventario, Campañas, Ventas y Finanzas no son públicas.
 - Opiniones: la tienda anónima solo lee las vistas con lista blanca `producto_rating_publico` (total y promedio por slug) y `opiniones_publicas` (tarjetas). La tabla `opiniones` no es pública.
 - Escribir una opinión ocurre únicamente a través de la Edge Function `enviar-opinion`, que valida el código del pedido server-side. La tienda nunca escribe la tabla.
-- `campana_producto.precio_venta` es el precio comercial mostrado y firmado para checkout.
-- El stock real proviene de `movimientos_inventario`; la tienda recibe únicamente `agotado`.
+- `campana_producto.precio_venta` es el precio comercial. El monto autoritativo
+  se calcula en servidor como `precio_venta × cantidad × 100`, con enteros.
+- `campana_producto.max_unidades_pedido` define el máximo comercial por pedido
+  (`1..20`, con `1` para campañas históricas); no es stock ni reutiliza
+  `tope_escaparate`.
+- `catalogo_publico` expone únicamente `agotado` y `max_comprable`, acotado a
+  `0..20`; `agotado` equivale a `max_comprable = 0`. Nunca publica stock exacto,
+  reservas, piso Dropi, origen, proveedor ni identificadores externos.
+- En producto propio, el máximo efectivo combina el máximo de campaña con la
+  disponibilidad derivada de Inventario. En proveedor, descuenta pedidos
+  pagados pendientes de transcripción y conserva el piso Dropi.
+- `pw_registrar_intencion` persiste y vuelve a validar campaña, cantidad, precio
+  y monto. Al materializar el pago, `crear_pedido` consolida por
+  campaña/producto y repite máximo y disponibilidad bajo bloqueo. Las
+  intenciones históricas versión 0 conservan compatibilidad acotada.
 - `imagenes` conserva paths grandes; la variante liviana se deriva como `<base>-sm.<ext>`.
 - La publishable key de `supabase-config.js` es pública por diseño; la seguridad depende de grants/RLS, no de ocultarla.
 
 ## Pagos: en producción
 
-Wompi F1 → F4 está en producción y quedó verificado con una compra real el 9-oct-2026:
+Wompi F1 → F4 está en producción y quedó verificado con una compra real de una
+unidad el 9-oct-2026. Esa evidencia es histórica y no demuestra por sí sola el
+flujo completo de C1 COMERCIAL con varias unidades:
 
-1. La tienda envía el identificador, la cantidad 1, los datos del comprador y la procedencia. La **dirección viaja completa**: `dirección · detalles de entrega` unidos, para que el apartamento o la torre lleguen al pedido (los campos tienen tope 120 y 70, así que la unión cabe en los 200 que guarda el servidor). A Wompi se le siguen enviando separados, cada uno en su parámetro oficial.
-2. `crear-intencion-pago` relee el precio, **guarda la intención antes de firmar** y calcula la firma server-side.
-3. Se abre el checkout de Wompi. El ambiente lo elige la llave pública que devuelve el servidor.
-4. Al aprobarse el pago, el back-office crea el pedido web una sola vez, baja el stock, registra el asiento contable y envía solo el correo «Recibido».
+1. La tienda envía el identificador, la **cantidad seleccionada** —entero entre
+   `1` y el máximo público efectivo—, los datos del comprador y la procedencia.
+   Si una integración histórica omite cantidad, el backend conserva `1` por
+   compatibilidad. La **dirección viaja completa**: `dirección · detalles de
+   entrega` unidos, para que el apartamento o la torre lleguen al pedido (los
+   campos tienen tope 120 y 70, así que la unión cabe en los 200 que guarda el
+   servidor). A Wompi se le siguen enviando separados, cada uno en su parámetro
+   oficial.
+2. `crear-intencion-pago` ignora precio y monto del navegador, relee catálogo y
+   `max_comprable`, verifica proveedor en vivo cuando aplica, calcula
+   `precio × cantidad × 100`, **guarda la intención antes de firmar** y recibe
+   una segunda validación transaccional en `pw_registrar_intencion`.
+3. Se abre el checkout de Wompi. El ambiente lo elige la llave pública que
+   devuelve el servidor.
+4. Al aprobarse el pago, el webhook usa la cantidad y campaña congeladas;
+   `crear_pedido` vuelve a validar máximo y disponibilidad. En el flujo ya
+   medido de una unidad crea el pedido una sola vez, baja el stock, registra el
+   asiento contable y envía solo el correo «Recibido».
 
 Si la intención falla, el aviso dice **el motivo real** (agotado, producto retirado, problema de configuración nuestro, fallo pasajero), leyendo el cuerpo de la respuesta y no el mensaje genérico de `supabase-js`. Nunca se filtra jerga técnica.
 
 El interruptor entre pagos reales y de prueba vive en el back-office (`pagos_config.entorno`); la tienda no cambia.
+
+### Evidencia C1 COMERCIAL · 16-oct-2026
+
+- Backend #276 (merge `e75dc1c…`) y tienda #102 (merge `db56c4f…`).
+- Producción: migración `20261102000000`, postflight `9/9` y
+  `crear-intencion-pago` desplegada.
+- Cantidad 1 respondió `200` y su persistencia pasó `7/7`, sin ejecutar pago.
+- `max+1` fue rechazado con `409`; Grisi reportó `max_unidades_pedido = 2` y
+  `max_comprable = 2`.
+- Cantidad 2 respondió `200` por `13.980.000` centavos. El dueño verificó
+  selector, máximo, total, modal y compra invitada.
+- **Límite:** no se ejecutó un pago real de cantidad 2. Por tanto, no están
+  medidos para esa cantidad el webhook, la creación del pedido, la baja de 2,
+  el asiento, el correo ni la idempotencia. C1 está **desplegado y probado en
+  estructura**, no cerrado end-to-end.
 
 ### Vuelta del pago — `producto/index.html` (D0, 9-oct-2026)
 
@@ -182,22 +240,26 @@ Antes, al volver de Wompi la ficha se veía igual y «Comprar ahora» seguía ac
 6. Definir cómo escala el grid móvil más allá de los cinco espacios actuales.
 7. Revisar accesibilidad completa de carrusel y modales antes del lanzamiento público definitivo.
 
-## Siguiente evolución comercial · aprobada, no desplegada
+## Evolución comercial · C1 desplegado y probado en estructura
 
-El 16-oct-2026 se aprobaron dos frentes para construir por tramos:
+El plano aprobado el 16-oct-2026 avanza por tramos:
 
-1. **Cantidades y carrito autenticado:** máximo por pedido configurado en
-   Campañas, cantidad también para invitado, carrito persistente solo con cuenta
-   y checkout multiproducto idempotente. Para proveedor, el máximo efectivo
-   conserva después de la compra el piso Dropi; para producto propio manda
-   Inventario.
-2. **Promocionar:** enlace oficial y por canal, preview social, textos, QR, kit
-   visual, registro de enlaces y atribución hasta la venta. Meta Ads, Pixel y
-   Conversions API quedan fuera de esta fase.
+1. **C1 COMERCIAL · cantidad en compra inmediata:** desplegado y probado en
+   estructura. Admite cantidad para invitado, máximo efectivo público y monto
+   autoritativo. El límite end-to-end para cantidad 2 está documentado en la
+   evidencia anterior.
+2. **C2 · carrito autenticado persistente:** es el siguiente tramo y está
+   pendiente.
+3. **C3 · checkout multiproducto:** pendiente.
+4. **C4 · vínculo transaccional del checkout con cuenta/ciclo del carrito:**
+   pendiente.
+5. **Promocionar:** pendiente completo: enlace oficial y por canal, preview
+   social, textos, QR, kit visual, registro de enlaces y atribución hasta la
+   venta. Meta Ads, Pixel y Conversions API quedan fuera de esta fase.
 
-El plano autoritativo vive en el back-office:
-`docs/PLANO-FASE-COMERCIAL.md`. La aprobación del plano no significa que estas
-funciones existan todavía en producción.
+C1 no desplegó carrito, checkout multiproducto, metadata/canonical, enlaces por
+canal, QR, kit visual ni atribución comercial nueva. El plano de decisiones y
+criterios vive en el back-office: `docs/PLANO-FASE-COMERCIAL.md`.
 
 ## Fuentes de verdad
 
@@ -206,6 +268,10 @@ funciones existan todavía en producción.
 - Presentación pública: `index.html` y `producto/index.html`.
 - Cuenta C2 y gates de apertura: `cuenta/CONFIGURACION.md`.
 - Esquema/RLS/RPC/Edge Functions: repositorio del back-office, carpeta `supabase/`.
-- Relevo operativo vigente: `docs/RELEVO-CUENTAS-C2-2026-10-16.md` del back-office.
-- Siguiente fase comercial: `docs/PLANO-FASE-COMERCIAL.md` del back-office.
+- Relevo global y punto de entrada comercial vigente:
+  `docs/RELEVO-COMERCIAL-C1-2026-10-16.md` del back-office.
+- Relevo temático de cuentas y sus gates:
+  `docs/RELEVO-CUENTAS-C2-2026-10-16.md` del back-office.
+- Diseño y criterios de los siguientes tramos:
+  `docs/PLANO-FASE-COMERCIAL.md` del back-office.
 - Inventario y publicación: back-office en `montaguth.institute`.
