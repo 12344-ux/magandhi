@@ -4,10 +4,12 @@
 
 > **Cuentas C2 · preapertura:** `/cuenta/` está publicado con correo/contraseña,
 > recuperación y Google. El backend C2, SMTP Resend y TokenHash están
-> desplegados y medidos. Google está configurado `External / Testing`, pero aún
-> falta probar el botón real. Signup y CAPTCHA siguen apagados; Turnstile no
-> tiene site key todavía. Punto exacto: `cuenta/CONFIGURACION.md` y
-> `docs/RELEVO-CUENTAS-C2-2026-10-16.md` del back-office.
+> desplegados y medidos. Google Identity Services quedó publicado con la tienda
+> PR #95 y medido en producción: el selector muestra `magandhi.com`, conserva el
+> mismo UID/identidad y una sola cuenta activa tras el segundo acceso. Signup y
+> CAPTCHA siguen apagados; Turnstile todavía no tiene site key. Punto exacto:
+> `cuenta/CONFIGURACION.md` y `docs/RELEVO-CUENTAS-C2-2026-10-16.md` del
+> back-office.
 >
 > **Dropshipping:** D2c está desplegado; la tienda ya puede vender productos de
 > proveedor con stock vivo y verificación antes de Wompi. El despacho posterior
@@ -60,7 +62,8 @@ Los JPG de `marca/` son referencias históricas. No gobiernan la identidad ni de
 ### Mi cuenta — `cuenta/` (C2, preapertura 16-oct-2026)
 
 - Registro e inicio por correo + contraseña.
-- `Continuar con Google` mediante Supabase Auth.
+- `Continuar con Google` mediante Google Identity Services e ID token validado
+  por Supabase Auth; el selector visible identifica `magandhi.com`.
 - Confirmación y recuperación con TokenHash; callback noindex/no-referrer.
 - Recuperación probada abriendo el correo en otro navegador.
 - Inicialización server-side mediante `cuenta-inicializar`; el navegador nunca
@@ -68,7 +71,8 @@ Los JPG de `marca/` son referencias históricas. No gobiernan la identidad ni de
 - Sesión de cliente separada del panel interno; personal y cuentas no
   disponibles reciben rechazo opaco y cierre local.
 - Compra como invitado intacta.
-- Google está configurado External/Testing, pero falta la prueba real del botón.
+- Google Identity Services está publicado y medido en External/Testing: mismo
+  UID, identidad enlazada y una fila activa después del segundo acceso.
 - Signup y CAPTCHA siguen apagados. `TURNSTILE_SITE_KEY` permanece vacía.
 - Estado y siguiente paso exacto en `cuenta/CONFIGURACION.md`.
 

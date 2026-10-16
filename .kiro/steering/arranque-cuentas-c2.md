@@ -17,12 +17,13 @@ Estado medido al 16-oct-2026:
 - Migración máxima: `20261101000000`; preflight limpio.
 - Login password, inicialización idempotente y recuperación cross-browser están
   verificados.
-- Google está configurado `External / Testing` y habilitado en Supabase, pero
-  falta probar el botón real.
+- Google Identity Services está publicado en `External / Testing`; el selector
+  muestra `magandhi.com` y la prueba controlada confirmó mismo UID, identidad
+  Google enlazada y una sola cuenta activa después del segundo acceso.
 - Signup y CAPTCHA siguen apagados; `TURNSTILE_SITE_KEY` está vacía.
-- Siguiente exacto: crear manualmente un usuario Auth autoconfirmado con el
-  correo del Google Test User y probar `Continuar con Google` en ventana privada
-  sin encender signup.
+- Siguiente exacto: crear un widget Turnstile administrado para `magandhi.com`.
+  El secret se guarda solo en Supabase y CAPTCHA no se enciende hasta publicar y
+  medir primero la site key del frontend.
 
 Reglas: compra invitada intacta; `clientes.id` no se reemplaza; secretos nunca
 en Git/chat; rama + PR por cambio; medir producción antes de afirmar cierre.
