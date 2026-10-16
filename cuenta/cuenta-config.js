@@ -10,10 +10,13 @@ export const RECOVERY_CALLBACK_URL = `${AUTH_CALLBACK_URL}?flow=recovery`;
 // orígenes declarados en Google Cloud; el Client Secret nunca va al frontend.
 export const GOOGLE_CLIENT_ID = '975249312497-go5nqtl8ml9mr4p8smbo8mg4ofqlchto.apps.googleusercontent.com';
 
-// Clave PÚBLICA de Cloudflare Turnstile. Déjala vacía durante desarrollo solo
-// mientras CAPTCHA permanezca apagado en Supabase Auth. Antes de encenderlo en
-// Supabase, crea el widget para magandhi.com y pega aquí su site key pública.
-// La secret key de Turnstile pertenece al servidor/dashboard y NUNCA al repo.
-export const TURNSTILE_SITE_KEY = '';
+// Clave PÚBLICA de Cloudflare Turnstile para magandhi.com. La secret key se
+// guarda únicamente en el servidor/dashboard y NUNCA en este repositorio.
+// CAPTCHA debe permanecer apagado en Supabase hasta publicar y medir el widget.
+export const TURNSTILE_SITE_KEY = '0x4AAAAAAFYjHiX83pwXm9WQ';
+
+// Fase de observación: el widget se renderiza y puede enviar token, pero el
+// frontend no bloquea Auth hasta que CAPTCHA también esté activo en Supabase.
+export const TURNSTILE_REQUIRED = false;
 
 export const CUENTA_INITIALIZE_FUNCTION = 'cuenta-inicializar';
