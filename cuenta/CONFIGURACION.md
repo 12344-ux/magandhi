@@ -2,6 +2,29 @@
 
 El frontend no contiene secretos. Usa el cliente público único de `../supabase-config.js` y URLs de retorno fijas de `cuenta-config.js`.
 
+## Estado medido · 16-oct-2026
+
+- [x] C2 fusionado y publicado (tienda PR #93; backend PR #270).
+- [x] Migración `20261101000000` aplicada; preflight C1/C2 presente y cinco
+  medidas de integridad en cero.
+- [x] `cuenta-inicializar` desplegada con Verify JWT.
+- [x] Site URL y tres redirects de callback configurados.
+- [x] `auth.magandhi.com` verificado en Resend mediante Porkbun.
+- [x] Custom SMTP guardado con `MAGANDHI <cuenta@auth.magandhi.com>`.
+- [x] Confirmación/recuperación TokenHash y cambio de contraseña probados,
+  incluso abriendo el enlace en otro navegador.
+- [x] Google OAuth configurado `External / Testing`, test user, cliente web,
+  provider Supabase y callback correctos.
+- [ ] Probar el botón real `Continuar con Google` con signup apagado.
+- [ ] Crear/configurar Cloudflare Turnstile; la site key sigue vacía.
+- [ ] Probar registro nuevo por correo y Google con CAPTCHA.
+- [ ] Cerrar políticas y decidir apertura pública.
+
+**Siguiente exacto:** crear manualmente en Supabase Auth un usuario
+autoconfirmado con el correo del Google Test User; después probar
+`Continuar con Google` en ventana privada sin encender signup. Relevo completo:
+`docs/RELEVO-CUENTAS-C2-2026-10-16.md` del back-office.
+
 ## Supabase Auth
 
 Antes de habilitar registros en producción:
@@ -16,23 +39,27 @@ Antes de habilitar registros en producción:
    incluso si el enlace se abre en otro navegador. El callback acepta
    `token_hash` y lo verifica directamente con Supabase:
 
-   **Confirm signup** — el `RedirectTo` ya contiene `?flow=signup`:
+   **Confirm signup** — producción usa una URL directa y fija:
 
    ```html
-   <a href="{{ .RedirectTo }}&amp;token_hash={{ .TokenHash }}&amp;type=email">Confirmar mi correo</a>
+   <a href="https://magandhi.com/cuenta/callback/?flow=signup&amp;token_hash={{ .TokenHash }}&amp;type=email">Confirmar mi correo</a>
    ```
 
-   **Reset password** — el `RedirectTo` ya contiene `?flow=recovery`:
+   **Reset password** — producción usa una URL directa y fija:
 
    ```html
-   <a href="{{ .RedirectTo }}&amp;token_hash={{ .TokenHash }}&amp;type=recovery">Crear una nueva contraseña</a>
+   <a href="https://magandhi.com/cuenta/callback/?flow=recovery&amp;token_hash={{ .TokenHash }}&amp;type=recovery">Crear una nueva contraseña</a>
    ```
 
    No usar enlaces manuales con correo, UID o tokens distintos de
    `.TokenHash`. Probar cada enlace en el navegador original y en otro.
-5. Habilitar Google y registrar en Google la URL de callback que indique Supabase para el proyecto. El navegador vuelve después a la URL canónica de MAGANDHI.
-6. Desplegar `cuenta-inicializar`. Debe validar el JWT, exigir correo confirmado y ser idempotente; el frontend nunca escribe `cuentas_cliente` directamente.
-7. Verificar SMTP, plantillas, límites de envío y rechazo del login interno antes de encender el registro público.
+5. Google está habilitado en modo `External / Testing`; callback Supabase:
+   `https://bxlzipwxyxdtffnuizbz.supabase.co/auth/v1/callback`. No pasar a
+   Production antes de políticas y pruebas finales.
+6. `cuenta-inicializar` está desplegada con Verify JWT; valida el JWT, exige
+   correo confirmado y es idempotente.
+7. SMTP, plantillas y recuperación cross-browser están medidos. El límite Auth
+   inicial es 30 correos/hora y no debe aumentarse antes de CAPTCHA.
 
 ## Cloudflare Turnstile
 
