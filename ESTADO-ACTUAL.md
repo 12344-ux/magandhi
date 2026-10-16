@@ -1,8 +1,18 @@
 # MAGANDHI · estado actual de la tienda pública
 
-**Corte:** 10 de octubre de 2026 (el estado completo del proyecto vive en `CONTEXTO-MAGANDHI.md` del repo del back-office)
+**Corte:** 16 de octubre de 2026 (el estado completo del proyecto vive en `CONTEXTO-MAGANDHI.md` del repo del back-office)
 
-> **Dropshipping (10-oct-2026):** en el back-office ya existen D1 y D2a: los productos de proveedor de Dropi se curan y se llevan a Campañas como **borradores**. **La tienda aún no los muestra ni los vende**: `catalogo_publico` los excluye hasta D2c, que traerá stock vivo, un estado «Temporalmente no disponible» en esta tienda y la verificación antes de Wompi. Nada de eso cambia todavía este repositorio.
+> **Cuentas C2 · preapertura:** `/cuenta/` está publicado con correo/contraseña,
+> recuperación y Google. El backend C2, SMTP Resend y TokenHash están
+> desplegados y medidos. Google está configurado `External / Testing`, pero aún
+> falta probar el botón real. Signup y CAPTCHA siguen apagados; Turnstile no
+> tiene site key todavía. Punto exacto: `cuenta/CONFIGURACION.md` y
+> `docs/RELEVO-CUENTAS-C2-2026-10-16.md` del back-office.
+>
+> **Dropshipping:** D2c está desplegado; la tienda ya puede vender productos de
+> proveedor con stock vivo y verificación antes de Wompi. El despacho posterior
+> continúa manual en el back-office.
+
 **Producción:** `https://magandhi.com`
 **Repositorio:** `12344-ux/magandhi`
 
@@ -46,6 +56,21 @@ Los JPG de `marca/` son referencias históricas. No gobiernan la identidad ni de
 - Checkout Wompi iniciado mediante `crear-intencion-pago`.
 - WhatsApp contextual por producto.
 - Opiniones verificadas en vivo (ver sección siguiente). Estado vacío honesto mientras un producto no tenga opiniones.
+
+### Mi cuenta — `cuenta/` (C2, preapertura 16-oct-2026)
+
+- Registro e inicio por correo + contraseña.
+- `Continuar con Google` mediante Supabase Auth.
+- Confirmación y recuperación con TokenHash; callback noindex/no-referrer.
+- Recuperación probada abriendo el correo en otro navegador.
+- Inicialización server-side mediante `cuenta-inicializar`; el navegador nunca
+  escribe `cuentas_cliente` ni elige `customer_id`.
+- Sesión de cliente separada del panel interno; personal y cuentas no
+  disponibles reciben rechazo opaco y cierre local.
+- Compra como invitado intacta.
+- Google está configurado External/Testing, pero falta la prueba real del botón.
+- Signup y CAPTCHA siguen apagados. `TURNSTILE_SITE_KEY` permanece vacía.
+- Estado y siguiente paso exacto en `cuenta/CONFIGURACION.md`.
 
 ### Políticas — `politicas/` (ESTRUCTURA provisional, 8-oct-2026)
 
@@ -137,7 +162,9 @@ Antes, al volver de Wompi la ficha se veía igual y «Comprar ahora» seguía ac
 
 ## Pendientes reales
 
-1. ~~Confirmación al volver de Wompi~~ · ~~detalles de entrega~~ · ~~mensajes de error de pago~~ — **cerrados y desplegados (D0, 9–10-oct-2026).** Ver «Vuelta del pago» arriba. La migración `20261021000000` y la Edge Function `estado-pago` están en producción desde el 10-oct-2026.
+1. **C2 preapertura:** probar Google con un usuario Auth manual que tenga el
+   correo del Google Test User, sin encender signup; después configurar
+   Turnstile, probar registro real controlado y solo entonces abrir.
 2. Políticas reales: privacidad, condiciones, entregas, cambios/devoluciones y tratamiento de datos.
 3. Canal/página formal de PQRS; mientras tanto se usa el correo real.
 4. Repaso de textos de la sección de opiniones. El diseño quedó aprobado; solo falta pulir copias. Los copys del aviso de vuelta del pago son provisionales y entran en el mismo repaso.
@@ -150,5 +177,7 @@ Antes, al volver de Wompi la ficha se veía igual y «Comprar ahora» seguía ac
 - Marca pública: `marca/logo/logo-magandhi.svg`, `marca/generar_assets.py`, `marca.css`.
 - Banners: `.kiro/steering/estandar-banners-magandhi.md` y `banners/LEEME.md`.
 - Presentación pública: `index.html` y `producto/index.html`.
+- Cuenta C2 y gates de apertura: `cuenta/CONFIGURACION.md`.
 - Esquema/RLS/RPC/Edge Functions: repositorio del back-office, carpeta `supabase/`.
+- Relevo operativo vigente: `docs/RELEVO-CUENTAS-C2-2026-10-16.md` del back-office.
 - Inventario y publicación: back-office en `montaguth.institute`.
