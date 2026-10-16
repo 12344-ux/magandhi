@@ -38,6 +38,20 @@
     <p>Los precios y la disponibilidad se muestran con su valor actual.</p>
   </div>
 
+  <section class="co-payment-return" id="co-payment-return" hidden tabindex="-1" aria-live="polite" aria-labelledby="co-payment-title">
+    <div class="co-payment-return__card" id="co-payment-card" data-estado="pendiente">
+      <span class="co-payment-return__icon" id="co-payment-icon" aria-hidden="true">…</span>
+      <div>
+        <h2 id="co-payment-title">Estamos confirmando tu pago</h2>
+        <p id="co-payment-message">Dale un momento. No necesitas iniciar otro pago mientras recibimos la confirmación.</p>
+        <div class="co-payment-return__actions">
+          <button type="button" class="co-payment-return__resume" id="co-payment-resume">Volver al pago seguro</button>
+          <button type="button" class="co-payment-return__retry" id="co-payment-retry">Consultar de nuevo</button>
+        </div>
+      </div>
+    </div>
+  </section>
+
   <section class="co-card co-state" id="co-loading" role="status" aria-live="polite">
     <span class="co-spinner" aria-hidden="true"></span>
     <p>Comprobando tu carrito…</p>
@@ -78,15 +92,118 @@
     <div class="co-notice" id="co-notice" role="status" aria-live="polite" hidden></div>
     <div class="co-lines" id="co-lines"></div>
     <aside class="co-summary" aria-label="Resumen del carrito">
-      <div><span>Subtotal actual</span><strong id="co-subtotal">—</strong></div>
-      <p>Este carrito permite guardar y ajustar productos. El pago multiproducto no está disponible.</p>
+      <div><span>Total actual</span><strong id="co-subtotal">—</strong></div>
+      <p>El servidor volverá a validar cada línea y confirmará el total autoritativo antes de abrir el pago.</p>
+      <button class="co-checkout" type="button" id="co-checkout" aria-haspopup="dialog" aria-controls="co-modal-checkout" disabled>
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="2" y="5" width="20" height="14" rx="2"/><path d="M2 10h20"/></svg>
+        Ir al pago seguro
+      </button>
+      <p class="co-checkout-help" id="co-checkout-help" role="status" aria-live="polite"></p>
     </aside>
   </section>
 </main>
 
+<div class="co-modal" id="co-modal-checkout" role="dialog" aria-modal="true" aria-labelledby="co-modal-title" aria-hidden="true">
+  <div class="co-modal__box">
+    <button type="button" class="co-modal__close" id="co-modal-close" aria-label="Cerrar formulario de pago">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12"/></svg>
+    </button>
+    <span class="co-modal__icon" aria-hidden="true">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M20 8v6M23 11h-6"/><path d="M8.5 12a4 4 0 1 0 0-8 4 4 0 0 0 0 8zM2 21v-2a4 4 0 0 1 4-4h5a4 4 0 0 1 4 4v2"/></svg>
+    </span>
+    <h2 id="co-modal-title">Datos de envío y facturación</h2>
+    <p class="co-form-intro">Estos datos permiten preparar el envío y emitir el comprobante. El pago se realiza en la plataforma segura de Wompi; MAGANDHI no ve ni guarda los datos de tu tarjeta. Los campos con asterisco son obligatorios.</p>
+    <p class="co-form-total" id="co-form-total" aria-live="polite"></p>
+
+    <form class="co-form" id="co-checkout-form" novalidate>
+      <fieldset class="co-form__group">
+        <legend class="co-form__legend">Tus datos</legend>
+        <div class="co-form__row">
+          <div class="co-field co-field--full">
+            <label for="co-c-nombre">Nombre completo <span aria-hidden="true">*</span></label>
+            <input type="text" id="co-c-nombre" name="nombre" autocomplete="name" maxlength="120" placeholder="Nombre y apellido" required aria-required="true" aria-invalid="false">
+            <span class="co-field__error" id="co-c-nombre-error">Escribe el nombre completo de quien recibe.</span>
+          </div>
+        </div>
+        <div class="co-form__row">
+          <div class="co-field">
+            <label for="co-c-correo">Correo <span aria-hidden="true">*</span></label>
+            <input type="email" id="co-c-correo" name="correo" autocomplete="email" inputmode="email" maxlength="160" placeholder="tucorreo@ejemplo.com" required aria-required="true" aria-invalid="false" aria-describedby="co-c-correo-help">
+            <span class="co-field__error" id="co-c-correo-error">Escribe un correo válido.</span>
+            <span class="co-field__help" id="co-c-correo-help">Allí llega el comprobante del pago.</span>
+          </div>
+          <div class="co-field">
+            <label for="co-c-telefono">Teléfono <span aria-hidden="true">*</span></label>
+            <input type="tel" id="co-c-telefono" name="telefono" autocomplete="tel" inputmode="tel" maxlength="40" placeholder="Ej. 3001234567" required aria-required="true" aria-invalid="false">
+            <span class="co-field__error" id="co-c-telefono-error">Escribe los 10 dígitos del teléfono colombiano.</span>
+          </div>
+        </div>
+      </fieldset>
+
+      <fieldset class="co-form__group">
+        <legend class="co-form__legend">Dirección de entrega</legend>
+        <div class="co-form__row">
+          <div class="co-field">
+            <label for="co-c-departamento">Departamento <span aria-hidden="true">*</span></label>
+            <select id="co-c-departamento" name="departamento" autocomplete="address-level1" required aria-required="true" aria-invalid="false" data-vacio="true">
+              <option value="" selected>Elige tu departamento</option>
+              <option>Amazonas</option><option>Antioquia</option><option>Arauca</option><option>Atlántico</option><option>Bogotá D.C.</option><option>Bolívar</option><option>Boyacá</option><option>Caldas</option><option>Caquetá</option><option>Casanare</option><option>Cauca</option><option>Cesar</option><option>Chocó</option><option>Córdoba</option><option>Cundinamarca</option><option>Guainía</option><option>Guaviare</option><option>Huila</option><option>La Guajira</option><option>Magdalena</option><option>Meta</option><option>Nariño</option><option>Norte de Santander</option><option>Putumayo</option><option>Quindío</option><option>Risaralda</option><option>San Andrés y Providencia</option><option>Santander</option><option>Sucre</option><option>Tolima</option><option>Valle del Cauca</option><option>Vaupés</option><option>Vichada</option>
+            </select>
+            <span class="co-field__error" id="co-c-departamento-error">Elige tu departamento.</span>
+          </div>
+          <div class="co-field">
+            <label for="co-c-ciudad">Ciudad o municipio <span aria-hidden="true">*</span></label>
+            <input type="text" id="co-c-ciudad" name="ciudad" autocomplete="address-level2" maxlength="80" placeholder="Ej. Tunja" required aria-required="true" aria-invalid="false">
+            <span class="co-field__error" id="co-c-ciudad-error">Escribe tu ciudad o municipio.</span>
+          </div>
+        </div>
+        <div class="co-form__row">
+          <div class="co-field co-field--full">
+            <label for="co-c-direccion">Dirección <span aria-hidden="true">*</span></label>
+            <input type="text" id="co-c-direccion" name="direccion" autocomplete="street-address" maxlength="120" placeholder="Ej. Calle 20 # 10-45" required aria-required="true" aria-invalid="false">
+            <span class="co-field__error" id="co-c-direccion-error">Escribe tu dirección.</span>
+          </div>
+        </div>
+        <div class="co-form__row">
+          <div class="co-field co-field--full">
+            <label for="co-c-detalles">Detalles de entrega <small>(opcional)</small></label>
+            <input type="text" id="co-c-detalles" name="detalles" autocomplete="address-line2" maxlength="70" placeholder="Apartamento, torre, barrio, indicaciones">
+          </div>
+        </div>
+      </fieldset>
+
+      <fieldset class="co-form__group">
+        <legend class="co-form__legend">Documento</legend>
+        <div class="co-form__row">
+          <div class="co-field">
+            <label for="co-c-tipo-doc">Tipo de documento <small>(opcional)</small></label>
+            <select id="co-c-tipo-doc" name="tipo_documento" aria-invalid="false" data-vacio="true">
+              <option value="" selected>Sin especificar</option><option value="CC">Cédula de ciudadanía</option><option value="CE">Cédula de extranjería</option><option value="NIT">NIT</option><option value="PP">Pasaporte</option><option value="TI">Tarjeta de identidad</option>
+            </select>
+            <span class="co-field__error" id="co-c-tipo-doc-error">Elige el tipo de documento.</span>
+          </div>
+          <div class="co-field">
+            <label for="co-c-num-doc">Número de documento <small>(opcional)</small></label>
+            <input type="text" id="co-c-num-doc" name="numero_documento" autocomplete="off" inputmode="text" maxlength="30" placeholder="Letras, números, guion o punto" aria-invalid="false">
+            <span class="co-field__error" id="co-c-num-doc-error">Usa de 5 a 30 letras, números, guiones o puntos.</span>
+          </div>
+        </div>
+      </fieldset>
+
+      <div class="co-form-alert" id="co-form-alert" role="alert" hidden></div>
+      <button type="submit" class="co-form-submit" id="co-form-submit">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="2" y="5" width="20" height="14" rx="2"/><path d="M2 10h20"/></svg>
+        <span id="co-form-submit-text">Ir al pago seguro</span>
+      </button>
+      <p class="co-form-note">Pago procesado por Wompi · conexión cifrada</p>
+    </form>
+  </div>
+</div>
+
 <footer class="co-footer">
   <span>© 2026 MAGANDHI</span><a href="../politicas/">Políticas</a><a href="mailto:contacto@magandhi.com">Contacto</a>
 </footer>
-<script type="module" src="carrito-ui.js?v=1"></script>
+<script type="module" src="../analitica/analitica.js?v=1"></script>
+<script type="module" src="carrito-ui.js?v=2"></script>
 </body>
 </html>
