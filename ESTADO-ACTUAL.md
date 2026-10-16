@@ -7,9 +7,10 @@
 > desplegados y medidos. Google Identity Services quedó publicado con la tienda
 > PR #95 y medido en producción: el selector muestra `magandhi.com`, conserva el
 > mismo UID/identidad y una sola cuenta activa tras el segundo acceso. Signup y
-> CAPTCHA siguen apagados; el widget Turnstile administrado ya existe y su site
-> key pública está configurada en el frontend, pendiente de medición tras
-> publicar. Punto exacto:
+> CAPTCHA de Supabase y signup siguen apagados; el widget Turnstile administrado
+> ya está publicado y medido en móvil/escritorio. El frontend exige token antes
+> de enviar, pendiente de activar también la validación server-side en Supabase.
+> Punto exacto:
 > `cuenta/CONFIGURACION.md` y `docs/RELEVO-CUENTAS-C2-2026-10-16.md` del
 > back-office.
 >
@@ -75,8 +76,10 @@ Los JPG de `marca/` son referencias históricas. No gobiernan la identidad ni de
 - Compra como invitado intacta.
 - Google Identity Services está publicado y medido en External/Testing: mismo
   UID, identidad enlazada y una fila activa después del segundo acceso.
-- Signup y CAPTCHA siguen apagados. El widget Turnstile administrado ya existe
-  y `TURNSTILE_SITE_KEY` está configurada, pendiente de medición en producción.
+- Signup y CAPTCHA de Supabase siguen apagados. El widget Turnstile administrado
+  está publicado y medido en móvil/escritorio; el frontend ya exige token.
+- Siguiente exacto: guardar el secret solo en Supabase Auth y encender CAPTCHA
+  manteniendo signup apagado; después medir login y recuperación.
 - Estado y siguiente paso exacto en `cuenta/CONFIGURACION.md`.
 
 ### Políticas — `politicas/` (ESTRUCTURA provisional, 8-oct-2026)
