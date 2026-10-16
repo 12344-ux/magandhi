@@ -1,8 +1,8 @@
 import { supabase } from '../supabase-config.js';
 import {
-  AUTH_CALLBACK_URL,
   SIGNUP_CALLBACK_URL,
   RECOVERY_CALLBACK_URL,
+  GOOGLE_CLIENT_ID,
   TURNSTILE_SITE_KEY,
   CUENTA_INITIALIZE_FUNCTION,
 } from './cuenta-config.js';
@@ -13,8 +13,13 @@ const captchaWidgets = new Map();
 let initializePromise = null;
 let initializeUserId = null;
 let authReady = false;
+let preserveAuthViewOnSignOut = false;
 const RECOVERY_PROOF_KEY = 'mg_cuenta_recovery_validada';
 const RECOVERY_PROOF_MAX_AGE_MS = 10 * 60 * 1000;
+const GOOGLE_GSI_SCRIPT_URL = 'https://accounts.google.com/gsi/client';
+let googleScriptPromise = null;
+let googleButtonGeneration = 0;
+let googleCredentialGeneration = null;
 
 const byId = (id) => document.getElementById(id);
 
@@ -238,6 +243,159 @@ async function setupTurnstile() {
   });
 }
 
+function loadGoogleIdentityServices() {
+  if (window.google?.accounts?.id) return Promise.resolve(window.google.accounts.id);
+  if (googleScriptPromise) return googleScriptPromise;
+
+  googleScriptPromise = new Promise((resolve, reject) => {
+    const ready = () => {
+      if (window.google?.accounts?.id) resolve(window.google.accounts.id);
+      else reject(new Error('google_identity_services_unavailable'));
+    };
+    const failed = () => reject(new Error('google_identity_services_load_failed'));
+    const existing = document.querySelector(`script[src="${GOOGLE_GSI_SCRIPT_URL}"]`);
+    if (existing) {
+      existing.addEventListener('load', ready, { once: true });
+      existing.addEventListener('error', failed, { once: true });
+      return;
+    }
+
+    const script = document.createElement('script');
+    script.src = GOOGLE_GSI_SCRIPT_URL;
+    script.async = true;
+    script.defer = true;
+    script.addEventListener('load', ready, { once: true });
+    script.addEventListener('error', failed, { once: true });
+    document.head.appendChild(script);
+  }).catch((error) => {
+    googleScriptPromise = null;
+    throw error;
+  });
+
+  return googleScriptPromise;
+}
+
+function base64Url(bytes) {
+  let binary = '';
+  for (const byte of bytes) binary += String.fromCharCode(byte);
+  return btoa(binary).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/g, '');
+}
+
+async function createGoogleNonce() {
+  const raw = base64Url(crypto.getRandomValues(new Uint8Array(32)));
+  const digest = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(raw));
+  const hashed = Array.from(new Uint8Array(digest), (byte) => byte.toString(16).padStart(2, '0')).join('');
+  return { raw, hashed };
+}
+
+function googleButtonWidth(container) {
+  const measured = Math.floor(container.getBoundingClientRect().width || 320);
+  return Math.max(200, Math.min(measured, 400));
+}
+
+function showGoogleSetupError() {
+  const container = byId('ct-google');
+  if (container) {
+    container.replaceChildren();
+    container.hidden = true;
+    container.inert = true;
+    container.removeAttribute('aria-busy');
+  }
+  message('ct-google-message', 'No pudimos cargar el acceso con Google. Recarga la página e inténtalo de nuevo.', 'error');
+}
+
+async function completeGoogleSignIn(response, nonce, generation) {
+  const container = byId('ct-google');
+  if (generation !== googleButtonGeneration) return;
+  if (googleCredentialGeneration !== null) {
+    setupGoogleButton();
+    return;
+  }
+
+  googleCredentialGeneration = generation;
+  if (container) {
+    container.setAttribute('aria-busy', 'true');
+    container.inert = true;
+  }
+  message('ct-google-message', 'Conectando con Google…', 'info');
+  let shouldRetry = false;
+
+  try {
+    if (!response?.credential) throw new Error('google_credential_missing');
+    const { data, error } = await supabase.auth.signInWithIdToken({
+      provider: 'google',
+      token: response.credential,
+      nonce,
+    });
+    if (error) throw error;
+    if (!data?.session) throw new Error('google_session_missing');
+    if (generation !== googleButtonGeneration) return;
+    await showSession(data.session);
+  } catch {
+    if (generation === googleButtonGeneration) {
+      shouldRetry = true;
+      message('ct-google-message', 'No pudimos iniciar sesión con Google. Inténtalo de nuevo.', 'error');
+    }
+  } finally {
+    if (googleCredentialGeneration === generation) googleCredentialGeneration = null;
+    if (generation === googleButtonGeneration && container) {
+      container.inert = false;
+      container.removeAttribute('aria-busy');
+    }
+  }
+
+  if (shouldRetry && generation === googleButtonGeneration) setupGoogleButton();
+}
+
+async function renderGoogleButton() {
+  if (!GOOGLE_CLIENT_ID) throw new Error('google_client_id_missing');
+  const container = byId('ct-google');
+  if (!container) throw new Error('google_button_missing');
+
+  container.hidden = false;
+  container.inert = true;
+  container.setAttribute('aria-busy', 'true');
+  container.replaceChildren();
+  const googleIdentity = await loadGoogleIdentityServices();
+  const { raw, hashed } = await createGoogleNonce();
+  const generation = ++googleButtonGeneration;
+  let pendingNonce = raw;
+
+  googleIdentity.initialize({
+    client_id: GOOGLE_CLIENT_ID,
+    nonce: hashed,
+    ux_mode: 'popup',
+    auto_select: false,
+    cancel_on_tap_outside: true,
+    callback(response) {
+      const nonce = pendingNonce;
+      pendingNonce = '';
+      if (!nonce || generation !== googleButtonGeneration) return;
+      void completeGoogleSignIn(response, nonce, generation);
+    },
+  });
+
+  container.replaceChildren();
+  googleIdentity.renderButton(container, {
+    type: 'standard',
+    theme: 'outline',
+    size: 'large',
+    text: 'continue_with',
+    shape: 'rectangular',
+    logo_alignment: 'left',
+    width: googleButtonWidth(container),
+    locale: 'es',
+  });
+  if (!container.firstElementChild) throw new Error('google_button_not_rendered');
+  container.inert = false;
+  container.removeAttribute('aria-busy');
+  message('ct-google-message');
+}
+
+function setupGoogleButton() {
+  renderGoogleButton().catch(showGoogleSetupError);
+}
+
 async function submitLogin(event) {
   event.preventDefault();
   const emailInput = byId('ct-login-email');
@@ -297,28 +455,24 @@ async function submitRegister(event) {
       if (!enumerable) throw error;
     }
     // La apertura de C2 exige confirmación. Si un entorno se configuró por error
-    // con auto-confirmación, no conservamos esa sesión creada por contraseña.
-    if (data?.session) await supabase.auth.signOut({ scope: 'local' });
+    // con auto-confirmación, no conservamos esa sesión creada por contraseña ni
+    // dejamos que SIGNED_OUT cambie la pestaña antes de mostrar el comprobante.
+    if (data?.session) {
+      preserveAuthViewOnSignOut = true;
+      try {
+        await supabase.auth.signOut({ scope: 'local' });
+      } finally {
+        preserveAuthViewOnSignOut = false;
+      }
+      setTab('register');
+      showView('auth', false);
+    }
     event.currentTarget.reset();
     message('ct-register-message', 'Si podemos completar el registro con ese correo, recibirás un enlace de confirmación. Revisa también spam o promociones.', 'success');
   } catch (error) {
     message('ct-register-message', humanAuthError(error, 'register'), 'error');
   } finally {
     resetCaptcha('register');
-    setBusy(button, false);
-  }
-}
-
-async function startGoogle() {
-  const button = byId('ct-google');
-  setBusy(button, true, 'Conectando con Google…');
-  message('ct-google-message');
-  const { error } = await supabase.auth.signInWithOAuth({
-    provider: 'google',
-    options: { redirectTo: AUTH_CALLBACK_URL },
-  });
-  if (error) {
-    message('ct-google-message', 'No pudimos abrir el acceso con Google. Inténtalo de nuevo.', 'error');
     setBusy(button, false);
   }
 }
@@ -398,7 +552,6 @@ function wireEvents() {
   byId('ct-tab-register').addEventListener('click', () => setTab('register'));
   byId('ct-login-form').addEventListener('submit', submitLogin);
   byId('ct-register-form').addEventListener('submit', submitRegister);
-  byId('ct-google').addEventListener('click', startGoogle);
   byId('ct-show-recovery').addEventListener('click', () => showView('recovery'));
   byId('ct-recovery-back').addEventListener('click', () => showView('auth'));
   byId('ct-recovery-form').addEventListener('submit', submitRecovery);
@@ -414,7 +567,10 @@ function wireEvents() {
 async function boot() {
   wireEvents();
   setupTurnstile().catch(() => {
-    message('ct-google-message', 'No pudimos cargar el desafío de seguridad. Recarga la página antes de continuar.', 'error');
+    const text = 'No pudimos cargar el desafío de seguridad. Recarga la página antes de continuar.';
+    message('ct-login-message', text, 'error');
+    message('ct-register-message', text, 'error');
+    message('ct-recovery-message', text, 'error');
   });
 
   const params = new URLSearchParams(window.location.search);
@@ -423,7 +579,9 @@ async function boot() {
   const { data, error } = await supabase.auth.getSession();
   authReady = true;
   if (error) {
+    setTab('login');
     showView('auth');
+    setupGoogleButton();
     message('ct-login-message', 'No pudimos comprobar tu sesión. Recarga la página e inténtalo de nuevo.', 'error');
     return;
   }
@@ -443,6 +601,7 @@ async function boot() {
   else {
     setTab(params.get('tab') === 'register' ? 'register' : 'login');
     showView('auth');
+    setupGoogleButton();
     if (status === 'callback-error') message('ct-login-message', 'El enlace no es válido o ya venció. Solicita uno nuevo si lo necesitas.', 'error');
     if (status === 'account-unavailable') message('ct-login-message', 'No pudimos habilitar esta cuenta. Si necesitas ayuda, escríbenos por nuestros canales de atención.', 'error');
   }
@@ -453,7 +612,14 @@ supabase.auth.onAuthStateChange((event) => {
   if (event === 'SIGNED_OUT') {
     initializePromise = null;
     initializeUserId = null;
-    if (!new URLSearchParams(location.search).has('mode')) showView('auth');
+    if (preserveAuthViewOnSignOut) return;
+    googleButtonGeneration += 1;
+    googleCredentialGeneration = null;
+    if (!new URLSearchParams(location.search).has('mode')) {
+      setTab('login');
+      showView('auth');
+      setupGoogleButton();
+    }
   }
 });
 

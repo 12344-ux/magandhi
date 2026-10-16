@@ -78,8 +78,8 @@ async function finishCallback() {
       session = data.session;
       recoveryVerified = tipo === 'recovery';
     } else if (code) {
-      // Google OAuth vuelve con un code PKCE. Los correos usan token_hash para
-      // que confirmación y recuperación funcionen también en otro navegador.
+      // El callback conserva compatibilidad con códigos PKCE emitidos antes
+      // de publicar GIS y con enlaces que todavía dependan de ese intercambio.
       const { data, error } = await supabase.auth.exchangeCodeForSession(code);
       if (error) throw error;
       session = data.session;

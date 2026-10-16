@@ -15,14 +15,17 @@ El frontend no contiene secretos. Usa el cliente público único de `../supabase
   incluso abriendo el enlace en otro navegador.
 - [x] Google OAuth configurado `External / Testing`, test user, cliente web,
   provider Supabase y callback correctos.
-- [ ] Probar el botón real `Continuar con Google` con signup apagado.
+- [x] Flujo OAuth redirigido probado: mismo UID, identidad Google enlazada y una
+  sola cuenta activa después del segundo acceso.
+- [ ] Publicar y medir Google Identity Services por ID token para reemplazar el
+  dominio técnico visible de Supabase.
 - [ ] Crear/configurar Cloudflare Turnstile; la site key sigue vacía.
 - [ ] Probar registro nuevo por correo y Google con CAPTCHA.
 - [ ] Cerrar políticas y decidir apertura pública.
 
-**Siguiente exacto:** crear manualmente en Supabase Auth un usuario
-autoconfirmado con el correo del Google Test User; después probar
-`Continuar con Google` en ventana privada sin encender signup. Relevo completo:
+**Siguiente exacto:** publicar mediante rama + PR la integración de Google
+Identity Services, manteniendo signup apagado; después repetir con el mismo Test
+User la comprobación de UID, identidad enlazada e idempotencia. Relevo completo:
 `docs/RELEVO-CUENTAS-C2-2026-10-16.md` del back-office.
 
 ## Supabase Auth
@@ -53,13 +56,32 @@ Antes de habilitar registros en producción:
 
    No usar enlaces manuales con correo, UID o tokens distintos de
    `.TokenHash`. Probar cada enlace en el navegador original y en otro.
-5. Google está habilitado en modo `External / Testing`; callback Supabase:
-   `https://bxlzipwxyxdtffnuizbz.supabase.co/auth/v1/callback`. No pasar a
+5. Google permanece `External / Testing`. El botón web usa Google Identity
+   Services desde `https://magandhi.com`, obtiene un ID token con nonce y lo
+   valida mediante `signInWithIdToken`; el Client ID de `cuenta-config.js` es
+   público y el Client Secret sigue únicamente en Supabase. El callback OAuth
+   `https://bxlzipwxyxdtffnuizbz.supabase.co/auth/v1/callback` se conserva
+   durante la transición, pero no participa en el nuevo botón. No pasar a
    Production antes de políticas y pruebas finales.
 6. `cuenta-inicializar` está desplegada con Verify JWT; valida el JWT, exige
    correo confirmado y es idempotente.
 7. SMTP, plantillas y recuperación cross-browser están medidos. El límite Auth
    inicial es 30 correos/hora y no debe aumentarse antes de CAPTCHA.
+
+## Google Identity Services
+
+El botón oficial carga `https://accounts.google.com/gsi/client` directamente y
+usa popup, nonce de un solo uso e ID token. Si se aplica una política CSP desde
+un CDN o proxy, debe autorizar los recursos GIS necesarios en `script-src`,
+`frame-src`, `connect-src` y `style-src` para `https://accounts.google.com`.
+Una política `Cross-Origin-Opener-Policy` estricta debe conservar la comunicación
+del popup; validar `same-origin-allow-popups` antes de publicarla en esta ruta.
+No relajar globalmente la CSP ni copiar el script de Google al repositorio.
+
+Antes de fusionar, medir los headers efectivos de `/cuenta/` y probar el botón
+en ventana normal y privada, con mouse y teclado. Después confirmar en Supabase
+el mismo UID, la identidad Google enlazada y una sola fila activa antes y después
+del segundo acceso.
 
 ## Cloudflare Turnstile
 

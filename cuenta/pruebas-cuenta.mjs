@@ -30,12 +30,23 @@ const checks = [
   ['detección implícita desactivada', (await readFile(new URL('../supabase-config.js', base), 'utf8')).includes('detectSessionInUrl: false')],
   ['callback noindex', /noindex/.test(files['callback/index.html'])],
   ['callback no-referrer', /no-referrer/.test(files['callback/index.html'])],
-  ['intercambio de código PKCE para Google', /exchangeCodeForSession/.test(files['callback/callback.js'])],
+  ['intercambio PKCE conservado para enlaces compatibles', /exchangeCodeForSession/.test(files['callback/callback.js'])],
   ['TokenHash para correos en otro navegador', /verifyOtp\(\{ token_hash: tokenHash/.test(files['callback/callback.js'])],
   ['limpieza de códigos y token hash', /'token_hash'/.test(files['callback/index.html']) && /history\.replaceState/.test(files['callback/callback.js'])],
   ['cierre local', /scope:\s*'local'/.test(files['cuenta.js'])],
   ['inicialización server-side', /cuenta-inicializar/.test(files['cuenta-config.js'])],
-  ['Google OAuth habilitado en interfaz', /provider:\s*'google'/.test(files['cuenta.js'])],
+  ['Google GIS con ID token y nonce',
+    /accounts\.google\.com\/gsi\/client/.test(files['cuenta.js']) &&
+    /signInWithIdToken/.test(files['cuenta.js']) &&
+    /token:\s*response\.credential/.test(files['cuenta.js']) &&
+    /crypto\.getRandomValues/.test(files['cuenta.js']) &&
+    /SHA-256/.test(files['cuenta.js']) &&
+    /nonce:\s*hashed/.test(files['cuenta.js']) &&
+    /nonce,/.test(files['cuenta.js']) &&
+    /container\.inert\s*=\s*true/.test(files['cuenta.js']) &&
+    /googleCredentialGeneration\s*=\s*null/.test(files['cuenta.js']) &&
+    /GOOGLE_CLIENT_ID\s*=\s*'[^']+\.apps\.googleusercontent\.com'/.test(files['cuenta-config.js']) &&
+    !/signInWithOAuth/.test(files['cuenta.js'])],
   ['recuperación exige comprobante reciente', /consumeRecoveryProof\(data\.session\)/.test(files['cuenta.js']) && /missing_callback_credential/.test(files['callback/callback.js'])],
   ['recuperación propaga errores devueltos por Supabase', recoveryErrorPropagated],
   ['recuperación acepta una respuesta sin error', recoverySuccess === true],
