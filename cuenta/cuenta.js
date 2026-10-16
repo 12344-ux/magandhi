@@ -4,12 +4,15 @@ import {
   RECOVERY_CALLBACK_URL,
   GOOGLE_CLIENT_ID,
   TURNSTILE_SITE_KEY,
+  TURNSTILE_REQUIRED,
   CUENTA_INITIALIZE_FUNCTION,
-} from './cuenta-config.js';
+} from './cuenta-config.js?v=2';
 import { requestPasswordRecovery } from './cuenta-auth-helpers.js';
 
 const views = ['loading', 'auth', 'recovery', 'password', 'session'];
 const captchaWidgets = new Map();
+const TURNSTILE_SCRIPT_URL = 'https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit';
+let turnstileScriptPromise = null;
 let initializePromise = null;
 let initializeUserId = null;
 let authReady = false;
@@ -28,6 +31,7 @@ function showView(name, shouldFocus = true) {
     const element = byId(`ct-${view}`);
     if (element) element.hidden = view !== name;
   }
+  scheduleCaptchaForView(name);
   if (!shouldFocus) return;
   const focusTargets = {
     auth: '#ct-auth [role="tab"][aria-selected="true"]',
@@ -193,6 +197,7 @@ function setTab(tabName, focus = false) {
   registerPanel.hidden = login;
   message('ct-login-message');
   message('ct-register-message');
+  scheduleCaptcha(login ? 'login' : 'register');
   if (focus) (login ? loginTab : registerTab).focus();
 }
 
@@ -202,45 +207,135 @@ function getCaptchaToken(name) {
   return entry?.token || undefined;
 }
 
-function resetCaptcha(name) {
-  if (!TURNSTILE_SITE_KEY || !window.turnstile) return;
-  const entry = captchaWidgets.get(name);
-  if (!entry) return;
-  entry.token = '';
-  window.turnstile.reset(entry.id);
+function captchaMessageId(name) {
+  return `ct-${name}-message`;
 }
 
-function requireCaptcha(name, messageId) {
-  if (!TURNSTILE_SITE_KEY || getCaptchaToken(name)) return true;
-  message(messageId, 'Completa el desafío de seguridad antes de continuar.', 'error');
-  return false;
+function captchaContainer(name) {
+  return document.querySelector(`[data-captcha-for="${name}"]`);
 }
 
-async function setupTurnstile() {
-  if (!TURNSTILE_SITE_KEY) return;
-  await new Promise((resolve, reject) => {
-    if (window.turnstile) return resolve();
+function captchaContainerVisible(container) {
+  return Boolean(container && container.getClientRects().length);
+}
+
+function loadTurnstile() {
+  if (window.turnstile) return Promise.resolve(window.turnstile);
+  if (turnstileScriptPromise) return turnstileScriptPromise;
+
+  turnstileScriptPromise = new Promise((resolve, reject) => {
     const script = document.createElement('script');
-    script.src = 'https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit';
+    script.src = TURNSTILE_SCRIPT_URL;
     script.async = true;
     script.defer = true;
-    script.onload = resolve;
-    script.onerror = reject;
+    script.addEventListener('load', () => {
+      if (window.turnstile) resolve(window.turnstile);
+      else {
+        script.remove();
+        reject(new Error('turnstile_unavailable'));
+      }
+    }, { once: true });
+    script.addEventListener('error', () => {
+      script.remove();
+      reject(new Error('turnstile_load_failed'));
+    }, { once: true });
     document.head.appendChild(script);
+  }).catch((error) => {
+    turnstileScriptPromise = null;
+    throw error;
   });
-  document.querySelectorAll('[data-captcha-for]').forEach((container) => {
-    const name = container.dataset.captchaFor;
-    const entry = { id: null, token: '' };
-    entry.id = window.turnstile.render(container, {
+
+  return turnstileScriptPromise;
+}
+
+async function ensureCaptcha(name) {
+  if (!TURNSTILE_SITE_KEY || captchaWidgets.has(name)) return;
+  const container = captchaContainer(name);
+  if (!captchaContainerVisible(container)) return;
+
+  const entry = { id: null, token: '', status: 'loading' };
+  captchaWidgets.set(name, entry);
+  try {
+    const turnstile = await loadTurnstile();
+    if (captchaWidgets.get(name) !== entry) return;
+    if (!captchaContainerVisible(container)) {
+      captchaWidgets.delete(name);
+      return;
+    }
+    entry.id = turnstile.render(container, {
       sitekey: TURNSTILE_SITE_KEY,
       theme: 'light',
       size: 'flexible',
-      callback(token) { entry.token = token; },
-      'expired-callback'() { entry.token = ''; },
-      'error-callback'() { entry.token = ''; },
+      callback(token) {
+        entry.token = token;
+        entry.status = 'ready';
+        message(captchaMessageId(name));
+      },
+      'expired-callback'() {
+        entry.token = '';
+        entry.status = 'expired';
+      },
+      'timeout-callback'() {
+        entry.token = '';
+        entry.status = 'expired';
+      },
+      'error-callback'() {
+        entry.token = '';
+        entry.status = 'error';
+      },
     });
-    captchaWidgets.set(name, entry);
+    if (entry.id === null || entry.id === undefined) throw new Error('turnstile_render_failed');
+    entry.status = 'ready';
+  } catch (error) {
+    if (captchaWidgets.get(name) === entry) captchaWidgets.delete(name);
+    throw error;
+  }
+}
+
+function showCaptchaSetupError(name) {
+  message(captchaMessageId(name), 'No pudimos cargar el desafío de seguridad. Recarga la página para volver a intentarlo.', 'error');
+}
+
+function scheduleCaptcha(name) {
+  if (!TURNSTILE_SITE_KEY || !name) return;
+  requestAnimationFrame(() => {
+    ensureCaptcha(name).catch(() => showCaptchaSetupError(name));
   });
+}
+
+function scheduleCaptchaForView(name) {
+  if (name === 'recovery') {
+    scheduleCaptcha('recovery');
+    return;
+  }
+  if (name !== 'auth') return;
+  const registerSelected = byId('ct-tab-register')?.getAttribute('aria-selected') === 'true';
+  scheduleCaptcha(registerSelected ? 'register' : 'login');
+}
+
+function resetCaptcha(name) {
+  const entry = captchaWidgets.get(name);
+  if (!entry) return;
+  const container = captchaContainer(name);
+  if (entry.id !== null && window.turnstile) {
+    try {
+      window.turnstile.remove(entry.id);
+    } catch {
+      // La entrada local se elimina de todos modos para crear un token nuevo.
+    }
+  }
+  captchaWidgets.delete(name);
+  if (captchaContainerVisible(container)) scheduleCaptcha(name);
+}
+
+function requireCaptcha(name, messageId) {
+  if (!TURNSTILE_REQUIRED || getCaptchaToken(name)) return true;
+  const entry = captchaWidgets.get(name);
+  const text = !entry || entry.id === null || entry.status === 'error'
+    ? 'No pudimos cargar el desafío de seguridad. Recarga la página e inténtalo de nuevo.'
+    : 'Completa el desafío de seguridad antes de continuar.';
+  message(messageId, text, 'error');
+  return false;
 }
 
 function loadGoogleIdentityServices() {
@@ -418,8 +513,8 @@ async function submitLogin(event) {
     await showSession(data.session);
   } catch (error) {
     message('ct-login-message', humanAuthError(error, 'login'), 'error');
-    resetCaptcha('login');
   } finally {
+    resetCaptcha('login');
     setBusy(button, false);
   }
 }
@@ -566,12 +661,6 @@ function wireEvents() {
 
 async function boot() {
   wireEvents();
-  setupTurnstile().catch(() => {
-    const text = 'No pudimos cargar el desafío de seguridad. Recarga la página antes de continuar.';
-    message('ct-login-message', text, 'error');
-    message('ct-register-message', text, 'error');
-    message('ct-recovery-message', text, 'error');
-  });
 
   const params = new URLSearchParams(window.location.search);
   const mode = params.get('mode');

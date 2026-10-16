@@ -20,10 +20,11 @@ Estado medido al 16-oct-2026:
 - Google Identity Services está publicado en `External / Testing`; el selector
   muestra `magandhi.com` y la prueba controlada confirmó mismo UID, identidad
   Google enlazada y una sola cuenta activa después del segundo acceso.
-- Signup y CAPTCHA siguen apagados; `TURNSTILE_SITE_KEY` está vacía.
-- Siguiente exacto: crear un widget Turnstile administrado para `magandhi.com`.
-  El secret se guarda solo en Supabase y CAPTCHA no se enciende hasta publicar y
-  medir primero la site key del frontend.
+- Signup y CAPTCHA siguen apagados; el widget Turnstile administrado ya existe
+  y `TURNSTILE_SITE_KEY` está configurada en el frontend.
+- Siguiente exacto: publicar la site key y medir el widget en móvil y escritorio.
+  Solo después se guarda el secret en Supabase y se enciende CAPTCHA; signup
+  permanece apagado.
 
 Reglas: compra invitada intacta; `clientes.id` no se reemplaza; secretos nunca
 en Git/chat; rama + PR por cambio; medir producción antes de afirmar cierre.

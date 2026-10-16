@@ -7,7 +7,9 @@
 > desplegados y medidos. Google Identity Services quedó publicado con la tienda
 > PR #95 y medido en producción: el selector muestra `magandhi.com`, conserva el
 > mismo UID/identidad y una sola cuenta activa tras el segundo acceso. Signup y
-> CAPTCHA siguen apagados; Turnstile todavía no tiene site key. Punto exacto:
+> CAPTCHA siguen apagados; el widget Turnstile administrado ya existe y su site
+> key pública está configurada en el frontend, pendiente de medición tras
+> publicar. Punto exacto:
 > `cuenta/CONFIGURACION.md` y `docs/RELEVO-CUENTAS-C2-2026-10-16.md` del
 > back-office.
 >
@@ -73,7 +75,8 @@ Los JPG de `marca/` son referencias históricas. No gobiernan la identidad ni de
 - Compra como invitado intacta.
 - Google Identity Services está publicado y medido en External/Testing: mismo
   UID, identidad enlazada y una fila activa después del segundo acceso.
-- Signup y CAPTCHA siguen apagados. `TURNSTILE_SITE_KEY` permanece vacía.
+- Signup y CAPTCHA siguen apagados. El widget Turnstile administrado ya existe
+  y `TURNSTILE_SITE_KEY` está configurada, pendiente de medición en producción.
 - Estado y siguiente paso exacto en `cuenta/CONFIGURACION.md`.
 
 ### Políticas — `politicas/` (ESTRUCTURA provisional, 8-oct-2026)

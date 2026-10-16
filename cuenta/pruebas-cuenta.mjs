@@ -51,7 +51,12 @@ const checks = [
   ['recuperación propaga errores devueltos por Supabase', recoveryErrorPropagated],
   ['recuperación acepta una respuesta sin error', recoverySuccess === true],
   ['inicialización ligada al UID actual', /initializeUserId === userId/.test(files['cuenta.js']) && /initializeUserId = null/.test(files['cuenta.js'])],
-  ['Turnstile público configurable y flexible', /TURNSTILE_SITE_KEY\s*=\s*''/.test(files['cuenta-config.js']) && /size:\s*'flexible'/.test(files['cuenta.js'])],
+  ['Turnstile público en observación, perezoso y flexible',
+    /TURNSTILE_SITE_KEY\s*=\s*'0x[0-9A-Za-z_-]+'/.test(files['cuenta-config.js']) &&
+    /TURNSTILE_REQUIRED\s*=\s*false/.test(files['cuenta-config.js']) &&
+    /ensureCaptcha/.test(files['cuenta.js']) &&
+    /getClientRects/.test(files['cuenta.js']) &&
+    /size:\s*'flexible'/.test(files['cuenta.js'])],
   ['sin escritura directa del puente', !/\.from\(['"]cuentas_cliente['"]\)/.test(files['cuenta.js'] + files['callback/callback.js'])],
   ['checkout invitado permanece presente', /crear-intencion-pago/.test(product) && /id="mg-comprar"/.test(product)],
 ];
