@@ -29,12 +29,17 @@ El frontend no contiene secretos. Usa el cliente público único de `../supabase
   apagado.
 - [x] Login y recuperación aceptados con token válido; solicitud sin token
   rechazada con `captcha_failed`/400; widget renovado después de expirar.
-- [ ] Probar registro nuevo por correo y Google con CAPTCHA.
-- [ ] Cerrar políticas y decidir apertura pública.
+- [x] Registro nuevo por correo con CAPTCHA, confirmación, inicialización y
+  segundo login: mismo UID y una sola fila activa.
+- [x] Google con usuario realmente nuevo: una identidad Auth y una sola fila
+  activa; signup volvió a OFF.
+- [ ] Redactar, revisar y publicar políticas y avisos contextuales.
+- [ ] Preparar Google Production y activar signup permanente.
 
-**Siguiente exacto:** ejecutar un registro nuevo controlado por correo con
-CAPTCHA activo y la ventana de signup abierta solo el tiempo necesario. Después
-probar Google con un usuario realmente nuevo. Relevo completo:
+**C2 queda cerrado técnicamente en preapertura.** CAPTCHA permanece activo;
+signup está OFF y Google continúa External/Testing. Cuando se retome esta parte,
+el siguiente gate es redactar, revisar y publicar políticas; solo después se
+prepara Google Production y se activa signup permanente. Relevo completo:
 `docs/RELEVO-CUENTAS-C2-2026-10-16.md` del back-office.
 
 ## Supabase Auth

@@ -2,17 +2,14 @@
 
 **Corte:** 16 de octubre de 2026 (el estado completo del proyecto vive en `CONTEXTO-MAGANDHI.md` del repo del back-office)
 
-> **Cuentas C2 · preapertura:** `/cuenta/` está publicado con correo/contraseña,
-> recuperación y Google. El backend C2, SMTP Resend y TokenHash están
-> desplegados y medidos. Google Identity Services quedó publicado con la tienda
-> PR #95 y medido en producción: el selector muestra `magandhi.com`, conserva el
-> mismo UID/identidad y una sola cuenta activa tras el segundo acceso. Signup y
-> CAPTCHA de Supabase está activo con el widget Turnstile administrado. Producción
-> aceptó login y recuperación con token válido, rechazó token ausente con
-> `captcha_failed`/400 y renovó el desafío expirado. Signup permanece apagado;
-> el siguiente paso es un registro nuevo controlado. Punto exacto:
-> `cuenta/CONFIGURACION.md` y `docs/RELEVO-CUENTAS-C2-2026-10-16.md` del
-> back-office.
+> **Cuentas C2 · infraestructura cerrada en preapertura:** `/cuenta/` está
+> publicado con correo/contraseña, recuperación, Google GIS y Turnstile. Se
+> midieron alta nueva por correo, confirmación, segundo login y alta Google con
+> usuario nuevo: identidades únicas y una sola cuenta activa. CAPTCHA permanece
+> activo; signup está OFF y Google sigue External/Testing. La apertura queda
+> deliberadamente pendiente hasta redactar, revisar y publicar políticas. Punto
+> exacto: `cuenta/CONFIGURACION.md` y
+> `docs/RELEVO-CUENTAS-C2-2026-10-16.md` del back-office.
 >
 > **Dropshipping:** D2c está desplegado; la tienda ya puede vender productos de
 > proveedor con stock vivo y verificación antes de Wompi. El despacho posterior
@@ -76,11 +73,12 @@ Los JPG de `marca/` son referencias históricas. No gobiernan la identidad ni de
 - Compra como invitado intacta.
 - Google Identity Services está publicado y medido en External/Testing: mismo
   UID, identidad enlazada y una fila activa después del segundo acceso.
-- Signup continúa apagado. CAPTCHA de Supabase y Turnstile están activos:
-  login/recuperación válidos, omisión rechazada con `captcha_failed`/400 y
-  renovación después de expirar quedaron medidos.
-- Siguiente exacto: registro nuevo controlado por correo; después Google con un
-  usuario realmente nuevo y cierre de políticas.
+- Alta nueva por correo con CAPTCHA, confirmación TokenHash y segundo login:
+  mismo UID y una sola fila activa.
+- Alta Google con usuario realmente nuevo: identidad única y una fila activa.
+- CAPTCHA permanece activo. Signup está apagado y Google sigue External/Testing.
+- Apertura pendiente: redactar/revisar/publicar políticas; después activar signup
+  permanentemente y completar Google Production.
 - Estado y siguiente paso exacto en `cuenta/CONFIGURACION.md`.
 
 ### Políticas — `politicas/` (ESTRUCTURA provisional, 8-oct-2026)
@@ -173,9 +171,10 @@ Antes, al volver de Wompi la ficha se veía igual y «Comprar ahora» seguía ac
 
 ## Pendientes reales
 
-1. **C2 preapertura:** ejecutar un registro nuevo controlado por correo con
-   CAPTCHA activo; después probar Google con un usuario realmente nuevo y solo
-   entonces decidir la apertura.
+1. **C2 queda cerrado técnicamente en preapertura:** signup permanece OFF y
+   Google External/Testing hasta publicar políticas. Cuando se retome, completar
+   políticas y avisos contextuales; luego preparar Google Production y activar
+   signup permanente.
 2. Políticas reales: privacidad, condiciones, entregas, cambios/devoluciones y tratamiento de datos.
 3. Canal/página formal de PQRS; mientras tanto se usa el correo real.
 4. Repaso de textos de la sección de opiniones. El diseño quedó aprobado; solo falta pulir copias. Los copys del aviso de vuelta del pago son provisionales y entran en el mismo repaso.

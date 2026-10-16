@@ -20,11 +20,14 @@ Estado medido al 16-oct-2026:
 - Google Identity Services está publicado en `External / Testing`; el selector
   muestra `magandhi.com` y la prueba controlada confirmó mismo UID, identidad
   Google enlazada y una sola cuenta activa después del segundo acceso.
-- Signup sigue apagado. CAPTCHA de Supabase y Turnstile están activos; login y
-  recuperación con token válido, omisión `captcha_failed`/400 y renovación tras
-  expiración están medidos.
-- Siguiente exacto: registro nuevo controlado por correo. Después probar Google
-  con un usuario realmente nuevo y cerrar políticas antes de abrir.
+- Alta nueva por correo con CAPTCHA, confirmación, inicialización y segundo
+  login: correcta, mismo UID y una sola cuenta activa.
+- Alta Google con usuario realmente nuevo: correcta, identidad única y una sola
+  cuenta activa.
+- C2 queda cerrado técnicamente en preapertura. CAPTCHA sigue activo; signup
+  permanece OFF y Google External/Testing.
+- La apertura se retoma solo después de redactar, revisar y publicar políticas;
+  entonces se prepara Google Production y se activa signup permanente.
 
 Reglas: compra invitada intacta; `clientes.id` no se reemplaza; secretos nunca
 en Git/chat; rama + PR por cambio; medir producción antes de afirmar cierre.
