@@ -10,6 +10,10 @@ Antes de tocar cuentas públicas:
 2. Leer en el repo `12344-ux.github.io` el relevo vigente
    `docs/RELEVO-CUENTAS-C2-2026-10-16.md`.
 3. No reconstruir C1/C2, migración, SMTP, TokenHash ni Google OAuth.
+4. Si la tarea toca cantidades, carrito, metadata de producto, enlaces o
+   atribución comercial, leer en el back-office
+   `docs/PLANO-FASE-COMERCIAL.md`. Sus frentes están aprobados para construir,
+   pero no están desplegados mientras el contexto no aporte evidencia.
 
 Estado medido al 16-oct-2026:
 
