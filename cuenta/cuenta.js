@@ -6,7 +6,7 @@ import {
   TURNSTILE_SITE_KEY,
   TURNSTILE_REQUIRED,
   CUENTA_INITIALIZE_FUNCTION,
-} from './cuenta-config.js?v=2';
+} from './cuenta-config.js?v=3';
 import { requestPasswordRecovery } from './cuenta-auth-helpers.js';
 
 const views = ['loading', 'auth', 'recovery', 'password', 'session'];

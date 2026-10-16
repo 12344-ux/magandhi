@@ -22,14 +22,17 @@ El frontend no contiene secretos. Usa el cliente público único de `../supabase
   la misma identidad y mantiene una sola cuenta activa tras el segundo acceso.
 - [x] Widget Cloudflare Turnstile administrado creado para `magandhi.com` y
   site key pública configurada en el frontend; CAPTCHA sigue apagado.
-- [ ] Publicar y medir el widget en móvil y escritorio.
+- [x] Publicar y medir el widget en móvil y escritorio: correcto; los ajustes
+  visuales menores quedan para una tarea separada.
+- [x] Exigir token Turnstile en el frontend antes de enviar formularios Auth.
+- [ ] Guardar la secret en Supabase y activar CAPTCHA con signup apagado.
 - [ ] Probar registro nuevo por correo y Google con CAPTCHA.
 - [ ] Cerrar políticas y decidir apertura pública.
 
-**Siguiente exacto:** publicar la site key mediante rama + PR y comprobar que
-el widget flexible carga correctamente en móvil y escritorio. Solo después se
-guarda el secret en Supabase y se enciende CAPTCHA; signup permanece apagado.
-Relevo completo: `docs/RELEVO-CUENTAS-C2-2026-10-16.md` del back-office.
+**Siguiente exacto:** publicar `TURNSTILE_REQUIRED=true` mediante rama + PR.
+Después guardar la secret únicamente en Supabase Auth y encender CAPTCHA con
+signup todavía apagado; entonces medir login y recuperación. Relevo completo:
+`docs/RELEVO-CUENTAS-C2-2026-10-16.md` del back-office.
 
 ## Supabase Auth
 
@@ -89,20 +92,19 @@ Google enlazada y una sola fila activa antes y después del segundo acceso.
 
 `TURNSTILE_SITE_KEY` en `cuenta-config.js` contiene únicamente la **site key
 pública** del widget administrado para `magandhi.com`. La secret permanece fuera
-del repositorio. `TURNSTILE_REQUIRED=false` mantiene una fase de observación:
-el widget se renderiza perezosamente solo cuando su formulario está visible y
-puede enviar token, pero una falla de Cloudflare todavía no bloquea Auth mientras
-CAPTCHA también siga apagado en Supabase.
+del repositorio. El widget se renderiza perezosamente solo cuando su formulario
+está visible y ya fue medido en móvil y escritorio. `TURNSTILE_REQUIRED=true`
+impide enviar correo/contraseña o recuperación sin un token resuelto; la
+validación server-side se activa a continuación en Supabase.
 
 Antes de habilitar CAPTCHA en Supabase:
 
-1. Fusionar/publicar la site key y comprobar el widget en móvil y escritorio.
-2. Cambiar `TURNSTILE_REQUIRED` a `true` mediante una segunda rama + PR, después
-   de que el widget publicado quede medido.
-3. Guardar la secret key directamente en Supabase Auth; nunca en este
+1. Fusionar/publicar `TURNSTILE_REQUIRED=true` y confirmar que el widget sigue
+   resolviendo en producción.
+2. Guardar la secret key directamente en Supabase Auth; nunca en este
    repositorio, documentación o chat.
-4. Encender CAPTCHA manteniendo signup apagado.
-5. Probar login y recuperación con token válido, ausente y vencido, además de
+3. Encender CAPTCHA manteniendo signup apagado.
+4. Probar login y recuperación con token válido, ausente y vencido, además de
    rate limit y fallo de desafío.
 
 No encender CAPTCHA antes de comprobar que el frontend publicado entrega tokens;

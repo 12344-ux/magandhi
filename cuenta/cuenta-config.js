@@ -15,8 +15,8 @@ export const GOOGLE_CLIENT_ID = '975249312497-go5nqtl8ml9mr4p8smbo8mg4ofqlchto.a
 // CAPTCHA debe permanecer apagado en Supabase hasta publicar y medir el widget.
 export const TURNSTILE_SITE_KEY = '0x4AAAAAAFYjHiX83pwXm9WQ';
 
-// Fase de observación: el widget se renderiza y puede enviar token, pero el
-// frontend no bloquea Auth hasta que CAPTCHA también esté activo en Supabase.
-export const TURNSTILE_REQUIRED = false;
+// El frontend exige un token resuelto antes de enviar correo/contraseña o
+// recuperación. Supabase CAPTCHA se activa solo después de publicar este valor.
+export const TURNSTILE_REQUIRED = true;
 
 export const CUENTA_INITIALIZE_FUNCTION = 'cuenta-inicializar';
