@@ -21,17 +21,20 @@ El frontend no contiene secretos. Usa el cliente público único de `../supabase
   producción: el selector muestra `magandhi.com`, conserva el mismo UID, enlaza
   la misma identidad y mantiene una sola cuenta activa tras el segundo acceso.
 - [x] Widget Cloudflare Turnstile administrado creado para `magandhi.com` y
-  site key pública configurada en el frontend; CAPTCHA sigue apagado.
+  site key pública configurada en el frontend.
 - [x] Publicar y medir el widget en móvil y escritorio: correcto; los ajustes
   visuales menores quedan para una tarea separada.
 - [x] Exigir token Turnstile en el frontend antes de enviar formularios Auth.
-- [ ] Guardar la secret en Supabase y activar CAPTCHA con signup apagado.
+- [x] Secret guardada únicamente en Supabase y CAPTCHA activado con signup
+  apagado.
+- [x] Login y recuperación aceptados con token válido; solicitud sin token
+  rechazada con `captcha_failed`/400; widget renovado después de expirar.
 - [ ] Probar registro nuevo por correo y Google con CAPTCHA.
 - [ ] Cerrar políticas y decidir apertura pública.
 
-**Siguiente exacto:** publicar `TURNSTILE_REQUIRED=true` mediante rama + PR.
-Después guardar la secret únicamente en Supabase Auth y encender CAPTCHA con
-signup todavía apagado; entonces medir login y recuperación. Relevo completo:
+**Siguiente exacto:** ejecutar un registro nuevo controlado por correo con
+CAPTCHA activo y la ventana de signup abierta solo el tiempo necesario. Después
+probar Google con un usuario realmente nuevo. Relevo completo:
 `docs/RELEVO-CUENTAS-C2-2026-10-16.md` del back-office.
 
 ## Supabase Auth
@@ -72,7 +75,7 @@ Antes de habilitar registros en producción:
 6. `cuenta-inicializar` está desplegada con Verify JWT; valida el JWT, exige
    correo confirmado y es idempotente.
 7. SMTP, plantillas y recuperación cross-browser están medidos. El límite Auth
-   inicial es 30 correos/hora y no debe aumentarse antes de CAPTCHA.
+   inicial es 30 correos/hora y no debe aumentarse antes de medir la apertura.
 
 ## Google Identity Services
 
@@ -97,18 +100,9 @@ está visible y ya fue medido en móvil y escritorio. `TURNSTILE_REQUIRED=true`
 impide enviar correo/contraseña o recuperación sin un token resuelto; la
 validación server-side se activa a continuación en Supabase.
 
-Antes de habilitar CAPTCHA en Supabase:
-
-1. Fusionar/publicar `TURNSTILE_REQUIRED=true` y confirmar que el widget sigue
-   resolviendo en producción.
-2. Guardar la secret key directamente en Supabase Auth; nunca en este
-   repositorio, documentación o chat.
-3. Encender CAPTCHA manteniendo signup apagado.
-4. Probar login y recuperación con token válido, ausente y vencido, además de
-   rate limit y fallo de desafío.
-
-No encender CAPTCHA antes de comprobar que el frontend publicado entrega tokens;
-Auth rechazaría correctamente las solicitudes sin token.
+Turnstile está activo también en Supabase. Producción aceptó login y recuperación
+con token válido, rechazó una llamada sin token con `captcha_failed`/400 y renovó
+el widget después de la expiración. Signup continúa apagado.
 
 ## Alcance
 
