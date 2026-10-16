@@ -2,35 +2,44 @@
 inclusion: always
 ---
 
-# MAGANDHI tienda · arranque Cuentas C2 + C1 COMERCIAL
+# MAGANDHI tienda · arranque Cuentas C2 + C2 COMERCIAL
 
 Antes de tocar la tienda pública:
 
 1. Leer `ESTADO-ACTUAL.md`.
 2. Usar como punto de entrada global del back-office
-   `docs/RELEVO-COMERCIAL-C1-2026-10-16.md`. Si la tarea toca cantidades,
-   carrito, metadata de producto, enlaces, Promocionar o atribución comercial,
-   leer además `docs/PLANO-FASE-COMERCIAL.md`.
+   `docs/RELEVO-COMERCIAL-C2-2026-10-16.md`. Si la tarea toca cantidades,
+   carrito, checkout, metadata de producto, enlaces, Promocionar o atribución
+   comercial, leer además `docs/PLANO-FASE-COMERCIAL.md`.
 3. Si la tarea toca Auth o cuentas públicas, leer `cuenta/CONFIGURACION.md` y el
    relevo temático `docs/RELEVO-CUENTAS-C2-2026-10-16.md` del back-office.
-4. No reconstruir Cuentas C1/C2, migración, SMTP, TokenHash ni Google OAuth.
-5. No reconstruir C1 COMERCIAL: cantidad inmediata ya está desplegada y probada
-   en estructura. C2 carrito autenticado es el siguiente tramo; C3, C4 y
-   Promocionar siguen pendientes.
+4. No confundir Cuentas C2 con Comercial C2 ni reconstruir Cuentas C1/C2,
+   migración, SMTP, TokenHash o Google OAuth.
+5. No reconstruir C1 ni C2 COMERCIAL. **C2 Comercial desplegado y probado en
+   estructura, apagado hasta C3**. C3 es el siguiente tramo; C4 y Promocionar
+   siguen pendientes.
 
-Estado medido al 16-oct-2026:
+## Comercial · estado medido al 16-oct-2026
 
-- Migración global máxima en producción: `20261102000000`.
-- C1 COMERCIAL: backend #276 (merge `e75dc1c…`) y tienda #102 (merge
-  `db56c4f…`); migración `20261102000000`, postflight `9/9` y
-  `crear-intencion-pago` desplegada.
-- Cantidad 1 respondió `200` y persistencia `7/7`, sin pago; `max+1` fue
-  rechazado `409`; Grisi dio máximo configurado `2` y `max_comprable = 2`;
-  cantidad 2 respondió `200` por `13.980.000` centavos.
-- El dueño verificó selector, máximo, total, modal y compra invitada.
-- No hubo pago real de cantidad 2: webhook, pedido, baja de 2, asiento, correo e
-  idempotencia no están medidos para esa cantidad. C1 COMERCIAL no está cerrado
-  end-to-end.
+- Migración global máxima en producción: `20261103000000`.
+- C2 COMERCIAL: backend PR #278 fusionado en
+  `a811082cc585ad8d77a98aa346ffbd06ac2ac3f4`; tienda PR #104 con implementación
+  `90dcb6d42eabd26935743b5bae4de9bba9692e39`, merge a `main`
+  `35a104a1c12b9b9276773bc7d7c082c0733c73a9` y Pages built.
+- Preflight `3/3 true`, migración `20261103000000` aplicada y postflight
+  `10/10 true`.
+- El flag OFF fue probado. Con activación temporal se verificaron agregar,
+  consolidar, cambiar y retirar; persistencia entre navegadores; aislamiento
+  entre dos cuentas; conflicto entre pestañas; logout y compra invitada.
+- Los invariantes `sin_doble_activo` y `sin_huerfanas` dieron `true`.
+- C2 no tocó dinero, Wompi, pedidos ni inventario. El flag productivo final es
+  `false`; no afirmar checkout multiproducto antes de C3.
+- C1 COMERCIAL conserva su límite: cantidad 2 solo llegó a intención, sin pago
+  real. Webhook, pedido, baja de 2, asiento, correo e idempotencia no están
+  medidos para esa cantidad; C1 no está cerrado end-to-end.
+
+## Cuentas C2 · preapertura separada
+
 - `/cuenta/`, callback y backend C2 están publicados/desplegados.
 - El preflight propio de Cuentas C1/C2 fue limpio sobre la migración
   `20261101000000`: cero inconsistencias, ambigüedades o vínculos duplicados.
