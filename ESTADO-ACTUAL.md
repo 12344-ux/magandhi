@@ -182,6 +182,23 @@ Antes, al volver de Wompi la ficha se veía igual y «Comprar ahora» seguía ac
 6. Definir cómo escala el grid móvil más allá de los cinco espacios actuales.
 7. Revisar accesibilidad completa de carrusel y modales antes del lanzamiento público definitivo.
 
+## Siguiente evolución comercial · aprobada, no desplegada
+
+El 16-oct-2026 se aprobaron dos frentes para construir por tramos:
+
+1. **Cantidades y carrito autenticado:** máximo por pedido configurado en
+   Campañas, cantidad también para invitado, carrito persistente solo con cuenta
+   y checkout multiproducto idempotente. Para proveedor, el máximo efectivo
+   conserva después de la compra el piso Dropi; para producto propio manda
+   Inventario.
+2. **Promocionar:** enlace oficial y por canal, preview social, textos, QR, kit
+   visual, registro de enlaces y atribución hasta la venta. Meta Ads, Pixel y
+   Conversions API quedan fuera de esta fase.
+
+El plano autoritativo vive en el back-office:
+`docs/PLANO-FASE-COMERCIAL.md`. La aprobación del plano no significa que estas
+funciones existan todavía en producción.
+
 ## Fuentes de verdad
 
 - Marca pública: `marca/logo/logo-magandhi.svg`, `marca/generar_assets.py`, `marca.css`.
@@ -190,4 +207,5 @@ Antes, al volver de Wompi la ficha se veía igual y «Comprar ahora» seguía ac
 - Cuenta C2 y gates de apertura: `cuenta/CONFIGURACION.md`.
 - Esquema/RLS/RPC/Edge Functions: repositorio del back-office, carpeta `supabase/`.
 - Relevo operativo vigente: `docs/RELEVO-CUENTAS-C2-2026-10-16.md` del back-office.
+- Siguiente fase comercial: `docs/PLANO-FASE-COMERCIAL.md` del back-office.
 - Inventario y publicación: back-office en `montaguth.institute`.
