@@ -17,15 +17,16 @@ El frontend no contiene secretos. Usa el cliente público único de `../supabase
   provider Supabase y callback correctos.
 - [x] Flujo OAuth redirigido probado: mismo UID, identidad Google enlazada y una
   sola cuenta activa después del segundo acceso.
-- [ ] Publicar y medir Google Identity Services por ID token para reemplazar el
-  dominio técnico visible de Supabase.
+- [x] Google Identity Services publicado mediante tienda PR #95 y medido en
+  producción: el selector muestra `magandhi.com`, conserva el mismo UID, enlaza
+  la misma identidad y mantiene una sola cuenta activa tras el segundo acceso.
 - [ ] Crear/configurar Cloudflare Turnstile; la site key sigue vacía.
 - [ ] Probar registro nuevo por correo y Google con CAPTCHA.
 - [ ] Cerrar políticas y decidir apertura pública.
 
-**Siguiente exacto:** publicar mediante rama + PR la integración de Google
-Identity Services, manteniendo signup apagado; después repetir con el mismo Test
-User la comprobación de UID, identidad enlazada e idempotencia. Relevo completo:
+**Siguiente exacto:** crear un widget Cloudflare Turnstile administrado para
+`magandhi.com`. Guardar el secret únicamente en Supabase, mantener CAPTCHA
+apagado y publicar primero la site key mediante rama + PR. Relevo completo:
 `docs/RELEVO-CUENTAS-C2-2026-10-16.md` del back-office.
 
 ## Supabase Auth
@@ -78,10 +79,9 @@ Una política `Cross-Origin-Opener-Policy` estricta debe conservar la comunicaci
 del popup; validar `same-origin-allow-popups` antes de publicarla en esta ruta.
 No relajar globalmente la CSP ni copiar el script de Google al repositorio.
 
-Antes de fusionar, medir los headers efectivos de `/cuenta/` y probar el botón
-en ventana normal y privada, con mouse y teclado. Después confirmar en Supabase
-el mismo UID, la identidad Google enlazada y una sola fila activa antes y después
-del segundo acceso.
+Producción quedó medida en ventana privada: el selector muestra `magandhi.com`,
+la sesión regresa sin advertencias y Supabase conserva el mismo UID, la identidad
+Google enlazada y una sola fila activa antes y después del segundo acceso.
 
 ## Cloudflare Turnstile
 
