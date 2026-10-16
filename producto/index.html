@@ -363,6 +363,39 @@
   .mg-precio b{font-size:28px;font-weight:600;color:var(--negro)}
   .mg-precio small{font-size:13px;color:var(--gris-cl)}
 
+  /* Cantidad de compra inmediata: el select conserva el comportamiento nativo
+     del navegador, con etiqueta real, foco visible y objetivo tactil comodo. El
+     maximo es comercial (por pedido), no una exposicion del stock exacto. */
+  .mg-cantidad{
+    display:grid;grid-template-columns:minmax(112px,auto) 1fr;align-items:end;
+    gap:8px 18px;max-width:430px;margin:12px 0 16px;padding:14px 16px;
+    background:var(--hueso);border:1px solid var(--linea);border-radius:13px;
+  }
+  .mg-cantidad[hidden]{display:none}
+  .mg-cantidad__campo{display:flex;flex-direction:column;gap:6px}
+  .mg-cantidad__campo label{font-size:12.5px;font-weight:600;color:var(--tinta)}
+  .mg-cantidad__campo select{
+    min-width:96px;min-height:44px;padding:9px 12px;font:inherit;font-size:15px;
+    color:var(--tinta);background:var(--blanco);border:1px solid var(--linea);
+    border-radius:10px;cursor:pointer;
+  }
+  .mg-cantidad__campo select:focus-visible{
+    outline:3px solid var(--acento-sombra);outline-offset:2px;border-color:var(--acento);
+  }
+  .mg-cantidad__campo select:disabled{cursor:not-allowed;opacity:.65}
+  .mg-cantidad__detalle{display:grid;gap:4px;min-width:0}
+  .mg-cantidad__max{font-size:12px;line-height:1.4;color:var(--gris)}
+  .mg-cantidad__total{font-size:15px;line-height:1.35;color:var(--tinta)}
+  .mg-cantidad__total strong{font-size:17px;color:var(--negro)}
+  .mg-cantidad__aviso{
+    grid-column:1 / -1;font-size:12.5px;line-height:1.45;color:var(--rojo-osc);
+  }
+  .mg-cantidad__aviso[hidden]{display:none}
+  @media(max-width:480px){
+    .mg-cantidad{grid-template-columns:1fr;align-items:stretch}
+    .mg-cantidad__campo select{width:100%}
+  }
+
   /* AVISO DE URGENCIA "Solo X disponibles": aviso honesto que aparece cuando
      quedan pocas unidades reales. Chip sobrio en el color del acento del
      producto, sin rojo de oferta ni urgencia agresiva: coherente con el alma
@@ -378,11 +411,10 @@
      hidden (aviso apagado), no se muestra vacio pese al display:inline-flex. */
   .mg-urgencia[hidden]{display:none}
 
-  /* AVISO "agotado": lo enciende el booleano catalogo_publico.agotado, derivado
-     del stock REAL de Inventario (existencias<=0); el numero exacto NUNCA se
-     expone. Chip sobrio en gris (no alarmista) y el boton de compra queda
-     deshabilitado (ver .mg-btn--primario:disabled). Oculto por defecto; el
-     script lo muestra solo si fila.agotado es true. */
+  /* AVISO "agotado": lo enciende la disponibilidad efectiva del catalogo:
+     agotado=true o max_comprable=0. El maximo publico ya viene acotado para el
+     pedido y no equivale al stock exacto. El boton de compra queda deshabilitado
+     (ver .mg-btn--primario:disabled). Oculto por defecto. */
   .mg-agotado{
     display:inline-flex;align-items:center;gap:7px;margin:0 0 16px;
     background:var(--hueso);color:var(--gris);
@@ -774,8 +806,11 @@
   .mg-modal__caja--form{max-width:520px;max-height:calc(100dvh - 32px);overflow-y:auto}
   .mg-form-intro{font-size:13.5px;color:var(--gris);margin:2px 0 18px}
   .mg-form-prod{
-    display:flex;align-items:center;gap:6px;font-weight:600;color:var(--acento);
+    display:flex;align-items:center;gap:6px;margin-top:12px;padding:10px 12px;
+    font-weight:600;color:var(--tinta);background:var(--hueso);
+    border:1px solid var(--linea);border-radius:11px;line-height:1.45;
   }
+  .mg-form-prod[hidden]{display:none}
   .mg-form{display:grid;gap:14px;margin:0}
   /* dos columnas en PC para pares cortos; una sola en movil */
   .mg-form__fila{display:grid;grid-template-columns:1fr 1fr;gap:14px}
@@ -1002,15 +1037,27 @@
     <h1 class="mg-titulo" id="mg-titulo">Producto</h1>
     <p class="mg-sub" id="mg-sub">Cargando información del producto…</p>
 
-    <div class="mg-precio"><b id="mg-precio">—</b><small>COP</small></div>
+    <div class="mg-precio"><b id="mg-precio">—</b><small>COP por unidad</small></div>
+
+    <div class="mg-cantidad" id="mg-cantidad-bloque" hidden>
+      <div class="mg-cantidad__campo">
+        <label for="mg-cantidad">Cantidad</label>
+        <select id="mg-cantidad" name="cantidad" disabled aria-describedby="mg-cantidad-max mg-cantidad-total"></select>
+      </div>
+      <div class="mg-cantidad__detalle">
+        <span class="mg-cantidad__max" id="mg-cantidad-max"></span>
+        <span class="mg-cantidad__total" id="mg-cantidad-total" aria-live="polite"></span>
+      </div>
+      <span class="mg-cantidad__aviso" id="mg-cantidad-aviso" role="status" hidden></span>
+    </div>
 
     <!-- aviso de urgencia "Solo X disponibles": aviso honesto que aparece cuando
          quedan pocas unidades reales. Vacio por defecto; el script lo rellena
          solo si el aviso esta activo. -->
     <div class="mg-urgencia" id="mg-urgencia" hidden></div>
 
-    <!-- aviso de agotado: el script lo muestra solo si catalogo_publico.agotado
-         es true (stock real de Inventario en cero); el numero exacto no se expone. -->
+    <!-- aviso de agotado: el script lo muestra si la disponibilidad efectiva
+         es cero (agotado=true o max_comprable=0). El maximo no revela stock. -->
     <div class="mg-agotado" id="mg-agotado" hidden>
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M4.9 4.9 19.1 19.1"/></svg>
       Agotado por ahora
@@ -1031,11 +1078,11 @@
     </div>
 
     <div class="mg-cta">
-      <button class="mg-btn mg-btn--primario" id="mg-comprar">
+      <button type="button" class="mg-btn mg-btn--primario" id="mg-comprar">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="8" cy="21" r="1"/><circle cx="19" cy="21" r="1"/><path d="M2.05 2.05h2l2.66 12.42a2 2 0 0 0 2 1.58h9.78a2 2 0 0 0 1.95-1.57l1.65-7.43H5.12"/></svg>
         Comprar ahora
       </button>
-      <button class="mg-btn mg-btn--wa" id="mg-whatsapp">
+      <button type="button" class="mg-btn mg-btn--wa" id="mg-whatsapp">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M7.9 20A9 9 0 1 0 4 16.1L2 22z"/></svg>
         Preguntar por WhatsApp
       </button>
@@ -1212,7 +1259,7 @@
       El pago se realiza en la plataforma segura de Wompi; MAGANDHI no ve ni guarda
       los datos de tu tarjeta. Los campos con asterisco
       <span class="req">*</span> son obligatorios; los demás, opcionales.
-      <span class="mg-form-prod" id="mg-form-prod" hidden></span>
+      <span class="mg-form-prod" id="mg-form-prod" hidden aria-live="polite"></span>
     </p>
 
     <!-- El formulario se agrupa en tres bloques ('Tus datos', 'Direccion de
@@ -1440,10 +1487,12 @@
        Si no hay imagenes, conserva el placeholder dibujado.
      · Aviso "Solo X disponibles": aviso honesto que aparece cuando quedan pocas
        unidades reales del producto.
-     · AGOTADO: viene del booleano catalogo_publico.agotado (derivado del stock
-       REAL: existencias<=0). El numero exacto NUNCA se expone. Si es true,
-       muestra el chip de agotado, DESHABILITA el boton 'Comprar ahora' y oculta
-       el aviso de urgencia (el chip Agotado manda).
+     · MAXIMO COMPRABLE: catalogo_publico expone un maximo efectivo de 0..20
+       ya limitado para este pedido, no el stock exacto. Si la columna todavia
+       no existe durante la transicion, se conserva agotado?0:1.
+     · AGOTADO: agotado=true o max_comprable=0 muestran el chip, ocultan el
+       selector y DESHABILITAN 'Comprar ahora'. El aviso de urgencia permanece
+       independiente y nunca se usa para derivar la cantidad.
      · Si no hay slug/id o la fila no existe (producto despublicado / placeholder
        no publicado), muestra un aviso sobrio de no disponible sin romper la
        pagina. Las opiniones permanecen en estado vacío hasta conectar datos
@@ -1462,10 +1511,144 @@
       .replace(/"/g,'&quot;').replace(/'/g,'&#39;');
   }
 
+  const MAX_COMPRABLE_TECHO = 20;
+
   function formatearPrecio(valor){
     const n = Number(valor);
     if(!Number.isFinite(n)) return '';
     return '$ ' + Math.round(n).toLocaleString('es-CO');
+  }
+
+  // El catalogo nuevo entrega un entero 0..20. Durante la transicion, una fila
+  // sin la propiedad conserva el comportamiento anterior: agotado -> 0; en los
+  // demas casos -> 1. Un valor presente pero inutilizable cierra la venta.
+  function normalizarMaxComprable(fila){
+    if(!fila || !Object.prototype.hasOwnProperty.call(fila, 'max_comprable')){
+      return fila && fila.agotado === true ? 0 : 1;
+    }
+    const valor = fila.max_comprable;
+    // El contrato público exige un número JSON entero 0..20. Un valor presente
+    // con otro tipo o fuera del rango cierra la venta; nunca se coerciona,
+    // redondea ni recorta silenciosamente.
+    if(typeof valor !== 'number' || !Number.isSafeInteger(valor) ||
+       valor < 0 || valor > MAX_COMPRABLE_TECHO) return 0;
+    return valor;
+  }
+
+  function productoAgotado(fila){
+    return !fila || fila.agotado === true || fila.max_comprable === 0;
+  }
+
+  function cantidadSeleccionada(){
+    const select = document.getElementById('mg-cantidad');
+    if(!select || !/^\d+$/.test(select.value)) return null;
+    const cantidad = Number(select.value);
+    return Number.isSafeInteger(cantidad) ? cantidad : null;
+  }
+
+  function cantidadValida(cantidad){
+    return !!filaProducto && Number.isSafeInteger(cantidad) && cantidad >= 1 &&
+      cantidad <= filaProducto.max_comprable;
+  }
+
+  function actualizarResumenModal(){
+    const resumen = document.getElementById('mg-form-prod');
+    if(!resumen) return;
+    const nombre = filaProducto && filaProducto.nombre ? String(filaProducto.nombre) : '';
+    if(!nombre){ resumen.textContent = ''; resumen.hidden = true; return; }
+    const cantidad = cantidadSeleccionada();
+    if(productoAgotado(filaProducto)){
+      resumen.textContent = nombre + ' · Agotado por ahora';
+    }else if(cantidadValida(cantidad)){
+      const total = Number(filaProducto.precio_venta) * cantidad;
+      const totalTexto = formatearPrecio(total);
+      resumen.textContent = nombre + ' × ' + cantidad + ' · Total ' +
+        (totalTexto ? totalTexto + ' COP' : 'por confirmar');
+    }else{
+      resumen.textContent = nombre + ' · Elige una cantidad para continuar';
+    }
+    resumen.hidden = false;
+  }
+
+  function actualizarTotalCantidad(){
+    const totalEl = document.getElementById('mg-cantidad-total');
+    if(!totalEl) return;
+    const cantidad = cantidadSeleccionada();
+    const precio = filaProducto ? Number(filaProducto.precio_venta) : NaN;
+    if(!cantidadValida(cantidad) || !Number.isFinite(precio)){
+      totalEl.textContent = 'Total: selecciona una cantidad';
+      actualizarResumenModal();
+      return;
+    }
+    const totalTexto = formatearPrecio(precio * cantidad);
+    totalEl.textContent = 'Total: ' + totalTexto + ' COP';
+    actualizarResumenModal();
+  }
+
+  // Puebla siempre 1..max. Tras una reduccion informada por el servidor se
+  // agrega un placeholder para exigir una nueva eleccion, sin recortar el valor
+  // anterior ni continuar con otra cantidad a espaldas de quien compra.
+  function pintarCantidad(exigirEleccion){
+    const bloque = document.getElementById('mg-cantidad-bloque');
+    const select = document.getElementById('mg-cantidad');
+    const maxEl = document.getElementById('mg-cantidad-max');
+    if(!bloque || !select || !maxEl || !filaProducto) return;
+    const max = filaProducto.max_comprable;
+    if(productoAgotado(filaProducto) || max <= 0){
+      select.replaceChildren();
+      select.disabled = true;
+      bloque.hidden = true;
+      maxEl.textContent = '';
+      actualizarTotalCantidad();
+      return;
+    }
+
+    const opciones = document.createDocumentFragment();
+    if(exigirEleccion){
+      const placeholder = document.createElement('option');
+      placeholder.value = '';
+      placeholder.textContent = 'Elige una cantidad';
+      placeholder.disabled = true;
+      placeholder.selected = true;
+      opciones.appendChild(placeholder);
+    }
+    for(let n = 1; n <= max; n += 1){
+      const opcion = document.createElement('option');
+      opcion.value = String(n);
+      opcion.textContent = String(n);
+      if(!exigirEleccion && n === 1) opcion.selected = true;
+      opciones.appendChild(opcion);
+    }
+    select.replaceChildren(opciones);
+    select.disabled = false;
+    bloque.hidden = false;
+    maxEl.textContent = 'Máximo ' + max + (max === 1 ? ' unidad' : ' unidades') + ' por pedido';
+    actualizarTotalCantidad();
+  }
+
+  function aplicarMaxComprable(max, exigirEleccion){
+    if(!filaProducto) return;
+    filaProducto.max_comprable = max;
+    filaProducto.agotado = max === 0;
+    pintarCantidad(!!exigirEleccion);
+    pintarAgotado(filaProducto);
+    actualizarResumenModal();
+  }
+
+  function mostrarAvisoCantidad(mensaje){
+    const aviso = document.getElementById('mg-cantidad-aviso');
+    if(!aviso) return;
+    aviso.textContent = mensaje;
+    aviso.hidden = !mensaje;
+  }
+
+  function configurarCantidad(){
+    const select = document.getElementById('mg-cantidad');
+    if(!select) return;
+    select.addEventListener('change', function(){
+      mostrarAvisoCantidad('');
+      actualizarTotalCantidad();
+    });
   }
 
   function set(id, texto){
@@ -1553,24 +1736,22 @@
     el.hidden = false;
   }
 
-  // Estado AGOTADO: viene del booleano catalogo_publico.agotado, que Inventario
-  // deriva del stock REAL (existencias<=0) del producto ligado. El numero exacto
-  // de unidades NUNCA se expone en la tienda; solo llega este true/false. Si es
-  // true, muestra el chip de agotado y deshabilita el boton 'Comprar ahora'.
-  // COHERENCIA: cuando esta agotado, ademas OCULTA el aviso de urgencia
-  // ('Solo X disponibles') para no contradecir (el chip Agotado manda). Se llama
-  // despues de pintarUrgencia, asi que aqui reforzamos el ocultado.
+  // Estado AGOTADO: la disponibilidad efectiva combina el booleano historico
+  // catalogo_publico.agotado con max_comprable=0. El maximo publico esta
+  // limitado por pedido y no permite reconstruir el stock exacto. Cuando no hay
+  // unidades comprables, muestra el chip, oculta cantidad/urgencia y deshabilita
+  // 'Comprar ahora'. Se llama despues de pintarUrgencia.
   function pintarAgotado(fila){
     const chip = document.getElementById('mg-agotado');
     const btn = document.getElementById('mg-comprar');
     const urgencia = document.getElementById('mg-urgencia');
-    const agotado = fila.agotado === true;
+    const agotado = productoAgotado(fila);
     if(chip) chip.hidden = !agotado;
     // OJO: '|| pagoEnCurso'. Esta funcion corre cuando el producto termina de
     // cargar, que es DESPUES de que el aviso de vuelta del pago ya bloqueo la
-    // compra. Sin esta condicion, un producto con stock reactivaria el boton y
-    // quien acaba de pagar podria pagar otra vez: era exactamente el hueco que
-    // cierra D0.
+    // compra. Sin esta condicion, un producto con disponibilidad reactivaria el
+    // boton y quien acaba de pagar podria pagar otra vez: era exactamente el
+    // hueco que cierra D0.
     if(btn) btn.disabled = agotado || pagoEnCurso;
     if(agotado && urgencia) urgencia.hidden = true;
   }
@@ -1780,10 +1961,23 @@
   }
 
   // Fila del producto ya cargada (catalogo_publico). Se guarda en este scope del
-  // modulo para que los listeners de 'Comprar' y 'WhatsApp' usen el slug/id, el
-  // nombre y el estado (agotado) reales sin volver a consultar. null mientras no
-  // haya un producto valido cargado.
+  // modulo para que compra, cantidad y WhatsApp compartan slug/id, nombre y
+  // disponibilidad sin volver a consultar. null mientras no haya producto.
   let filaProducto = null;
+
+  function errorPorMaxComprableAusente(error){
+    if(!error) return false;
+    const detalle = [error.message, error.details, error.hint, error.code]
+      .filter(Boolean).join(' ');
+    return /max_comprable/i.test(detalle) &&
+      /(column|columna|schema cache|does not exist|no existe|42703|PGRST204)/i.test(detalle);
+  }
+
+  async function consultarProducto(campos, slug, id){
+    let consulta = supabase.from('catalogo_publico').select(campos.join(','));
+    consulta = slug ? consulta.eq('slug', slug) : consulta.eq('id', id);
+    return consulta.maybeSingle();
+  }
 
   async function cargarProducto(){
     // Lee el parametro de la URL: preferir ?slug=, si no ?id=.
@@ -1798,16 +1992,21 @@
     }
 
     try{
-      const campos = [
+      const camposBase = [
         'id','nombre','slug','categoria_nombre','caracteristica_adicional','precio_venta',
         'hook_largo','por_que_magandhi','sobre_este_producto','ficha_tecnica',
         'imagenes','imagen_banner_path','sello_elegido','agotado',
         'aviso_urgencia_activo','aviso_urgencia_cantidad'
-      ].join(',');
-      let consulta = supabase.from('catalogo_publico').select(campos);
-      // El slug es la clave publica preferida; el id (uuid) es el respaldo.
-      consulta = slug ? consulta.eq('slug', slug) : consulta.eq('id', id);
-      const { data, error } = await consulta.maybeSingle();
+      ];
+      // Se intenta primero el contrato C1. Si una vista antigua aun no tiene la
+      // columna, se repite solo en ese caso con el contrato previo y se aplica
+      // el fallback por fila (agotado?0:1); otros errores siguen cerrando venta.
+      let resultado = await consultarProducto(camposBase.concat('max_comprable'), slug, id);
+      if(resultado.error && errorPorMaxComprableAusente(resultado.error)){
+        resultado = await consultarProducto(camposBase, slug, id);
+      }
+      const data = resultado.data;
+      const error = resultado.error;
       if(error) throw error;
       if(!data){
         // Producto despublicado / inexistente: aviso sobrio, sin romper la pagina.
@@ -1815,30 +2014,33 @@
         return;
       }
 
-      // Se guarda la fila para los botones de compra y WhatsApp.
-      filaProducto = data;
+      // Se normaliza una sola vez. max_comprable nunca supera el techo publico.
+      filaProducto = Object.assign({}, data, {
+        max_comprable: normalizarMaxComprable(data),
+      });
 
       // (acento fijo de marca; ya no se aplica color por categoria)
-      pintarSello(data);
-      set('mg-titulo', data.nombre || '');
-      document.title = (data.nombre ? data.nombre + ' · MAGANDHI' : 'Producto · MAGANDHI');
-      set('mg-miga-nom', data.nombre || 'Producto');
-      if(data.categoria_nombre) set('mg-miga-cat', data.categoria_nombre);
-      if(data.caracteristica_adicional) set('mg-sub', data.caracteristica_adicional);
+      pintarSello(filaProducto);
+      set('mg-titulo', filaProducto.nombre || '');
+      document.title = (filaProducto.nombre ? filaProducto.nombre + ' · MAGANDHI' : 'Producto · MAGANDHI');
+      set('mg-miga-nom', filaProducto.nombre || 'Producto');
+      if(filaProducto.categoria_nombre) set('mg-miga-cat', filaProducto.categoria_nombre);
+      if(filaProducto.caracteristica_adicional) set('mg-sub', filaProducto.caracteristica_adicional);
       else set('mg-sub', '');
-      set('mg-precio', formatearPrecio(data.precio_venta));
-      setVisible('mg-desc', data.hook_largo);
-      const textoCuraduria = String(data.por_que_magandhi || '').trim();
+      set('mg-precio', formatearPrecio(filaProducto.precio_venta));
+      setVisible('mg-desc', filaProducto.hook_largo);
+      const textoCuraduria = String(filaProducto.por_que_magandhi || '').trim();
       set('mg-curaduria', textoCuraduria);
       const bloqueCuraduria = document.getElementById('mg-curaduria-bloque');
       if(bloqueCuraduria) bloqueCuraduria.hidden = !textoCuraduria;
-      pintarSobre(data.sobre_este_producto);
-      pintarFicha(data.ficha_tecnica);
-      pintarGaleria(data);
-      pintarUrgencia(data);
-      pintarAgotado(data);
+      pintarSobre(filaProducto.sobre_este_producto);
+      pintarFicha(filaProducto.ficha_tecnica);
+      pintarGaleria(filaProducto);
+      pintarUrgencia(filaProducto);
+      pintarCantidad(false);
+      pintarAgotado(filaProducto);
       // Opiniones verificadas: se leen por SLUG de las vistas publicas.
-      cargarResenas(data.slug || null);
+      cargarResenas(filaProducto.slug || null);
       // Llegada desde el correo de "Entregado": abre el formulario con el codigo
       // ya escrito, solo cuando el producto ya cargo (el envio necesita el slug).
       if(codigoDesdeCorreo && abrirResenaConCodigo){
@@ -1846,10 +2048,10 @@
         abrirResenaConCodigo(cod);
       }
     }catch(e){
-      // Falla de red/consulta: no se pudo confirmar el producto ni su stock, asi
-      // que se muestra el aviso sobrio de no disponible y se DESHABILITA la
-      // compra (mostrarNoDisponible apaga el boton 'Comprar ahora'). Cerrar el
-      // caso asi evita ofrecer comprar un producto que no pudimos cargar.
+      // Falla de red/consulta: no se pudo confirmar el producto ni su
+      // disponibilidad, asi que se muestra el aviso sobrio de no disponible y
+      // se DESHABILITA la compra. Cerrar el caso asi evita ofrecer un producto
+      // que no pudimos cargar.
       console.error('No se pudo cargar el producto desde Campanas:', e);
       mostrarNoDisponible();
     }
@@ -1994,7 +2196,7 @@
       // verdad hay algo que comprar.
       const hayProducto = !!filaProducto &&
         !document.body.classList.contains('mg-sin-producto');
-      const agotado = !!(filaProducto && filaProducto.agotado === true);
+      const agotado = productoAgotado(filaProducto);
       btn.disabled = !hayProducto || agotado;
     }
 
@@ -2174,7 +2376,6 @@
     const enviarTxt  = document.getElementById('mg-form-enviar-txt');
     const aviso      = document.getElementById('mg-form-aviso');
     const avisoTxt   = document.getElementById('mg-form-aviso-txt');
-    const chipProd   = document.getElementById('mg-form-prod');
     if(!btnComprar || !modal || !cerrar || !form) return;
 
     let ultimoFoco = null;
@@ -2190,15 +2391,17 @@
 
     function abrir(){
       // Doble cinturon: si por cualquier razon el boton esta deshabilitado
-      // (agotado / no disponible), no se abre el formulario.
+      // (agotado / no disponible), no se abre el formulario. La cantidad se
+      // valida tambien aqui para que el modal nunca nazca con un resumen falso.
       if(btnComprar.disabled) return;
-      limpiarAviso();
-      // Nombre del producto sobre el formulario, para dar contexto.
-      const nombre = filaProducto && filaProducto.nombre ? filaProducto.nombre : '';
-      if(chipProd){
-        if(nombre){ chipProd.textContent = nombre; chipProd.hidden = false; }
-        else { chipProd.textContent = ''; chipProd.hidden = true; }
+      const cantidad = cantidadSeleccionada();
+      if(!cantidadValida(cantidad)){
+        const selector = document.getElementById('mg-cantidad');
+        if(selector) selector.focus();
+        return;
       }
+      limpiarAviso();
+      actualizarResumenModal();
       ultimoFoco = document.activeElement;
       modal.setAttribute('aria-hidden', 'false');
       const primero = document.getElementById('mg-c-nombre');
@@ -2219,7 +2422,7 @@
       if(ico){ ico.outerHTML = '<span class="mg-spin" id="mg-form-spin" aria-hidden="true"></span>'; }
     }
     function restaurarBoton(){
-      if(enviar) enviar.disabled = false;
+      if(enviar) enviar.disabled = !!filaProducto && productoAgotado(filaProducto);
       if(enviarTxt) enviarTxt.textContent = 'Ir al pago seguro';
       const spin = document.getElementById('mg-form-spin');
       if(spin){ spin.outerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="5" width="20" height="14" rx="2"/><path d="M2 10h20"/></svg>'; }
@@ -2330,10 +2533,18 @@
         return;
       }
 
+      // Segunda validacion del selector justo antes de pedir la intencion. No se
+      // recorta ni se sustituye una cantidad fuera de 1..max_comprable.
+      const cantidad = cantidadSeleccionada();
+      if(!cantidadValida(cantidad)){
+        mostrarAviso('Elige una cantidad válida dentro del máximo disponible para este pedido.');
+        return;
+      }
+
       ponerCargando();
       try{
-        // El navegador NO envia precio: el servidor lo relee de la base y calcula
-        // la firma. cantidad = 1 en esta etapa.
+        // El navegador NO envia precio ni monto: el servidor relee el precio,
+        // vuelve a validar la cantidad y calcula el total firmado.
         //
         // F2: ademas de identificar el producto, se envian los DATOS DEL
         // COMPRADOR (los que acaba de escribir y ya quedaron validados arriba)
@@ -2368,7 +2579,7 @@
           'crear-intencion-pago',
           { body: {
               producto: producto,
-              cantidad: 1,
+              cantidad: cantidad,
               comprador: {
                 nombre:       datos.nombre,
                 correo:       datos.correo,
@@ -2398,6 +2609,38 @@
 
         if(error || !cuerpo || cuerpo.error){
           restaurarBoton();
+
+          // El servidor puede descubrir que el maximo bajo mientras se llenaba
+          // el formulario. Solo se aplica un contrato 409 completo y valido;
+          // nunca se recorta ni se reintenta la cantidad automaticamente.
+          const status = Number(error && error.context && error.context.status);
+          const maxBruto = cuerpo ? cuerpo.max_comprable : undefined;
+          const nuevoMax = typeof maxBruto === 'number' ? maxBruto : NaN;
+          const cambioMaximo = status === 409 && cuerpo && cuerpo.codigo === 'MAX_COMPRABLE' &&
+            Number.isSafeInteger(nuevoMax) && nuevoMax >= 0 && nuevoMax <= MAX_COMPRABLE_TECHO;
+          if(cambioMaximo){
+            const mensaje = nuevoMax === 0
+              ? 'Este producto se agotó mientras completabas la compra. No es posible continuar con el pago por ahora.'
+              : 'Ahora puedes comprar hasta ' + nuevoMax +
+                ' unidades; ajusta la cantidad para continuar';
+            aplicarMaxComprable(nuevoMax, nuevoMax > 0);
+            mostrarAviso(mensaje);
+
+            if(nuevoMax > 0){
+              // El selector esta en la ficha, fuera del modal. Se cierra sin
+              // resetear los datos escritos y se lleva el foco al nuevo rango.
+              mostrarAvisoCantidad(mensaje);
+              modal.setAttribute('aria-hidden', 'true');
+              const selector = document.getElementById('mg-cantidad');
+              if(selector) selector.focus();
+            }else if(enviar){
+              // El modal permanece abierto con el resumen de agotado y el aviso
+              // visible, pero ya no permite iniciar otra intencion.
+              enviar.disabled = true;
+            }
+            return;
+          }
+
           mostrarAviso(mensajeDeError(error, cuerpo));
           return;
         }
@@ -2450,9 +2693,9 @@
     }
 
     // --- nuestro: la tienda mando algo que la funcion no acepta ---
-    // 'una unidad', 'Falta producto', 'Body invalido', 'Metodo no permitido'.
-    // Si esto aparece hay un error de programacion, no del usuario.
-    if(/una unidad|falta '?producto|body invalido|metodo no permitido/i.test(texto)){
+    // 'Falta producto', 'Body invalido', 'Metodo no permitido'. Si esto aparece
+    // hay un error de programacion, no del usuario.
+    if(/falta '?producto|body invalido|metodo no permitido/i.test(texto)){
       return 'Algo salió mal al preparar tu pago. Recarga la página e inténtalo de nuevo; si sigue igual, escríbenos por WhatsApp.';
     }
 
@@ -3004,6 +3247,7 @@
   //  · y si el producto no llegara a cargar, quien acaba de pagar igual ve que
   //    su pago esta en nuestras manos.
   configurarVueltaDelPago();
+  configurarCantidad();
   configurarCompra();
   configurarWhatsApp();
   configurarResena();
