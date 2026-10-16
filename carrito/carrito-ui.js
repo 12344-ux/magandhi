@@ -5,15 +5,22 @@ import {
   quitarDelCarrito,
   mensajeErrorCarrito,
 } from './carrito-core.js';
+import { configurarCheckoutCarrito } from './checkout-carrito.js';
 
 const vistas = ['loading', 'session', 'disabled', 'error', 'empty', 'content'];
 let uidActual = null;
+let sesionActual = null;
 let snapshotActual = null;
 let generacion = 0;
 let operacion = false;
+let checkout = { actualizar() {} };
 
 const porId = (id) => document.getElementById(id);
 const moneda = (valor) => '$ ' + Math.round(Number(valor)).toLocaleString('es-CO') + ' COP';
+
+function estadoCheckout() {
+  return { sesion: sesionActual, snapshot: snapshotActual, operacion };
+}
 
 function mostrar(nombre) {
   for (const vista of vistas) {
@@ -32,6 +39,7 @@ function limpiar() {
   snapshotActual = null;
   porId('co-lines').replaceChildren();
   aviso();
+  checkout.actualizar();
 }
 
 function mensajeCambio(item) {
@@ -133,12 +141,14 @@ function pintar(snapshot) {
   for (const item of snapshot.items) lineas.appendChild(crearLinea(item, snapshot.version));
   porId('co-lines').replaceChildren(lineas);
   porId('co-count').textContent = `${snapshot.cantidad_unidades} ${snapshot.cantidad_unidades === 1 ? 'unidad' : 'unidades'}`;
+  const subtotalCompleto = snapshot.items.every((item) => item.precio_disponible);
   const subtotal = snapshot.items.reduce((total, item) =>
     total + (item.precio_disponible ? item.subtotal_actual : 0), 0);
-  porId('co-subtotal').textContent = moneda(subtotal);
-  aviso(snapshot.items.some((item) => item.requiere_ajuste || !item.disponible)
+  porId('co-subtotal').textContent = subtotalCompleto ? moneda(subtotal) : 'Por confirmar';
+  aviso(snapshot.items.some((item) => item.requiere_ajuste || !item.disponible || !item.precio_disponible)
     ? 'Algunos productos cambiaron. Revísalos antes de continuar.' : '');
   mostrar('content');
+  checkout.actualizar();
 }
 
 async function cargar() {
@@ -154,6 +164,7 @@ async function cargar() {
     if (token !== generacion || uidAlPedir !== uidActual) return;
     if (error?.codigo === 'CO_CARRITO_DESHABILITADO') {
       mostrar('disabled');
+      checkout.actualizar();
       return;
     }
     if (error?.codigo === 'CO_CUENTA_NO_DISPONIBLE') {
@@ -162,6 +173,7 @@ async function cargar() {
     }
     porId('co-error-message').textContent = mensajeErrorCarrito(error, 'cargar');
     mostrar('error');
+    checkout.actualizar();
   }
 }
 
@@ -170,6 +182,7 @@ async function ejecutar(linea, tarea, accion, restaurarFoco) {
   const uidOperacion = uidActual;
   const generacionOperacion = generacion;
   operacion = true;
+  checkout.actualizar();
   document.querySelectorAll('#co-lines button, #co-lines select').forEach((control) => {
     control.disabled = true;
   });
@@ -195,6 +208,7 @@ async function ejecutar(linea, tarea, accion, restaurarFoco) {
     }
   } finally {
     operacion = false;
+    checkout.actualizar();
   }
 }
 
@@ -222,20 +236,31 @@ porId('co-retry').addEventListener('click', () => {
   else revalidarSesionCliente();
 });
 
+checkout = configurarCheckoutCarrito({
+  obtenerEstado: estadoCheckout,
+  recargarCarrito: cargar,
+  revalidarSesion: revalidarSesionCliente,
+});
+
 observarSesionCliente((sesion) => {
   ++generacion;
+  sesionActual = sesion;
   limpiar();
+  checkout.cambiarSesion(sesion);
   if (sesion.estado === 'comprobando') {
     uidActual = null;
     mostrar('loading');
+    checkout.actualizar();
     return;
   }
   if (sesion.estado !== 'valida') {
     uidActual = null;
     mostrar(sesion.estado === 'sin-sesion' ? 'session' : 'error');
     if (sesion.estado === 'error') porId('co-error-message').textContent = 'No pudimos validar tu cuenta. Inténtalo de nuevo más tarde.';
+    checkout.actualizar();
     return;
   }
   uidActual = sesion.uid;
+  checkout.actualizar();
   cargar();
 });
