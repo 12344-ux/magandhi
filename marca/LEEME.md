@@ -30,8 +30,40 @@ Los derivados no se editan a mano. Si cambia el SVG, se regenera el conjunto y s
 
 ## Perfiles externos
 
-- `gen_perfil_whatsapp.py`: genera las variantes cuadradas para WhatsApp/Instagram desde el logo oficial.
+- `gen_perfil_whatsapp.py`: genera las variantes cuadradas para WhatsApp, Instagram y cualquier otro canal, desde el logo oficial.
 - `perfil/`: entregables de perfil para canales externos; no aparecen como `<img>` en la web y eso no los convierte en archivos huérfanos.
+
+**Nueve archivos, todos 1024×1024 PNG.** Seis combinaciones de tinta y fondo:
+
+| Archivo | Fondo | Tinta |
+|---|---|---|
+| `perfil-negro-sobre-rojo.png` | terracota `#A6332E` | negro `#111111` |
+| `perfil-rojo-sobre-negro.png` | negro `#111111` | terracota `#A6332E` |
+| `perfil-blanco-sobre-negro.png` | negro `#111111` | blanco `#FFFFFF` |
+| `perfil-blanco-sobre-rojo.png` | terracota `#A6332E` | blanco `#FFFFFF` |
+| `perfil-rojo-sobre-blanco.png` | blanco `#FFFFFF` | terracota `#A6332E` |
+| `perfil-negro-sobre-blanco.png` | blanco `#FFFFFF` | negro `#111111` |
+
+Y tres con fondo transparente, para montar sobre cualquier superficie: `perfil-rojo-transparente.png`, `perfil-negro-transparente.png`, `perfil-blanco-transparente.png`.
+
+Los nombres conservan «rojo» por compatibilidad histórica; el color real y vigente es **terracota**.
+
+### Las dos decisiones del generador
+
+**1024 y no 640.** El tamaño anterior se eligió pensando solo en WhatsApp. Un cuadrado de 1024 se reduce limpio a cualquier destino, y al contrario no: ampliar pixela.
+
+**El logo ocupa el 66 % del lienzo, medido sobre la tinta y no sobre el lienzo del SVG.** WhatsApp e Instagram recortan la foto de perfil en **círculo**, y el círculo inscrito en un cuadrado se come las esquinas. Con el 66 % la silueta queda a 451 px del centro en su punto más lejano, contra un radio de 512: **11,9 % de margen**.
+
+El recorte previo a la tinta importa y no es cosmético. El lienzo del SVG mide 1254 px pero la silueta solo ocupa 1129×1005 dentro de él, con márgenes **desiguales** (62 izq, 63 der, 103 arriba, 146 abajo). Centrando el lienzo en vez de la silueta, el logo salía más pequeño de lo que decía la constante (60 % de ancho y 53 % de alto) **y descentrado hacia arriba**. Ahora los márgenes del resultado son 174/176 y 212/212.
+
+### Regenerarlos
+
+```
+pip install cairosvg pillow
+python3 marca/gen_perfil_whatsapp.py      # desde la raíz del repo
+```
+
+Si cambia el SVG maestro, se regeneran los nueve de una vez. No se editan a mano.
 
 ## Archivos históricos
 
