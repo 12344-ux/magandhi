@@ -32,7 +32,16 @@ export const SUPABASE_URL = 'https://bxlzipwxyxdtffnuizbz.supabase.co';
 // Publishable key: publica por diseno, protegida por RLS/vista. NUNCA la secret.
 export const SUPABASE_PUBLISHABLE_KEY = 'sb_publishable_ap4jdsO_0KPOPWhUk9Y7ZA_0jDUvHu1';
 
-// Instancia unica del cliente. Importar { supabase } desde este modulo.
-export const supabase = createClient(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY);
+// Instancia unica del cliente. Auth usa PKCE explícito: el callback intercambia
+// manualmente el código y lo limpia de la URL. La sesión se conserva y renueva
+// en este origen para que cuenta y tienda compartan el mismo estado.
+export const supabase = createClient(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY, {
+  auth: {
+    flowType: 'pkce',
+    detectSessionInUrl: false,
+    persistSession: true,
+    autoRefreshToken: true,
+  },
+});
 
 export default supabase;

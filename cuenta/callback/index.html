@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Confirmando acceso · MAGANDHI</title>
+<meta name="robots" content="noindex, nofollow, noarchive">
+<meta name="referrer" content="no-referrer">
+<meta http-equiv="Referrer-Policy" content="no-referrer">
+<script>
+(function(){
+  var url = new URL(window.location.href);
+  window.__MG_AUTH_CALLBACK__ = {
+    code: url.searchParams.get('code'),
+    tokenHash: url.searchParams.get('token_hash'),
+    tokenType: url.searchParams.get('type'),
+    flow: url.searchParams.get('flow') || 'oauth',
+    error: url.searchParams.get('error') || url.searchParams.get('error_description')
+  };
+  ['code','token_hash','type','error','error_code','error_description'].forEach(function(key){ url.searchParams.delete(key); });
+  url.hash = '';
+  history.replaceState(null, '', url.pathname + url.search);
+})();
+</script>
+<meta name="theme-color" content="#A6332E">
+<link rel="icon" type="image/png" href="../../favicon.png?v=4">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../../marca.css?v=3">
+<link rel="stylesheet" href="../cuenta.css?v=1">
+</head>
+<body class="ct-callback-body">
+<main class="ct-callback" aria-labelledby="ct-callback-title">
+  <a class="ct-brand ct-brand-callback" href="../../" aria-label="MAGANDHI, inicio">
+    <img src="../../logo-mark-terracota.png" alt="">
+    <span><b>MAGANDHI</b><small>Hoy mereces lo mejor</small></span>
+  </a>
+  <section class="ct-card ct-callback-card">
+    <span class="ct-spinner ct-callback-spinner" id="ct-callback-spinner" aria-hidden="true"></span>
+    <h1 id="ct-callback-title">Confirmando tu acceso</h1>
+    <p id="ct-callback-message" role="status" aria-live="polite">Espera un momento. Estamos terminando de proteger tu sesión.</p>
+    <a class="ct-secondary ct-callback-link" id="ct-callback-back" href="../" hidden>Volver a Mi cuenta</a>
+  </section>
+</main>
+<script type="module" src="callback.js?v=1"></script>
+</body>
+</html>
