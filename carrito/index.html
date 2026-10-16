@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Carrito · MAGANDHI</title>
+<meta name="description" content="Revisa los productos guardados en tu carrito MAGANDHI.">
+<meta name="robots" content="noindex, nofollow">
+<meta name="theme-color" content="#A6332E">
+<link rel="icon" type="image/png" href="../favicon.png?v=4">
+<link rel="apple-touch-icon" href="../icono-app-180.png?v=4">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../marca.css?v=3">
+<link rel="stylesheet" href="carrito.css?v=1">
+</head>
+<body>
+<header class="co-head">
+  <a class="co-back" href="../" aria-label="Volver a la tienda">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
+    <span>Volver a la tienda</span>
+  </a>
+  <a class="co-brand" href="../" aria-label="MAGANDHI, inicio">
+    <img src="../logo-mark-terracota.png" alt="">
+    <span><b>MAGANDHI</b><small>Hoy mereces lo mejor</small></span>
+  </a>
+  <a class="co-account" href="../cuenta/" aria-label="Mi cuenta">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/></svg>
+    <span>Mi cuenta</span>
+  </a>
+</header>
+
+<main class="co-main">
+  <div class="co-title">
+    <span class="co-kicker">Tu selección</span>
+    <h1>Carrito</h1>
+    <p>Los precios y la disponibilidad se muestran con su valor actual.</p>
+  </div>
+
+  <section class="co-card co-state" id="co-loading" role="status" aria-live="polite">
+    <span class="co-spinner" aria-hidden="true"></span>
+    <p>Comprobando tu carrito…</p>
+  </section>
+
+  <section class="co-card co-state" id="co-session" hidden aria-labelledby="co-session-title">
+    <h2 id="co-session-title">Inicia sesión para ver tu carrito</h2>
+    <p>El carrito se guarda en tu cuenta para que puedas continuarlo en otro dispositivo.</p>
+    <a class="co-primary" href="../cuenta/">Ir a Mi cuenta</a>
+    <a class="co-link" href="../">Seguir viendo productos</a>
+  </section>
+
+  <section class="co-card co-state" id="co-disabled" hidden role="status" aria-labelledby="co-disabled-title">
+    <h2 id="co-disabled-title">El carrito no está disponible</h2>
+    <p>Puedes seguir comprando cada producto con “Comprar ahora”.</p>
+    <a class="co-primary" href="../">Volver a la tienda</a>
+  </section>
+
+  <section class="co-card co-state" id="co-error" hidden role="alert" aria-labelledby="co-error-title">
+    <h2 id="co-error-title">No pudimos mostrar tu carrito</h2>
+    <p id="co-error-message">Revisa tu conexión e inténtalo de nuevo.</p>
+    <button class="co-primary" type="button" id="co-retry">Intentar de nuevo</button>
+    <a class="co-link" href="../cuenta/">Ir a Mi cuenta</a>
+  </section>
+
+  <section class="co-card co-state" id="co-empty" hidden role="status" aria-labelledby="co-empty-title">
+    <span class="co-empty-icon" aria-hidden="true">♡</span>
+    <h2 id="co-empty-title">Tu carrito está vacío</h2>
+    <p>Explora la selección y guarda aquí los productos que quieras revisar.</p>
+    <a class="co-primary" href="../#descubrir">Ver productos</a>
+  </section>
+
+  <section id="co-content" hidden aria-labelledby="co-content-title">
+    <div class="co-content-head">
+      <div><span class="co-kicker">Guardado en tu cuenta</span><h2 id="co-content-title" tabindex="-1">Tus productos</h2></div>
+      <span class="co-count" id="co-count"></span>
+    </div>
+    <div class="co-notice" id="co-notice" role="status" aria-live="polite" hidden></div>
+    <div class="co-lines" id="co-lines"></div>
+    <aside class="co-summary" aria-label="Resumen del carrito">
+      <div><span>Subtotal actual</span><strong id="co-subtotal">—</strong></div>
+      <p>Este carrito permite guardar y ajustar productos. El pago multiproducto no está disponible.</p>
+    </aside>
+  </section>
+</main>
+
+<footer class="co-footer">
+  <span>© 2026 MAGANDHI</span><a href="../politicas/">Políticas</a><a href="mailto:contacto@magandhi.com">Contacto</a>
+</footer>
+<script type="module" src="carrito-ui.js?v=1"></script>
+</body>
+</html>
