@@ -1,0 +1,241 @@
+import { observarSesionCliente, revalidarSesionCliente } from '../cliente/cliente-sesion.js';
+import {
+  listarCarrito,
+  cambiarCantidadCarrito,
+  quitarDelCarrito,
+  mensajeErrorCarrito,
+} from './carrito-core.js';
+
+const vistas = ['loading', 'session', 'disabled', 'error', 'empty', 'content'];
+let uidActual = null;
+let snapshotActual = null;
+let generacion = 0;
+let operacion = false;
+
+const porId = (id) => document.getElementById(id);
+const moneda = (valor) => '$ ' + Math.round(Number(valor)).toLocaleString('es-CO') + ' COP';
+
+function mostrar(nombre) {
+  for (const vista of vistas) {
+    const elemento = porId(`co-${vista}`);
+    if (elemento) elemento.hidden = vista !== nombre;
+  }
+}
+
+function aviso(texto = '') {
+  const elemento = porId('co-notice');
+  elemento.textContent = texto;
+  elemento.hidden = !texto;
+}
+
+function limpiar() {
+  snapshotActual = null;
+  porId('co-lines').replaceChildren();
+  aviso();
+}
+
+function mensajeCambio(item) {
+  if (!item.disponible || item.max_comprable === 0) return 'Este producto fue retirado o se agotó. Retíralo del carrito para continuar.';
+  if (item.requiere_ajuste) return `Este producto cambió desde que lo agregaste. Revisa el precio actual y elige una cantidad de 1 a ${item.max_comprable}.`;
+  return '';
+}
+
+function crearLinea(item, version) {
+  const linea = document.createElement('article');
+  linea.className = 'co-line';
+  linea.dataset.campana = item.campana_id;
+
+  const principal = document.createElement('div');
+  principal.className = 'co-line__main';
+  const titulo = document.createElement('h3');
+  if (!item.retirada) {
+    const enlace = document.createElement('a');
+    enlace.href = item.slug
+      ? `../producto/?slug=${encodeURIComponent(item.slug)}`
+      : `../producto/?id=${encodeURIComponent(item.campana_id)}`;
+    enlace.textContent = item.nombre;
+    titulo.appendChild(enlace);
+  } else titulo.textContent = item.nombre;
+  const precio = document.createElement('p');
+  precio.className = 'co-line__price';
+  precio.textContent = item.precio_disponible
+    ? `${moneda(item.precio_unitario_actual)} por unidad`
+    : 'Precio no disponible';
+  principal.append(titulo, precio);
+
+  const subtotal = document.createElement('strong');
+  subtotal.className = 'co-line__subtotal';
+  subtotal.textContent = item.precio_disponible ? moneda(item.subtotal_actual) : '—';
+  linea.append(principal, subtotal);
+
+  const cambio = mensajeCambio(item);
+  if (cambio) {
+    const advertencia = document.createElement('p');
+    advertencia.className = 'co-line__warning';
+    advertencia.setAttribute('role', 'status');
+    advertencia.textContent = cambio;
+    linea.appendChild(advertencia);
+  }
+
+  const acciones = document.createElement('div');
+  acciones.className = 'co-line__actions';
+  const campo = document.createElement('div');
+  campo.className = 'co-quantity';
+  const idSelect = `co-cantidad-${item.campana_id}`;
+  const etiqueta = document.createElement('label');
+  etiqueta.htmlFor = idSelect;
+  etiqueta.textContent = 'Cantidad';
+  const select = document.createElement('select');
+  select.id = idSelect;
+  select.disabled = !item.disponible || item.max_comprable === 0;
+
+  if (item.requiere_ajuste || item.cantidad > item.max_comprable) {
+    const opcion = document.createElement('option');
+    opcion.value = '';
+    opcion.textContent = 'Elige';
+    opcion.selected = true;
+    opcion.disabled = true;
+    select.appendChild(opcion);
+  }
+  for (let cantidad = 1; cantidad <= item.max_comprable; cantidad += 1) {
+    const opcion = document.createElement('option');
+    opcion.value = String(cantidad);
+    opcion.textContent = String(cantidad);
+    opcion.selected = !item.requiere_ajuste && cantidad === item.cantidad;
+    select.appendChild(opcion);
+  }
+  select.addEventListener('change', () => cambiar(item, Number(select.value), version, linea));
+  campo.append(etiqueta, select);
+
+  const retirar = document.createElement('button');
+  retirar.type = 'button';
+  retirar.className = 'co-remove';
+  retirar.textContent = 'Retirar';
+  retirar.addEventListener('click', () => quitar(item, version, linea));
+  acciones.append(campo, retirar);
+  linea.appendChild(acciones);
+  return linea;
+}
+
+function pintar(snapshot) {
+  snapshotActual = snapshot;
+  if (!snapshot.habilitado) {
+    limpiar();
+    mostrar('disabled');
+    return;
+  }
+  if (snapshot.cantidad_lineas === 0) {
+    limpiar();
+    mostrar('empty');
+    return;
+  }
+  const lineas = document.createDocumentFragment();
+  for (const item of snapshot.items) lineas.appendChild(crearLinea(item, snapshot.version));
+  porId('co-lines').replaceChildren(lineas);
+  porId('co-count').textContent = `${snapshot.cantidad_unidades} ${snapshot.cantidad_unidades === 1 ? 'unidad' : 'unidades'}`;
+  const subtotal = snapshot.items.reduce((total, item) =>
+    total + (item.precio_disponible ? item.subtotal_actual : 0), 0);
+  porId('co-subtotal').textContent = moneda(subtotal);
+  aviso(snapshot.items.some((item) => item.requiere_ajuste || !item.disponible)
+    ? 'Algunos productos cambiaron. Revísalos antes de continuar.' : '');
+  mostrar('content');
+}
+
+async function cargar() {
+  const uidAlPedir = uidActual;
+  const token = ++generacion;
+  limpiar();
+  mostrar('loading');
+  try {
+    const snapshot = await listarCarrito();
+    if (token !== generacion || uidAlPedir !== uidActual) return;
+    pintar(snapshot);
+  } catch (error) {
+    if (token !== generacion || uidAlPedir !== uidActual) return;
+    if (error?.codigo === 'CO_CARRITO_DESHABILITADO') {
+      mostrar('disabled');
+      return;
+    }
+    if (error?.codigo === 'CO_CUENTA_NO_DISPONIBLE') {
+      revalidarSesionCliente(true);
+      return;
+    }
+    porId('co-error-message').textContent = mensajeErrorCarrito(error, 'cargar');
+    mostrar('error');
+  }
+}
+
+async function ejecutar(linea, tarea, accion, restaurarFoco) {
+  if (operacion || !uidActual) return;
+  const uidOperacion = uidActual;
+  const generacionOperacion = generacion;
+  operacion = true;
+  document.querySelectorAll('#co-lines button, #co-lines select').forEach((control) => {
+    control.disabled = true;
+  });
+  linea.setAttribute('aria-busy', 'true');
+  try {
+    const snapshot = await tarea();
+    if (uidOperacion !== uidActual || generacionOperacion !== generacion) return;
+    pintar(snapshot);
+    if (typeof restaurarFoco === 'function') restaurarFoco();
+  } catch (error) {
+    if (uidOperacion !== uidActual || generacionOperacion !== generacion) return;
+    const mensaje = mensajeErrorCarrito(error, accion);
+    if (error?.codigo === 'CO_CARRITO_DESHABILITADO') {
+      mostrar('disabled');
+    } else if (error?.codigo === 'CO_CUENTA_NO_DISPONIBLE') {
+      revalidarSesionCliente(true);
+    } else if (/VERSION|CONFLICT|DESACTUALIZ/.test(String(error?.codigo || ''))) {
+      await cargar();
+      aviso(mensaje);
+    } else {
+      pintar(snapshotActual);
+      aviso(mensaje);
+    }
+  } finally {
+    operacion = false;
+  }
+}
+
+function cambiar(item, cantidad, version, linea) {
+  if (!Number.isSafeInteger(cantidad) || cantidad < 1 || cantidad > item.max_comprable) return;
+  ejecutar(
+    linea,
+    () => cambiarCantidadCarrito(item.campana_id, cantidad, version),
+    'actualizar',
+    () => document.getElementById(`co-cantidad-${item.campana_id}`)?.focus()
+  );
+}
+
+function quitar(item, version, linea) {
+  ejecutar(
+    linea,
+    () => quitarDelCarrito(item.campana_id, version),
+    'actualizar',
+    () => document.getElementById('co-content-title')?.focus()
+  );
+}
+
+porId('co-retry').addEventListener('click', () => {
+  if (uidActual) cargar();
+  else revalidarSesionCliente();
+});
+
+observarSesionCliente((sesion) => {
+  ++generacion;
+  limpiar();
+  if (sesion.estado === 'comprobando') {
+    uidActual = null;
+    mostrar('loading');
+    return;
+  }
+  if (sesion.estado !== 'valida') {
+    uidActual = null;
+    mostrar(sesion.estado === 'sin-sesion' ? 'session' : 'error');
+    if (sesion.estado === 'error') porId('co-error-message').textContent = 'No pudimos validar tu cuenta. Inténtalo de nuevo más tarde.';
+    return;
+  }
+  uidActual = sesion.uid;
+  cargar();
+});

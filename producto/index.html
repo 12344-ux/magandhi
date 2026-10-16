@@ -15,6 +15,7 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="../marca.css?v=3">
+<link rel="stylesheet" href="../componentes/cuenta-carrito.css?v=1">
 
 <!--
   MAGANDHI · Pagina de producto GENERICA. Mismo diseno boutique aprobado del
@@ -185,7 +186,7 @@
     .mg-nav{display:none}
     header{padding:14px 16px;gap:10px}
     .mg-head-left{min-width:0}.mg-marca{gap:8px}.mg-marca img{width:34px;height:34px}.mg-word{font-size:17px}
-    .mg-head-actions{gap:0}.mg-cuenta-link{min-height:38px;padding:7px 9px;font-size:11.5px}
+    .mg-head-actions{gap:8px}.mg-cuenta-link{min-height:38px;padding:7px 9px;font-size:11.5px}
   }
   @media(max-width:380px){
     .mg-cuenta-link{width:40px;padding:7px;justify-content:center}
@@ -535,6 +536,14 @@
     background:var(--gris-cl);color:#fff;cursor:not-allowed;opacity:.75;
   }
   .mg-btn--primario:disabled:hover{background:var(--gris-cl);transform:none}
+  .mg-btn:focus-visible{outline:3px solid rgba(194,138,58,.42);outline-offset:3px}
+  .mg-btn--carrito{background:#fff;color:var(--rojo);border:1px solid var(--rojo)}
+  .mg-btn--carrito:hover{background:var(--red-50)}
+  .mg-btn--carrito:disabled{color:var(--gris);border-color:var(--linea);cursor:not-allowed;opacity:.68;background:#fff}
+  .mg-btn--carrito[aria-busy="true"]{cursor:wait}
+  .mg-carrito-status{flex-basis:100%;margin:-2px 0 0;color:var(--gris);font-size:12.5px}
+  .mg-carrito-status[data-tone="error"]{color:var(--red-900)}
+  .mg-carrito-status[data-tone="success"]{color:var(--verde)}
   /* "Preguntar por WhatsApp": contorno VERDE de confianza (el mismo de "Compra
      verificada"). WhatsApp es el canal de atencion directa; el verde lo distingue
      del rojo de "Comprar" sin competir con el. */
@@ -956,6 +965,7 @@
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/></svg>
       <span>Mi cuenta</span>
     </a>
+    <span data-cuenta-carrito data-carrito-href="../carrito/" hidden></span>
   </div>
 </header>
 
@@ -1082,10 +1092,15 @@
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="8" cy="21" r="1"/><circle cx="19" cy="21" r="1"/><path d="M2.05 2.05h2l2.66 12.42a2 2 0 0 0 2 1.58h9.78a2 2 0 0 0 1.95-1.57l1.65-7.43H5.12"/></svg>
         Comprar ahora
       </button>
+      <button type="button" class="mg-btn mg-btn--carrito" id="mg-agregar-carrito" hidden disabled>
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="8" cy="21" r="1"/><circle cx="19" cy="21" r="1"/><path d="M2.05 2.05h2l2.66 12.42a2 2 0 0 0 2 1.58h9.78a2 2 0 0 0 1.95-1.57l1.65-7.43H5.12"/><path d="M12 8v6M9 11h6"/></svg>
+        <span>Agregar al carrito</span>
+      </button>
       <button type="button" class="mg-btn mg-btn--wa" id="mg-whatsapp">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M7.9 20A9 9 0 1 0 4 16.1L2 22z"/></svg>
         Preguntar por WhatsApp
       </button>
+      <p class="mg-carrito-status" id="mg-carrito-status" role="status" aria-live="polite" hidden></p>
     </div>
   </div>
 </section>
@@ -1500,6 +1515,14 @@
      ============================================================ -->
 <script type="module">
   import { supabase } from '../supabase-config.js';
+  import { agregarAlCarrito, mensajeErrorCarrito } from '../carrito/carrito-core.js';
+  import {
+    observarEstadoCarrito,
+    sincronizarCuentaCarrito,
+    refrescarCuentaCarrito,
+    ocultarCuentaCarrito,
+  } from '../componentes/cuenta-carrito.js';
+  import { revalidarSesionCliente } from '../cliente/cliente-sesion.js';
 
   // Nombre del bucket publico de Campanas donde viven las imagenes de producto.
   const BUCKET_CAMPANAS = 'campanas';
@@ -1633,6 +1656,7 @@
     pintarCantidad(!!exigirEleccion);
     pintarAgotado(filaProducto);
     actualizarResumenModal();
+    actualizarBotonCarrito();
   }
 
   function mostrarAvisoCantidad(mensaje){
@@ -1648,6 +1672,7 @@
     select.addEventListener('change', function(){
       mostrarAvisoCantidad('');
       actualizarTotalCantidad();
+      actualizarBotonCarrito();
     });
   }
 
@@ -1956,6 +1981,7 @@
     if(el) el.setAttribute('data-visible', 'true');
     const btn = document.getElementById('mg-comprar');
     if(btn) btn.disabled = true;
+    actualizarBotonCarrito();
     set('mg-titulo', 'Producto no disponible');
     set('mg-sub', '');
   }
@@ -1964,6 +1990,132 @@
   // modulo para que compra, cantidad y WhatsApp compartan slug/id, nombre y
   // disponibilidad sin volver a consultar. null mientras no haya producto.
   let filaProducto = null;
+  let carritoDisponible = false;
+  let carritoUid = null;
+  let carritoSnapshot = null;
+  let carritoGeneracion = 0;
+  let agregandoAlCarrito = false;
+
+  function cantidadActualEnCarrito(){
+    if(!filaProducto || !carritoSnapshot || !Array.isArray(carritoSnapshot.items)) return 0;
+    const linea = carritoSnapshot.items.find(function(item){
+      return item.campana_id === filaProducto.id;
+    });
+    return linea ? linea.cantidad : 0;
+  }
+
+  function maxAgregableAlCarrito(){
+    if(!filaProducto) return 0;
+    return Math.max(0, filaProducto.max_comprable - cantidadActualEnCarrito());
+  }
+
+  function mostrarEstadoCarrito(mensaje, tono){
+    const estadoEl = document.getElementById('mg-carrito-status');
+    if(!estadoEl) return;
+    estadoEl.textContent = mensaje || '';
+    estadoEl.hidden = !mensaje;
+    if(mensaje && tono) estadoEl.dataset.tone = tono;
+    else delete estadoEl.dataset.tone;
+  }
+
+  function actualizarBotonCarrito(){
+    const boton = document.getElementById('mg-agregar-carrito');
+    if(!boton) return;
+    const cantidad = cantidadSeleccionada();
+    const maxAgregable = maxAgregableAlCarrito();
+    const productoListo = !!filaProducto && !!filaProducto.id &&
+      !productoAgotado(filaProducto) && cantidadValida(cantidad) && cantidad <= maxAgregable;
+    boton.hidden = !carritoDisponible || !filaProducto;
+    boton.disabled = !carritoDisponible || !productoListo || agregandoAlCarrito;
+    boton.title = carritoDisponible && filaProducto && maxAgregable === 0
+      ? 'Ya alcanzaste el máximo de este producto en tu carrito.' : '';
+  }
+
+  function configurarCarritoProducto(){
+    const boton = document.getElementById('mg-agregar-carrito');
+    if(!boton) return;
+
+    observarEstadoCarrito(function(estadoCarrito){
+      carritoGeneracion += 1;
+      carritoDisponible = estadoCarrito.visible === true;
+      carritoUid = carritoDisponible ? estadoCarrito.uid : null;
+      carritoSnapshot = carritoDisponible ? estadoCarrito.snapshot : null;
+      if(!carritoDisponible) mostrarEstadoCarrito('');
+      actualizarBotonCarrito();
+    });
+
+    boton.addEventListener('click', async function(){
+      if(boton.disabled || !carritoDisponible || !filaProducto) return;
+      const cantidad = cantidadSeleccionada();
+      if(!cantidadValida(cantidad)){
+        const selector = document.getElementById('mg-cantidad');
+        if(selector) selector.focus();
+        return;
+      }
+
+      agregandoAlCarrito = true;
+      const uidAlAgregar = carritoUid;
+      const generacionAlAgregar = carritoGeneracion;
+      boton.setAttribute('aria-busy', 'true');
+      actualizarBotonCarrito();
+      mostrarEstadoCarrito('Agregando a tu carrito…');
+      try{
+        // La RPC recibe el UUID de campaña y el delta elegido. Precio, usuario y
+        // disponibilidad se resuelven otra vez en el servidor.
+        const snapshot = await agregarAlCarrito(filaProducto.id, cantidad);
+        if(!carritoDisponible || !uidAlAgregar || uidAlAgregar !== carritoUid ||
+           generacionAlAgregar !== carritoGeneracion) return;
+        if(!sincronizarCuentaCarrito(snapshot) || !carritoDisponible) return;
+        mostrarEstadoCarrito(
+          cantidad === 1 ? 'Agregamos 1 unidad a tu carrito.' : 'Agregamos ' + cantidad + ' unidades a tu carrito.',
+          'success'
+        );
+      }catch(error){
+        if(!carritoDisponible || !uidAlAgregar || uidAlAgregar !== carritoUid ||
+           generacionAlAgregar !== carritoGeneracion) return;
+        const codigo = String(error && error.codigo || '');
+        if(codigo === 'CO_CARRITO_DESHABILITADO' || codigo === 'CO_CUENTA_NO_DISPONIBLE'){
+          ocultarCuentaCarrito(true);
+          mostrarEstadoCarrito(mensajeErrorCarrito(error, 'actualizar'), 'error');
+          if(codigo === 'CO_CUENTA_NO_DISPONIBLE') revalidarSesionCliente(true);
+          return;
+        }
+
+        const nuevoMax = codigo === 'CO_MAX_COMPRABLE' ? error.maxComprable : null;
+        if(Number.isSafeInteger(nuevoMax) && nuevoMax >= 0 && nuevoMax <= MAX_COMPRABLE_TECHO){
+          let snapshotActualizado = null;
+          try{ snapshotActualizado = await refrescarCuentaCarrito(); }catch(_){ /* El mensaje sigue siendo seguro. */ }
+          if(nuevoMax < filaProducto.max_comprable){
+            aplicarMaxComprable(nuevoMax, nuevoMax > 0);
+          }
+          const lineaActual = snapshotActualizado && Array.isArray(snapshotActualizado.items)
+            ? snapshotActualizado.items.find(function(item){ return item.campana_id === filaProducto.id; })
+            : null;
+          const yaGuardadas = lineaActual ? lineaActual.cantidad : cantidadActualEnCarrito();
+          const restantes = Math.max(0, nuevoMax - yaGuardadas);
+          const mensaje = nuevoMax === 0
+            ? 'Este producto se agotó antes de agregarlo al carrito.'
+            : restantes === 0
+              ? 'Ya alcanzaste el máximo de este producto en tu carrito.'
+              : 'Ya tienes ' + yaGuardadas + ' en tu carrito; puedes agregar hasta ' + restantes +
+                (restantes === 1 ? ' unidad más.' : ' unidades más.');
+          mostrarAvisoCantidad(mensaje);
+          mostrarEstadoCarrito(mensaje, 'error');
+          actualizarBotonCarrito();
+          if(restantes > 0){
+            const selector = document.getElementById('mg-cantidad');
+            if(selector) selector.focus();
+          }
+        }else{
+          mostrarEstadoCarrito(mensajeErrorCarrito(error, 'actualizar'), 'error');
+        }
+      }finally{
+        agregandoAlCarrito = false;
+        boton.removeAttribute('aria-busy');
+        actualizarBotonCarrito();
+      }
+    });
+  }
 
   function errorPorMaxComprableAusente(error){
     if(!error) return false;
@@ -2039,6 +2191,7 @@
       pintarUrgencia(filaProducto);
       pintarCantidad(false);
       pintarAgotado(filaProducto);
+      actualizarBotonCarrito();
       // Opiniones verificadas: se leen por SLUG de las vistas publicas.
       cargarResenas(filaProducto.slug || null);
       // Llegada desde el correo de "Entregado": abre el formulario con el codigo
@@ -3248,6 +3401,7 @@
   //    su pago esta en nuestras manos.
   configurarVueltaDelPago();
   configurarCantidad();
+  configurarCarritoProducto();
   configurarCompra();
   configurarWhatsApp();
   configurarResena();
