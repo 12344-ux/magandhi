@@ -11,19 +11,26 @@
 > exacto: `cuenta/CONFIGURACION.md` y el relevo temático
 > `docs/RELEVO-CUENTAS-C2-2026-10-16.md` del back-office.
 >
-> **C4 COMERCIAL · rama y PR abiertos; no aplicada, publicada ni medida:** la
-> implementación vive en `feat/comercial-c4-ciclo-carrito` y la tienda tiene el
-> PR #108 abierto. La tienda pasó `node --check`, revisión de diff y revisión
-> semántica. El backend compañero sigue abierto en el PR #283 y pasó su Banco de
-> pruebas PostgreSQL 15/Deno en GitHub Actions, run `39320288166`: incluye la
-> migración `20261105000000_comercial_c4_cuenta_ciclo_carrito.sql` y las Edge
-> Functions `crear-intencion-pago`/`estado-pago`. Estas validaciones son de rama,
-> no evidencia productiva: C4 no está aplicada, fusionada, publicada ni medida;
-> el backend debe desplegarse antes que el frontend C4. Producción continúa en
-> C3, con `carrito_habilitado=false` y el backend aplicado solo hasta
-> `20261104000000`.
+> **C4 COMERCIAL · EN PRODUCCIÓN desde el 19-oct-2026; carrito ENCENDIDO.**
+> Los PR de tienda #108 (C4) y #109 (ids de campaña) están fusionados y
+> publicados. El backend aplicó la migración `20261105000000` y desplegó
+> `crear-intencion-pago` y `estado-pago`. Se probó sin dinero: agregar,
+> consolidar, cambiar, checkout desde el carrito, apertura de Wompi con
+> temporizador y bloqueo mientras el pago está pendiente. **El carrito quedó
+> encendido** porque el trabajo continúa de inmediato. No hubo pago real.
+> Siguen abiertas tres decisiones: slug automático, el bloqueo de 30 minutos
+> (botón cancelar, o carrito libre + "Mis compras" como C5) y el valor final del
+> flag. Punto de arranque: `docs/RELEVO-COMERCIAL-C4-2026-10-19.md` del
+> back-office.
 >
-> La implementación real de la rama consume `bloqueo_pago` (`pendiente` o
+> **Corregido el 19-oct (PR #109):** el carrito rechazaba los ids de las
+> campañas sembradas en 2025 (`00000000-…-0000000c000N`), que son válidos en
+> PostgreSQL pero no son UUID RFC 4122. Afectaba a 5 de 6 campañas y mostraba
+> "revisa tu conexión". Ahora se acepta la forma canónica, los errores de
+> disponibilidad tienen mensajes propios y la caché se renovó
+> (`carrito-core.js?v=3`, `carrito-ui.js?v=5`).
+>
+> La implementación consume `bloqueo_pago` (`pendiente` o
 > `revision`) como autoridad del servidor para impedir edición y otro checkout
 > aun entre pestañas; cada pestaña refleja el estado al recargar el snapshot y
 > las mutaciones quedan protegidas también en servidor. El retorno v2 puede
@@ -89,9 +96,9 @@ Los JPG de `marca/` son referencias históricas. No gobiernan la identidad ni de
 - Vitrina dinámica desde `catalogo_publico`.
 - Tarjetas blancas, acento dorado fijo y disponibilidad derivada.
 - Enlaces hacia `producto/?slug=…` con respaldo por `?id=…`.
-- El acceso al carrito autenticado y su checkout C3 están desplegados bajo un
-  único flag; con el valor final `false` permanecen ocultos y no alteran la
-  navegación ni la compra invitada.
+- El acceso al carrito autenticado y su checkout C4 están desplegados bajo un
+  único flag, **encendido al 19-oct-2026**. Apagado, el carrito permanece oculto
+  y no altera la navegación ni la compra invitada.
 - Contacto real por WhatsApp y `contacto@magandhi.com`.
 
 ### Producto — `producto/index.html`
@@ -111,8 +118,8 @@ Los JPG de `marca/` son referencias históricas. No gobiernan la identidad ni de
 - Checkout Wompi iniciado mediante `crear-intencion-pago`, con la cantidad
   seleccionada también para compra invitada.
 - «Agregar al carrito» y el checkout multiproducto aparecen solo para una cuenta
-  autenticada válida mientras el flag esté encendido. El flag final está en
-  `false`; estos caminos no reemplazan «Comprar ahora».
+  autenticada válida mientras el flag esté encendido (lo está al 19-oct-2026).
+  Estos caminos no reemplazan «Comprar ahora».
 - WhatsApp contextual por producto.
 - Opiniones verificadas en vivo (ver sección siguiente). Estado vacío honesto mientras un producto no tenga opiniones.
 
@@ -138,7 +145,11 @@ Los JPG de `marca/` son referencias históricas. No gobiernan la identidad ni de
   permanentemente y completar Google Production.
 - Estado y siguiente paso exacto en `cuenta/CONFIGURACION.md`.
 
-### Carrito autenticado — `carrito/` (C3 EN PRODUCCIÓN; C4 SOLO EN RAMA, flag productivo OFF)
+### Carrito autenticado — `carrito/` (C4 EN PRODUCCIÓN; flag ENCENDIDO al 19-oct-2026)
+
+> Las viñetas siguientes conservan la descripción técnica escrita durante la
+> implementación. Donde dicen "rama", "PR abierto" o "flag `false`", léase
+> fusionado, publicado y flag encendido.
 
 - En producción, C3 persiste una cesta activa por cuenta, consolida líneas y
   detecta conflictos de versión entre pestañas.
@@ -355,6 +366,12 @@ Antes, al volver de Wompi la ficha se veía igual y «Comprar ahora» seguía ac
 
 ## Pendientes reales
 
+0. **Comercial C4 · decisiones abiertas** (relevo C4 del back-office, §4):
+   - slug automático en servidor, porque una campaña publicada sin slug rompe
+     el checkout del carrito;
+   - bloqueo de 30 minutos → botón "Cancelar este pago" o carrito libre +
+     "Mis compras" (C5);
+   - valor final del flag.
 1. **C2 queda cerrado técnicamente en preapertura:** signup permanece OFF y
    Google External/Testing hasta publicar políticas. Cuando se retome, completar
    políticas y avisos contextuales; luego preparar Google Production y activar
@@ -366,7 +383,11 @@ Antes, al volver de Wompi la ficha se veía igual y «Comprar ahora» seguía ac
 6. Definir cómo escala el grid móvil más allá de los cinco espacios actuales.
 7. Revisar accesibilidad completa de carrusel y modales antes del lanzamiento público definitivo.
 
-## Evolución comercial · producción en C3; C4 construida en rama, pendiente publicar y medir
+## Evolución comercial · C4 en producción con carrito encendido; cierre formal pendiente
+
+> **Actualización 19-oct-2026 (noche):** el punto 4 ya está fusionado,
+> publicado y aplicado en producción. Ver el bloque C4 al inicio de este
+> documento y el relevo C4 del back-office.
 
 El plano aprobado el 16-oct-2026 avanza por tramos. Estado honesto al
 19-oct-2026:
@@ -411,11 +432,9 @@ al nuevo relevo C4 del backend/back-office.
 - Esquema/RLS/RPC/Edge Functions: repositorio del back-office, carpeta `supabase/`.
 - Relevo productivo y evidencia histórica de C3:
   `docs/RELEVO-COMERCIAL-C3-2026-10-17.md` del back-office.
-- Continuación de C4: PR de tienda #108 en
-  `feat/comercial-c4-ciclo-carrito` y PR backend #283 con migración
-  `20261105000000_comercial_c4_cuenta_ciclo_carrito.sql`,
-  `crear-intencion-pago` y `estado-pago`. Ambos PR permanecen abiertos; estas
-  referencias describen implementación, no publicación ni medición productiva.
+- Continuación de C4: `docs/RELEVO-COMERCIAL-C4-2026-10-19.md` del
+  back-office (ejecución productiva, defectos corregidos y decisiones
+  abiertas). PR #108, #109, #283, #284 y #285 están fusionados.
 - Relevo temático de cuentas y sus gates:
   `docs/RELEVO-CUENTAS-C2-2026-10-16.md` del back-office.
 - Diseño y criterios de los siguientes tramos:
