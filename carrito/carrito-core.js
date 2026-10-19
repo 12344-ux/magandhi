@@ -32,7 +32,10 @@ function objetoRespuesta(data) {
 export function normalizarSnapshot(data) {
   const valor = objetoRespuesta(data);
   if (!valor || typeof valor !== 'object' || Array.isArray(valor)) throw new ErrorCarrito('CO_RESPUESTA_INVALIDA');
+  const bloqueoPagoValido = valor.bloqueo_pago === null ||
+    valor.bloqueo_pago === 'pendiente' || valor.bloqueo_pago === 'revision';
   if (typeof valor.habilitado !== 'boolean' ||
+      !bloqueoPagoValido ||
       !(valor.carrito_id === null || (typeof valor.carrito_id === 'string' && UUID.test(valor.carrito_id))) ||
       !entero(valor.version, 0) || !entero(valor.cantidad_lineas, 0, 20) ||
       !entero(valor.cantidad_unidades, 0) || !Array.isArray(valor.items) ||
@@ -81,6 +84,7 @@ export function normalizarSnapshot(data) {
     version: valor.version,
     cantidad_lineas: valor.cantidad_lineas,
     cantidad_unidades: valor.cantidad_unidades,
+    bloqueo_pago: valor.bloqueo_pago,
     items: Object.freeze(items),
   });
 }
@@ -152,6 +156,7 @@ export function mensajeErrorCarrito(error, accion = 'actualizar') {
   }
   if (/NO_DISPONIBLE|RETIRAD|AGOTAD/.test(codigo)) return 'Este producto ya no está disponible por ahora.';
   if (/VERSION|CONFLICT|DESACTUALIZ/.test(codigo)) return 'El carrito cambió en otra pestaña o dispositivo. Ya mostramos su estado más reciente.';
+  if (codigo === 'CO_CARRITO_BLOQUEADO') return 'Hay un pago pendiente o en revisión. Actualizamos el carrito; espera su confirmación antes de cambiarlo.';
   if (/LIMITE.*LINEA|MAX.*LINEA/.test(codigo)) return 'Tu carrito alcanzó el máximo de productos distintos. Retira uno para agregar otro.';
   if (/NO_AUTENTIC|SESION|CUENTA/.test(codigo)) return 'Vuelve a iniciar sesión para usar tu carrito.';
   if (/DESHABILIT|NO_HABILIT/.test(codigo)) return 'El carrito no está disponible en este momento.';

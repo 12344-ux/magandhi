@@ -2,9 +2,10 @@ import { supabase } from '../supabase-config.js';
 
 const WOMPI_CHECKOUT_URL = 'https://checkout.wompi.co/p/';
 const CLAVE_PAGO = 'mg_pago_carrito_en_curso';
+const TTL_MEMORIA_PAGO_MS = 6 * 60 * 60 * 1000;
 const ESPERAS_PAGO_MS = [5000, 12000];
 const FORMATO_REFERENCIA = /^[A-Za-z0-9_-]{6,64}$/;
-const FORMATO_UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+const FORMATO_UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 const ESTADOS_PAGO = new Set(['pendiente', 'revision', 'aprobado', 'rechazado']);
 let memoriaDescartadaPorInvalida = false;
 
@@ -32,7 +33,7 @@ function mismaTupla(memoria, tupla) {
 function aptitudCheckout(estado, pagoBloqueado, sesionInvalidada) {
   if (!sesionValida(estado?.sesion)) return { valida: false, mensaje: 'Inicia sesión para continuar al pago.' };
   if (sesionInvalidada) return { valida: false, mensaje: 'Tu sesión debe validarse de nuevo antes de continuar al pago.' };
-  if (pagoBloqueado) return { valida: false, mensaje: 'Este carrito ya tiene una intención de pago. Usa el aviso de pago para continuar o consultar su estado.' };
+  if (pagoBloqueado) return { valida: false, mensaje: 'Hay un pago pendiente o en revisión. Espera la confirmación antes de cambiar el carrito o iniciar otro pago.' };
   if (estado?.operacion) return { valida: false, mensaje: 'Espera a que termine la actualización del carrito.' };
   const snapshot = estado?.snapshot;
   if (!snapshot) return { valida: false, mensaje: 'Estamos comprobando el estado actual del carrito.' };
@@ -70,6 +71,9 @@ function pagoPublicoValido(pago) {
     pago.moneda === 'COP' &&
     typeof pago.monto_en_centavos === 'string' && /^(?!0)\d{1,18}$/.test(pago.monto_en_centavos) &&
     typeof pago.referencia === 'string' && FORMATO_REFERENCIA.test(pago.referencia) &&
+    typeof pago.expira_en === 'string' &&
+    /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{3}Z$/.test(pago.expira_en) &&
+    Number.isFinite(Date.parse(pago.expira_en)) &&
     typeof pago.firma_integridad === 'string' && /^[a-fA-F0-9]{64}$/.test(pago.firma_integridad) &&
     retorno.protocol === 'https:' && retorno.hostname === 'magandhi.com' &&
     retorno.port === '' && retorno.pathname === '/carrito/' &&
@@ -82,6 +86,7 @@ function extraerPagoPublico(pago) {
     referencia: pago.referencia,
     monto_en_centavos: pago.monto_en_centavos,
     moneda: pago.moneda,
+    expira_en: pago.expira_en,
     firma_integridad: pago.firma_integridad,
     llave_publica: pago.llave_publica.trim(),
     url_redireccion: pago.url_redireccion,
@@ -103,26 +108,68 @@ function datosWompiValidos(datos) {
     (documentoVacio || documentoCompleto);
 }
 
-function memoriaPagoValida(dato) {
+function referenciaMemoria(memoria) {
+  const referencia = memoria?.referencia || memoria?.payload_publico?.referencia || '';
+  return typeof referencia === 'string' && FORMATO_REFERENCIA.test(referencia) ? referencia : '';
+}
+
+function baseMemoriaPagoValida(dato) {
   return !!dato && typeof dato === 'object' && FORMATO_UUID.test(dato.uid || '') &&
     FORMATO_UUID.test(dato.carrito_id || '') &&
     Number.isSafeInteger(dato.carrito_version) && dato.carrito_version >= 0 &&
     Number.isSafeInteger(dato.startedAt) && dato.startedAt > 0 && dato.startedAt <= Date.now() + 60000 &&
-    ESTADOS_PAGO.has(dato.lastState) && pagoPublicoValido(dato.payload_publico) &&
-    datosWompiValidos(dato.datos_wompi);
+    Date.now() - dato.startedAt <= TTL_MEMORIA_PAGO_MS &&
+    ['pendiente', 'revision', 'aprobado'].includes(dato.lastState) && !!referenciaMemoria(dato);
+}
+
+function memoriaPendienteCompleta(memoria) {
+  return baseMemoriaPagoValida(memoria) && memoria.lastState === 'pendiente' &&
+    pagoPublicoValido(memoria.payload_publico) && datosWompiValidos(memoria.datos_wompi) &&
+    referenciaMemoria(memoria) === memoria.payload_publico.referencia;
+}
+
+function memoriaPagoValida(dato) {
+  if (!baseMemoriaPagoValida(dato)) return false;
+  if (dato.lastState === 'pendiente') return memoriaPendienteCompleta(dato);
+  return dato.lastState === 'revision' || dato.lastState === 'aprobado';
+}
+
+function minimizarMemoriaPago(memoria, estado = memoria?.lastState) {
+  const referencia = referenciaMemoria(memoria);
+  if (!memoria || !referencia || !['revision', 'aprobado'].includes(estado)) return null;
+  return {
+    uid: memoria.uid,
+    carrito_id: memoria.carrito_id,
+    carrito_version: memoria.carrito_version,
+    referencia,
+    lastState: estado,
+    startedAt: memoria.startedAt,
+  };
 }
 
 function leerMemoriaPago() {
   try {
     const dato = JSON.parse(sessionStorage.getItem(CLAVE_PAGO) || 'null');
     if (dato === null) return null;
+    if (dato?.lastState === 'rechazado') {
+      memoriaDescartadaPorInvalida = true;
+      sessionStorage.removeItem(CLAVE_PAGO);
+      return null;
+    }
     if (!memoriaPagoValida(dato)) {
       memoriaDescartadaPorInvalida = true;
       sessionStorage.removeItem(CLAVE_PAGO);
       return null;
     }
+    const memoria = dato.lastState === 'pendiente' ? dato : minimizarMemoriaPago(dato);
+    if (!memoria) {
+      memoriaDescartadaPorInvalida = true;
+      sessionStorage.removeItem(CLAVE_PAGO);
+      return null;
+    }
+    if (memoria !== dato) sessionStorage.setItem(CLAVE_PAGO, JSON.stringify(memoria));
     memoriaDescartadaPorInvalida = false;
-    return dato;
+    return memoria;
   } catch {
     memoriaDescartadaPorInvalida = true;
     try { sessionStorage.removeItem(CLAVE_PAGO); } catch { /* No hay memoria utilizable. */ }
@@ -144,6 +191,10 @@ function olvidarPago() {
   try { sessionStorage.removeItem(CLAVE_PAGO); } catch { /* Sin almacenamiento, no hay nada más que limpiar. */ }
 }
 
+function limpiarFormulariosWompi() {
+  document.querySelectorAll('form[data-wompi-temporal="true"]').forEach((formulario) => formulario.remove());
+}
+
 function referenciaDeLaUrl() {
   const parametros = new URLSearchParams(window.location.search);
   const presente = parametros.has('ref');
@@ -156,6 +207,20 @@ function referenciaDeLaUrl() {
     history.replaceState(null, '', window.location.pathname + (consulta ? `?${consulta}` : '') + window.location.hash);
   } catch { /* La referencia se procesa aunque el navegador no permita reemplazar la URL. */ }
   return { presente, referencia, valida: presente && FORMATO_REFERENCIA.test(referencia) };
+}
+
+function checkoutCarritoDeRespuesta(cuerpo) {
+  const checkout = cuerpo?.checkout;
+  if (!checkout || typeof checkout !== 'object' || checkout.tipo !== 'carrito' ||
+      !FORMATO_UUID.test(checkout.id || '') ||
+      !Number.isSafeInteger(checkout.version) || checkout.version < 0 ||
+      checkout.recargar !== true) return null;
+  return { carritoId: checkout.id, version: checkout.version };
+}
+
+function checkoutCoincideConMemoria(checkout, memoria, referencia) {
+  if (!memoria || referenciaMemoria(memoria) !== referencia) return true;
+  return memoria.carrito_id === checkout.carritoId && memoria.carrito_version === checkout.version;
 }
 
 async function cuerpoDeRespuesta(error, data) {
@@ -181,6 +246,7 @@ function estadoHttp(error) {
 
 function errorExigeRecarga(codigo) {
   return codigo === 'MAX_COMPRABLE' || codigo === 'CO_MAX_COMPRABLE' ||
+    codigo === 'CO_CARRITO_BLOQUEADO' ||
     codigo === 'CARRITO_NO_DISPONIBLE' || codigo === 'CARRITO_YA_PROCESADO' ||
     /VERSION|DESACTUALIZ/.test(codigo) ||
     /NO_DISPONIBLE|RETIRAD|AGOTAD|PRECIO.*CAMBI|CAMBI.*PRECIO/.test(codigo) ||
@@ -189,6 +255,7 @@ function errorExigeRecarga(codigo) {
 
 function mensajeErrorPago(codigo, cuerpo) {
   const maximo = typeof cuerpo?.max_comprable === 'number' ? cuerpo.max_comprable : NaN;
+  if (codigo === 'CO_CARRITO_BLOQUEADO') return 'Hay un pago pendiente o en revisión. Actualizamos el carrito para mostrar su estado autoritativo.';
   if (/MAX_COMPRABLE/.test(codigo)) {
     if (Number.isSafeInteger(maximo) && maximo === 0) return 'Un producto se agotó mientras completabas tus datos. Revisa el carrito antes de continuar.';
     if (Number.isSafeInteger(maximo) && maximo > 0) return `La disponibilidad cambió: ahora una línea admite máximo ${maximo} ${maximo === 1 ? 'unidad' : 'unidades'}. Revisa el carrito.`;
@@ -211,16 +278,20 @@ function mensajeErrorPago(codigo, cuerpo) {
 }
 
 function irAWompi(pago, datos) {
-  if (!pagoPublicoValido(pago) || !datosWompiValidos(datos)) return false;
+  if (!pagoPublicoValido(pago) || !datosWompiValidos(datos) ||
+      Date.parse(pago.expira_en) <= Date.now()) return false;
   const formulario = document.createElement('form');
   formulario.method = 'GET';
   formulario.action = WOMPI_CHECKOUT_URL;
+  formulario.dataset.wompiTemporal = 'true';
+  formulario.setAttribute('autocomplete', 'off');
 
   const campos = {
     'public-key': pago.llave_publica,
     currency: pago.moneda,
     'amount-in-cents': pago.monto_en_centavos,
     reference: pago.referencia,
+    'expiration-time': pago.expira_en,
     'signature:integrity': pago.firma_integridad,
     'redirect-url': pago.url_redireccion,
     'customer-data:email': datos.correo,
@@ -248,8 +319,12 @@ function irAWompi(pago, datos) {
     formulario.appendChild(campo);
   }
   document.body.appendChild(formulario);
-  formulario.submit();
-  return true;
+  try {
+    formulario.submit();
+    return true;
+  } finally {
+    formulario.remove();
+  }
 }
 
 export function configurarCheckoutCarrito({ obtenerEstado, recargarCarrito, revalidarSesion }) {
@@ -283,12 +358,15 @@ export function configurarCheckoutCarrito({ obtenerEstado, recargarCarrito, reva
   let reintentosPago = 0;
   let consultaIniciada = false;
   let temporizadorPago = null;
+  let temporizadorMemoriaPago = null;
   let generacionCheckout = 0;
   let generacionConsulta = 0;
   let ultimoUidValido = null;
   let tokenSesionInvalidado = '';
-  let bloqueoProcesado = null;
   let retornoUrl = referenciaDeLaUrl();
+  let referenciaRetornoPendiente = '';
+  let requiereRecargaPago = retornoUrl.presente || !!memoriaPago || memoriaDescartadaPorInvalida;
+  let promesaRecargaPago = null;
 
   function sesionInvalidada() {
     const sesion = obtenerEstado()?.sesion;
@@ -296,10 +374,13 @@ export function configurarCheckoutCarrito({ obtenerEstado, recargarCarrito, reva
   }
 
   function pagoBloqueado() {
-    const tupla = tuplaCarrito(obtenerEstado());
-    if (bloqueoProcesado && mismaTupla(bloqueoProcesado, tupla)) return true;
+    if (requiereRecargaPago) return true;
+    const estado = obtenerEstado();
+    const bloqueoServidor = estado?.snapshot?.bloqueo_pago;
+    if (bloqueoServidor === 'pendiente' || bloqueoServidor === 'revision') return true;
+    const tupla = tuplaCarrito(estado);
     return mismaTupla(memoriaPago, tupla) &&
-      ['pendiente', 'revision', 'aprobado', 'rechazado'].includes(memoriaPago.lastState);
+      (memoriaPago.lastState === 'pendiente' || memoriaPago.lastState === 'revision');
   }
 
   function cancelarConsultas() {
@@ -354,14 +435,36 @@ export function configurarCheckoutCarrito({ obtenerEstado, recargarCarrito, reva
     cancelarConsultas();
   }
 
+  function memoriaDeReferencia(referencia = referenciaActiva) {
+    return referenciaMemoria(memoriaPago) === referencia ? memoriaPago : null;
+  }
+
   function persistirEstadoPago(estado) {
-    if (!memoriaPago || !ESTADOS_PAGO.has(estado)) return;
+    if (!ESTADOS_PAGO.has(estado)) return estado;
+    if (estado === 'rechazado') {
+      olvidarPago();
+      memoriaPago = null;
+      cancelarTemporizadorMemoria();
+      limpiarDatosTemporalesPago();
+      return estado;
+    }
+
+    const memoria = memoriaDeReferencia();
+    if (!memoria) return estado;
     let siguiente = estado;
-    if (memoriaPago.lastState === 'aprobado') siguiente = 'aprobado';
-    else if (memoriaPago.lastState === 'revision' && estado === 'pendiente') siguiente = 'revision';
-    else if (memoriaPago.lastState === 'rechazado' && estado === 'pendiente') siguiente = 'rechazado';
-    memoriaPago = { ...memoriaPago, lastState: siguiente };
-    guardarMemoriaPago(memoriaPago);
+    if (memoria.lastState === 'aprobado') siguiente = 'aprobado';
+    else if (memoria.lastState === 'revision' && estado === 'pendiente') siguiente = 'revision';
+
+    if (siguiente === 'revision' || siguiente === 'aprobado') {
+      memoriaPago = minimizarMemoriaPago(memoria, siguiente);
+      if (!memoriaPago || !guardarMemoriaPago(memoriaPago)) olvidarPago();
+      limpiarDatosTemporalesPago();
+    } else {
+      memoriaPago = { ...memoria, referencia: referenciaMemoria(memoria), lastState: siguiente };
+      guardarMemoriaPago(memoriaPago);
+    }
+    programarCaducidadMemoria();
+    return siguiente;
   }
 
   function pintarTerminal(titulo, mensaje) {
@@ -377,14 +480,13 @@ export function configurarCheckoutCarrito({ obtenerEstado, recargarCarrito, reva
 
   function pintarEstadoPago(estado) {
     const textos = {
-      pendiente: ['Estamos confirmando tu pago', 'Dale un momento. No inicies otro pago para este carrito; puedes volver a la misma intención segura.'],
-      revision: ['Recibimos tu pago', 'Estamos terminando de confirmar el pedido. No inicies otro pago; te contactaremos si hace falta algo.'],
-      aprobado: ['¡Recibimos tu pago!', 'Tu pedido quedó registrado. Este carrito no puede volver a pagarse mientras conserve la misma versión.'],
-      rechazado: ['El pago no se completó', 'Puedes volver a abrir la misma intención de pago segura sin crear una nueva.'],
+      pendiente: ['Estamos confirmando tu pago', 'Dale un momento. No inicies otro pago para este carrito; si esta pestaña conserva la intención, puedes volver al mismo pago seguro.'],
+      revision: ['Tu pago está en revisión', 'No puedes cambiar el carrito ni iniciar otro pago mientras terminamos la confirmación. Te contactaremos si hace falta algo.'],
+      aprobado: ['¡Recibimos tu pago!', 'Tu pedido quedó registrado. Actualizamos el carrito con el estado confirmado por el servidor.'],
+      rechazado: ['El pago no se completó', 'Actualizamos el carrito. Puedes editarlo o iniciar un pago nuevo; esta referencia rechazada no volverá a abrirse.'],
     };
     const solicitado = ESTADOS_PAGO.has(estado) ? estado : 'pendiente';
-    persistirEstadoPago(solicitado);
-    estadoPago = memoriaPago?.lastState || solicitado;
+    estadoPago = persistirEstadoPago(solicitado);
     const visual = estadoPago === 'revision' ? 'pendiente' : estadoPago;
     tarjetaPago.dataset.estado = visual;
     iconoPago.textContent = estadoPago === 'aprobado' ? '✓' : (estadoPago === 'rechazado' ? '!' : '…');
@@ -392,18 +494,21 @@ export function configurarCheckoutCarrito({ obtenerEstado, recargarCarrito, reva
     mensajePago.textContent = textos[estadoPago][1];
     seccionPago.hidden = false;
     reintentarPago.hidden = estadoPago === 'aprobado' || estadoPago === 'rechazado';
-    volverPago.hidden = !memoriaPago || !['pendiente', 'rechazado'].includes(estadoPago);
+    const memoriaReabrible = memoriaDeReferencia();
+    volverPago.hidden = !memoriaPendienteCompleta(memoriaReabrible) || estadoPago !== 'pendiente';
   }
 
   function activarMemoria(memoria, consultar = true) {
     if (!memoriaPagoValida(memoria)) return;
-    const mismaReferencia = referenciaActiva === memoria.payload_publico.referencia;
+    const referencia = referenciaMemoria(memoria);
+    const mismaReferencia = referenciaActiva === referencia;
     memoriaPago = memoria;
-    referenciaActiva = memoria.payload_publico.referencia;
+    referenciaActiva = referencia;
     estadoPago = memoria.lastState;
+    programarCaducidadMemoria();
     if (!mismaReferencia) {
       cancelarConsultas();
-      referenciaActiva = memoria.payload_publico.referencia;
+      referenciaActiva = referencia;
     }
     pintarEstadoPago(memoria.lastState);
     if (consultar && memoria.lastState !== 'aprobado' && !consultaIniciada &&
@@ -413,29 +518,74 @@ export function configurarCheckoutCarrito({ obtenerEstado, recargarCarrito, reva
     }
   }
 
-  function limpiarMemoriaConTerminal(titulo, mensaje) {
-    cancelarConsultas();
+  function olvidarMemoriaDeReferencia(referencia) {
+    if (referenciaMemoria(memoriaPago) !== referencia) return;
     olvidarPago();
     memoriaPago = null;
+    cancelarTemporizadorMemoria();
+  }
+
+  function limpiarMemoriaConTerminal(titulo, mensaje, referencia = referenciaActiva) {
+    cancelarConsultas();
+    olvidarMemoriaDeReferencia(referencia);
+    limpiarDatosTemporalesPago();
+    requiereRecargaPago = true;
+    if (referenciaRetornoPendiente === referencia) referenciaRetornoPendiente = '';
     referenciaActiva = '';
-    bloqueoProcesado = null;
     pintarTerminal(titulo, mensaje);
     actualizar();
+  }
+
+  function prepararPagoTrasRecarga() {
+    if (!requiereRecargaPago) return Promise.resolve(true);
+    if (promesaRecargaPago) return promesaRecargaPago;
+    const estado = obtenerEstado();
+    if (!sesionValida(estado?.sesion) || sesionInvalidada()) return Promise.resolve(false);
+    const uid = estado.sesion.uid;
+    const generacion = generacionCheckout;
+    const tarea = Promise.resolve().then(async () => {
+      let recargado = false;
+      try { recargado = await recargarCarrito() === true; } catch { recargado = false; }
+      if (!recargado || generacion !== generacionCheckout || uid !== obtenerEstado()?.sesion?.uid ||
+          !sesionValida(obtenerEstado()?.sesion) || sesionInvalidada()) return false;
+      requiereRecargaPago = false;
+      return true;
+    });
+    promesaRecargaPago = tarea;
+    tarea.finally(() => {
+      if (promesaRecargaPago !== tarea) return;
+      promesaRecargaPago = null;
+      if (requiereRecargaPago && generacion !== generacionCheckout &&
+          sesionValida(obtenerEstado()?.sesion) && !sesionInvalidada()) {
+        queueMicrotask(actualizar);
+      }
+    });
+    return tarea;
   }
 
   function sincronizarPago() {
     const estado = obtenerEstado();
     if (!sesionValida(estado?.sesion) || sesionInvalidada()) return;
+    if (requiereRecargaPago) {
+      prepararPagoTrasRecarga().then((recargado) => {
+        if (recargado) actualizar();
+      });
+      return;
+    }
 
     if (memoriaDescartadaPorInvalida) {
       memoriaDescartadaPorInvalida = false;
       memoriaPago = null;
+      cancelarTemporizadorMemoria();
+      limpiarDatosTemporalesPago();
       referenciaActiva = '';
-      pintarTerminal(
-        'No pudimos identificar el pago guardado',
-        'La referencia o los datos firmados no eran válidos. Limpiamos el bloqueo para que revises el carrito.'
-      );
-      return;
+      if (!retornoUrl.presente && !referenciaRetornoPendiente) {
+        pintarTerminal(
+          'No pudimos identificar el pago guardado',
+          'La intención guardada venció o sus datos no eran válidos. El servidor conserva la autoridad sobre el estado del carrito.'
+        );
+        return;
+      }
     }
 
     if (retornoUrl.presente) {
@@ -444,18 +594,24 @@ export function configurarCheckoutCarrito({ obtenerEstado, recargarCarrito, reva
       if (!retorno.valida) {
         limpiarMemoriaConTerminal(
           'No pudimos identificar el pago',
-          'La referencia de retorno no es válida. El carrito quedó disponible para que revises su estado.'
+          'La referencia de retorno no es válida. Revisa el estado actual del carrito antes de continuar.'
         );
         return;
       }
-      if (!memoriaPago || memoriaPago.uid !== estado.sesion.uid ||
-          memoriaPago.payload_publico.referencia !== retorno.referencia) {
-        pintarTerminal(
-          'No pudimos recuperar el pago',
-          'Esta referencia no está asociada a la sesión y al carrito guardados en esta pestaña.'
-        );
-        return;
+      referenciaRetornoPendiente = retorno.referencia;
+    }
+
+    if (referenciaRetornoPendiente) {
+      if (referenciaActiva !== referenciaRetornoPendiente) {
+        cancelarConsultas();
+        referenciaActiva = referenciaRetornoPendiente;
       }
+      pintarEstadoPago(memoriaDeReferencia()?.lastState || 'pendiente');
+      if (!consultaIniciada) {
+        consultaIniciada = true;
+        consultarPago(referenciaActiva);
+      }
+      return;
     }
 
     if (!memoriaPago) return;
@@ -466,14 +622,32 @@ export function configurarCheckoutCarrito({ obtenerEstado, recargarCarrito, reva
     activarMemoria(memoriaPago);
   }
 
-  function actualizar() {
-    const aptitud = aptitudCheckout(obtenerEstado(), pagoBloqueado(), sesionInvalidada());
+  function actualizarControles() {
+    const estado = obtenerEstado();
+    const bloqueadoPago = pagoBloqueado();
+    const aptitud = aptitudCheckout(estado, bloqueadoPago, sesionInvalidada());
     boton.disabled = !aptitud.valida;
     ayuda.textContent = aptitud.mensaje;
     if (!enviando) enviar.disabled = !aptitud.valida;
     reintentarPago.disabled = consultandoPago || sesionInvalidada();
     volverPago.disabled = sesionInvalidada();
+    const itemsPorCampana = new Map(
+      (estado?.snapshot?.items || []).map((item) => [item.campana_id, item])
+    );
+    document.querySelectorAll('#co-lines .co-line').forEach((linea) => {
+      const item = itemsPorCampana.get(linea.dataset.campana);
+      const retirar = linea.querySelector('.co-remove');
+      const cantidad = linea.querySelector('select');
+      if (retirar) retirar.disabled = bloqueadoPago || !item;
+      if (cantidad) {
+        cantidad.disabled = bloqueadoPago || !item?.disponible || item.max_comprable <= 0;
+      }
+    });
     actualizarResumen();
+  }
+
+  function actualizar() {
+    actualizarControles();
     sincronizarPago();
   }
 
@@ -519,7 +693,7 @@ export function configurarCheckoutCarrito({ obtenerEstado, recargarCarrito, reva
     if (consultandoPago || !FORMATO_REFERENCIA.test(ref) || ref !== referenciaActiva ||
         !sesionValida(obtenerEstado()?.sesion) || sesionInvalidada()) {
       if (ref && !FORMATO_REFERENCIA.test(ref)) {
-        limpiarMemoriaConTerminal('No pudimos identificar el pago', 'La referencia guardada no es válida. El carrito quedó desbloqueado.');
+        limpiarMemoriaConTerminal('No pudimos identificar el pago', 'La referencia guardada no es válida. Revisa el estado actual del carrito.');
       }
       return;
     }
@@ -557,25 +731,54 @@ export function configurarCheckoutCarrito({ obtenerEstado, recargarCarrito, reva
     if (http === 404) {
       limpiarMemoriaConTerminal(
         'No encontramos esta intención de pago',
-        'La referencia ya no se puede consultar. Limpiamos el bloqueo para que revises el carrito antes de continuar.'
+        'La referencia ya no se puede consultar. Revisa el estado actual del carrito antes de iniciar otro pago.',
+        ref
       );
       return;
     }
     if (errorConsulta || !ESTADOS_PAGO.has(estado)) {
-      // Red, 5xx o respuesta desconocida: conserva el último estado, sin desbloquear ni degradar un terminal.
-      pintarEstadoPago(memoriaPago?.lastState || 'pendiente');
+      // Red, 5xx o respuesta desconocida: conserva el último estado local sin alterar el carrito.
+      pintarEstadoPago(memoriaDeReferencia(ref)?.lastState || 'pendiente');
       actualizar();
       return;
     }
 
+    const checkout = checkoutCarritoDeRespuesta(cuerpo);
+    if (!checkout || !checkoutCoincideConMemoria(checkout, memoriaPago, ref)) {
+      if (referenciaRetornoPendiente === ref) referenciaRetornoPendiente = '';
+      pintarTerminal(
+        'No pudimos validar este pago',
+        'La respuesta no identifica un checkout de carrito válido. No modificamos el carrito; solicita ayuda si el problema continúa.'
+      );
+      actualizarControles();
+      return;
+    }
+
+    if (estado !== 'pendiente') requiereRecargaPago = true;
+    pintarEstadoPago(estado);
+    if (estado === 'pendiente') {
+      actualizar();
+      if (reintentosPago < ESPERAS_PAGO_MS.length) {
+        const espera = ESPERAS_PAGO_MS[reintentosPago];
+        reintentosPago += 1;
+        clearTimeout(temporizadorPago);
+        temporizadorPago = setTimeout(() => consultarPago(ref), espera);
+      }
+      return;
+    }
+
+    clearTimeout(temporizadorPago);
+    temporizadorPago = null;
+    reintentosPago = 0;
+    consultaIniciada = true;
+
+    const recargado = await prepararPagoTrasRecarga();
+    if (generacionEstado !== generacionCheckout || tokenConsulta !== generacionConsulta ||
+        uidAlConsultar !== obtenerEstado()?.sesion?.uid || ref !== referenciaActiva) return;
+    if (referenciaRetornoPendiente === ref) referenciaRetornoPendiente = '';
     pintarEstadoPago(estado);
     actualizar();
-    if (estadoPago === 'pendiente' && reintentosPago < ESPERAS_PAGO_MS.length) {
-      const espera = ESPERAS_PAGO_MS[reintentosPago];
-      reintentosPago += 1;
-      clearTimeout(temporizadorPago);
-      temporizadorPago = setTimeout(() => consultarPago(ref), espera);
-    }
+    if (recargado) requestAnimationFrame(() => seccionPago.focus());
   }
 
   function datosFormulario() {
@@ -642,22 +845,71 @@ export function configurarCheckoutCarrito({ obtenerEstado, recargarCarrito, reva
     mostrarAlerta();
   }
 
+  function limpiarDatosTemporalesPago() {
+    limpiarFormulariosWompi();
+    limpiarFormulario();
+  }
+
+  function cancelarTemporizadorMemoria() {
+    clearTimeout(temporizadorMemoriaPago);
+    temporizadorMemoriaPago = null;
+  }
+
+  function caducarMemoriaLocal() {
+    if (!memoriaPago) return false;
+    cancelarTemporizadorMemoria();
+    cancelarConsultas();
+    olvidarPago();
+    memoriaPago = null;
+    limpiarDatosTemporalesPago();
+    referenciaActiva = '';
+    referenciaRetornoPendiente = '';
+    requiereRecargaPago = true;
+    pintarTerminal(
+      'La recuperación local del pago venció',
+      'Eliminamos los datos temporales y estamos consultando el estado autoritativo del carrito antes de permitir otro pago.'
+    );
+    actualizar();
+    return true;
+  }
+
+  function programarCaducidadMemoria() {
+    cancelarTemporizadorMemoria();
+    if (!memoriaPago) return;
+    const restante = memoriaPago.startedAt + TTL_MEMORIA_PAGO_MS - Date.now();
+    if (restante <= 0) {
+      caducarMemoriaLocal();
+      return;
+    }
+    temporizadorMemoriaPago = setTimeout(() => {
+      temporizadorMemoriaPago = null;
+      revalidarCaducidadMemoria();
+    }, restante);
+  }
+
+  function revalidarCaducidadMemoria() {
+    limpiarFormulariosWompi();
+    if (!memoriaPago) return false;
+    if (Date.now() - memoriaPago.startedAt < TTL_MEMORIA_PAGO_MS) {
+      programarCaducidadMemoria();
+      return false;
+    }
+    return caducarMemoriaLocal();
+  }
+
   function cambiarSesion(sesion) {
     const uidSiguiente = sesionValida(sesion) ? sesion.uid : null;
     const tokenSiguiente = sesion?.sesion?.access_token || '';
     const cambioIdentidad = !!uidSiguiente && !!ultimoUidValido && uidSiguiente !== ultimoUidValido;
     ++generacionCheckout;
     cancelarConsultas();
-    if (cambioIdentidad) {
-      limpiarFormulario();
-      bloqueoProcesado = null;
-    }
+    if (cambioIdentidad) limpiarFormulario();
     if (uidSiguiente && tokenSesionInvalidado && tokenSiguiente && tokenSiguiente !== tokenSesionInvalidado) {
       tokenSesionInvalidado = '';
     }
     if (uidSiguiente) ultimoUidValido = uidSiguiente;
     if (!uidSiguiente || memoriaPago?.uid !== uidSiguiente) ocultarPago();
-    else activarMemoria(memoriaPago);
+    else if (!requiereRecargaPago) activarMemoria(memoriaPago);
     if (!uidSiguiente) {
       modal.setAttribute('aria-hidden', 'true');
       document.body.classList.remove('co-modal-open');
@@ -760,16 +1012,21 @@ export function configurarCheckoutCarrito({ obtenerEstado, recargarCarrito, reva
         }
         restaurarEnvio();
         if (codigo === 'CARRITO_YA_PROCESADO') {
-          bloqueoProcesado = { uid: identidad.uid, carrito_id: identidad.carritoId, carrito_version: identidad.version };
-          await recargarCarrito();
-          if (identidad.generacion !== generacionCheckout || identidad.uid !== obtenerEstado()?.sesion?.uid) return;
+          requiereRecargaPago = true;
           memoriaPago = null;
+          olvidarPago();
+          cancelarTemporizadorMemoria();
+          limpiarDatosTemporalesPago();
+          const recargado = await prepararPagoTrasRecarga();
+          if (identidad.generacion !== generacionCheckout || identidad.uid !== obtenerEstado()?.sesion?.uid) return;
           referenciaActiva = '';
           estadoPago = 'aprobado';
           tarjetaPago.dataset.estado = 'aprobado';
           iconoPago.textContent = '✓';
           tituloPago.textContent = 'Este carrito ya fue procesado';
-          mensajePago.textContent = 'Actualizamos el carrito y mantuvimos bloqueado este mismo estado para evitar un pago duplicado.';
+          mensajePago.textContent = recargado
+            ? 'Actualizamos el carrito con el estado procesado por el servidor para evitar un pago duplicado.'
+            : 'El servidor indicó que este carrito ya fue procesado. Seguiremos bloqueando otro pago hasta poder actualizarlo.';
           seccionPago.hidden = false;
           reintentarPago.hidden = true;
           volverPago.hidden = true;
@@ -786,7 +1043,8 @@ export function configurarCheckoutCarrito({ obtenerEstado, recargarCarrito, reva
       }
 
       const pagoPublico = extraerPagoPublico(cuerpo);
-      if (!pagoPublico) {
+      const checkoutPreparado = checkoutCarritoDeRespuesta(cuerpo);
+      if (!pagoPublico || !checkoutPreparado || checkoutPreparado.carritoId !== identidad.carritoId) {
         restaurarEnvio();
         mostrarAlerta('No pudimos validar la respuesta del pago. No se abrió ningún cobro; inténtalo de nuevo.');
         return;
@@ -795,7 +1053,8 @@ export function configurarCheckoutCarrito({ obtenerEstado, recargarCarrito, reva
       memoriaPago = {
         uid: identidad.uid,
         carrito_id: identidad.carritoId,
-        carrito_version: identidad.version,
+        carrito_version: checkoutPreparado.version,
+        referencia: pagoPublico.referencia,
         startedAt: Date.now(),
         lastState: 'pendiente',
         payload_publico: pagoPublico,
@@ -827,35 +1086,64 @@ export function configurarCheckoutCarrito({ obtenerEstado, recargarCarrito, reva
   });
 
   volverPago.addEventListener('click', () => {
-    if (!memoriaPago || memoriaPago.uid !== obtenerEstado()?.sesion?.uid || sesionInvalidada()) return;
-    if (!['pendiente', 'rechazado'].includes(memoriaPago.lastState)) return;
-    if (memoriaPago.lastState === 'rechazado') {
-      memoriaPago = { ...memoriaPago, lastState: 'pendiente' };
-      guardarMemoriaPago(memoriaPago);
-      pintarEstadoPago('pendiente');
-      actualizar();
+    revalidarCaducidadMemoria();
+    const memoria = memoriaDeReferencia();
+    if (!memoriaPendienteCompleta(memoria) || memoria.uid !== obtenerEstado()?.sesion?.uid || sesionInvalidada()) return;
+    if (estadoPago !== 'pendiente') return;
+    if (!irAWompi(memoria.payload_publico, memoria.datos_wompi)) {
+      volverPago.hidden = true;
+      mensajePago.textContent = 'Esta ventana de pago venció. Estamos actualizando el carrito para que puedas iniciar una nueva de forma segura.';
+      clearTimeout(temporizadorPago);
+      reintentosPago = 0;
+      consultarPago(referenciaActiva);
     }
-    irAWompi(memoriaPago.payload_publico, memoriaPago.datos_wompi);
   });
 
-  window.addEventListener('pageshow', (evento) => {
+  window.addEventListener('pageshow', async (evento) => {
     const modalEstabaAbierto = modal.getAttribute('aria-hidden') === 'false';
-    ++generacionCheckout;
+    const tokenPageshow = ++generacionCheckout;
     cancelarConsultas();
+    cancelarTemporizadorMemoria();
     modal.setAttribute('aria-hidden', 'true');
     document.body.classList.remove('co-modal-open');
     restaurarEnvio(false);
+    limpiarDatosTemporalesPago();
     memoriaPago = leerMemoriaPago();
     referenciaActiva = '';
     estadoPago = '';
+    requiereRecargaPago = requiereRecargaPago || retornoUrl.presente ||
+      !!referenciaRetornoPendiente || !!memoriaPago || memoriaDescartadaPorInvalida;
+    programarCaducidadMemoria();
+
+    let preparado = true;
+    if (requiereRecargaPago && sesionValida(obtenerEstado()?.sesion) && !sesionInvalidada()) {
+      boton.disabled = true;
+      enviar.disabled = true;
+      ayuda.textContent = 'Estamos actualizando el carrito antes de comprobar el pago.';
+      preparado = await prepararPagoTrasRecarga();
+    }
+    if (tokenPageshow !== generacionCheckout) return;
     actualizar();
-    if ((evento.persisted || retornoUrl.presente || !seccionPago.hidden) && !seccionPago.hidden) {
+    if (!preparado) return;
+    if ((evento.persisted || retornoUrl.presente || !!referenciaRetornoPendiente || !!memoriaPago || !seccionPago.hidden) && !seccionPago.hidden) {
       requestAnimationFrame(() => seccionPago.focus());
     } else if (modalEstabaAbierto) {
       requestAnimationFrame(() => boton.focus());
     }
   });
 
+  function revalidarMemoriaPorCicloDeVida() {
+    limpiarFormulariosWompi();
+    if (revalidarCaducidadMemoria()) return;
+    programarCaducidadMemoria();
+  }
+
+  document.addEventListener('visibilitychange', () => {
+    if (document.visibilityState === 'visible') revalidarMemoriaPorCicloDeVida();
+  });
+  window.addEventListener('focus', revalidarMemoriaPorCicloDeVida);
+
+  programarCaducidadMemoria();
   actualizar();
   return { actualizar, cambiarSesion };
 }
