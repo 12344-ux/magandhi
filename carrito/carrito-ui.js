@@ -158,8 +158,9 @@ async function cargar() {
   mostrar('loading');
   try {
     const snapshot = await listarCarrito();
-    if (token !== generacion || uidAlPedir !== uidActual) return;
+    if (token !== generacion || uidAlPedir !== uidActual) return null;
     pintar(snapshot);
+    return snapshot;
   } catch (error) {
     if (token !== generacion || uidAlPedir !== uidActual) return;
     if (error?.codigo === 'CO_CARRITO_DESHABILITADO') {
