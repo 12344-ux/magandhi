@@ -15,7 +15,7 @@
 > implementación vive en `feat/comercial-c4-ciclo-carrito` y la tienda tiene el
 > PR #108 abierto. La tienda pasó `node --check`, revisión de diff y revisión
 > semántica. El backend compañero sigue abierto en el PR #283 y pasó su Banco de
-> pruebas PostgreSQL 15/Deno en GitHub Actions, run `39319540269`: incluye la
+> pruebas PostgreSQL 15/Deno en GitHub Actions, run `39320288166`: incluye la
 > migración `20261105000000_comercial_c4_cuenta_ciclo_carrito.sql` y las Edge
 > Functions `crear-intencion-pago`/`estado-pago`. Estas validaciones son de rama,
 > no evidencia productiva: C4 no está aplicada, fusionada, publicada ni medida;
