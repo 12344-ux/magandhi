@@ -1,6 +1,6 @@
 # MAGANDHI · estado actual de la tienda pública
 
-**Corte:** 17 de octubre de 2026 (el estado completo del proyecto vive en `CONTEXTO-MAGANDHI.md` del repo del back-office)
+**Corte:** 19 de octubre de 2026 (el estado completo del proyecto vive en `CONTEXTO-MAGANDHI.md` del repo del back-office)
 
 > **Cuentas C2 · infraestructura cerrada en preapertura:** `/cuenta/` está
 > publicado con correo/contraseña, recuperación, Google GIS y Turnstile. Se
@@ -11,7 +11,31 @@
 > exacto: `cuenta/CONFIGURACION.md` y el relevo temático
 > `docs/RELEVO-CUENTAS-C2-2026-10-16.md` del back-office.
 >
-> **C3 COMERCIAL · desplegado y probado en estructura; flag final OFF:** backend
+> **C4 COMERCIAL · rama y PR abiertos; no publicada ni medida:** la
+> implementación vive en `feat/comercial-c4-ciclo-carrito` y la tienda tiene el
+> PR #108 abierto. No está fusionada, publicada ni medida. Producción continúa
+> en C3, con `carrito_habilitado=false` y el backend aplicado solo hasta
+> `20261104000000`. El backend compañero también sigue abierto en el PR #283:
+> migración `20261105000000_comercial_c4_cuenta_ciclo_carrito.sql` y Edge
+> Functions `crear-intencion-pago`/`estado-pago`; ese backend debe desplegarse
+> antes que el frontend C4.
+>
+> La implementación real de la rama consume `bloqueo_pago` (`pendiente` o
+> `revision`) como autoridad del servidor para impedir edición y otro checkout
+> aun entre pestañas; cada pestaña refleja el estado al recargar el snapshot y
+> las mutaciones quedan protegidas también en servidor. El retorno v2 puede
+> recuperarse con la referencia y el JWT vigente aunque no exista
+> `sessionStorage`; usa `expiration-time` servidor de 30 minutos. Aprobación,
+> rechazo, expiración y revisión fuerzan recarga autoritativa: rechazo o
+> expiración liberan una versión nueva; aprobación consume solo lo congelado y
+> preserva extras. La memoria terminal minimiza PII y tiene TTL local de 6
+> horas, pero ese TTL nunca desbloquea por sí solo. Los controles se rehabilitan
+> según el snapshot resultante. Compra inmediata y compra invitada permanecen
+> intactas. Nada de esto constituye evidencia productiva: no se atribuyen a C4
+> merge, migración aplicada, postflight, redespliegue, pago, pedido, inventario,
+> asiento, correo, idempotencia ni medición real.
+>
+> **C3 COMERCIAL · estado productivo vigente; probado en estructura:** backend
 > PR #280 (implementación `424e7632d214a90afdb7c9265fbe758bfa3fc580`,
 > merge `275c0dd4548937075770ddd6dace1801c013c929`) y tienda PR #106
 > (implementación `c87934cd6034677be1c1888b8eadce95dcc348a4`, merge
@@ -20,7 +44,7 @@
 > redesplegadas. Se midieron UI OFF/ON y una intención v2 productiva sin pago:
 > total/líneas exactos y una sola intención al reintentar entre sesiones. No
 > hubo aprobación, pedido, inventario, asiento, correo ni webhook repetido. El
-> flag final es `false`; Comercial C4 es el siguiente tramo.
+> flag productivo permanece en `false`.
 >
 > **C1 COMERCIAL · desplegado y probado en estructura:** backend #276 (merge
 > `e75dc1c…`) y tienda #102 (merge `db56c4f…`). La compra inmediata admite
@@ -111,25 +135,48 @@ Los JPG de `marca/` son referencias históricas. No gobiernan la identidad ni de
   permanentemente y completar Google Production.
 - Estado y siguiente paso exacto en `cuenta/CONFIGURACION.md`.
 
-### Carrito autenticado — `carrito/` (C3 COMERCIAL, flag final OFF)
+### Carrito autenticado — `carrito/` (C3 EN PRODUCCIÓN; C4 SOLO EN RAMA, flag productivo OFF)
 
-- Persiste una cesta activa por cuenta, consolida líneas y detecta conflictos de
-  versión entre pestañas.
+- En producción, C3 persiste una cesta activa por cuenta, consolida líneas y
+  detecta conflictos de versión entre pestañas.
 - Permite cambiar cantidades y retirar; relee presentación, precio, máximo y
   disponibilidad sin guardar el precio como autoridad.
 - C3 añade formulario de envío/facturación, intención multiproducto, apertura de
   Wompi por el total firmado y retorno prudente con bloqueo de doble pago.
 - El navegador envía únicamente id/versión de carrito y comprador; no decide
   líneas, precio, monto, UID ni `customer_id`.
-- Una prueba productiva sin pago congeló líneas y subtotales exactos y reutilizó
-  una sola intención para la misma versión desde otra sesión.
+- Una prueba productiva C3 sin pago congeló líneas y subtotales exactos y
+  reutilizó una sola intención para la misma versión desde otra sesión.
 - Logout o cambio de cuenta retira inmediatamente la cesta visible; la compra
   invitada continúa independiente.
 - No hubo aprobación real C3: pedido, inventario, asiento, correo y webhook
-  repetido no están medidos. El consumo/desbloqueo postpago y `customer_id`
-  pertenecen a Comercial C4.
-- El flag productivo final es `false`; la intención estructural permanece en
-  `creada`, sin pedido/evento, y no debe borrarse ni presentarse como venta.
+  repetido no están medidos. La intención estructural permanece en `creada`,
+  sin pedido/evento, y no debe borrarse ni presentarse como venta.
+- El frontend C4 de `feat/comercial-c4-ciclo-carrito`/PR #108 consume
+  `bloqueo_pago: null | pendiente | revision` del snapshot. Es autoridad de
+  servidor para bloquear edición y otro checkout entre pestañas: una pestaña
+  actualiza la UI al recargar, y una mutación atrasada también es rechazada por
+  el backend.
+- El retorno v2 conserva la referencia de la URL y consulta `estado-pago` con el
+  JWT vigente, por lo que es recuperable aunque no exista `sessionStorage`. La
+  ventana Wompi usa el `expiration-time` exacto del servidor, de 30 minutos.
+- `aprobado`, `rechazado`, expiración y `revision` exigen recargar el snapshot
+  autoritativo antes de rehabilitar acciones. Rechazo o expiración liberan el
+  carrito en una versión nueva; aprobación consume las cantidades/campañas
+  congeladas y preserva unidades extra o líneas añadidas.
+- La memoria terminal se reduce a los identificadores mínimos, referencia,
+  estado y tiempo, sin conservar el formulario ni el payload con PII. Su TTL
+  local de 6 horas solo elimina esa recuperación local: nunca desbloquea el
+  carrito por sí mismo. Los selectores, retiros y checkout se rehabilitan según
+  el snapshot vigente, no por memoria local.
+- Compra inmediata y compra invitada permanecen en su flujo histórico e
+  independiente.
+- Todo lo descrito como C4 es implementación de rama asociada al PR #108
+  abierto, no evidencia productiva. Requiere desplegar antes el backend del PR
+  #283 —migración
+  `20261105000000_comercial_c4_cuenta_ciclo_carrito.sql` y Edge Functions
+  `crear-intencion-pago`/`estado-pago`—. Producción conserva C3, flag `false` y
+  backend hasta `20261104000000`.
 
 ### Políticas — `politicas/` (ESTRUCTURA provisional, 8-oct-2026)
 
@@ -278,7 +325,8 @@ en `false` para construir C3.
   líneas válidas y conservó una sola intención al reintentar desde otra sesión.
 - No hubo aprobación, pedido, movimientos de inventario, asiento, correo ni
   webhook repetido. C3 queda correcto en estructura, no end-to-end.
-- Flag productivo final: `false`. Siguiente tramo: Comercial C4.
+- Flag productivo final: `false`. Esta evidencia C3 sigue siendo la base
+  actualmente desplegada mientras C4 permanece solo en rama.
 
 ### Vuelta del pago — `producto/index.html` (D0, 9-oct-2026)
 
@@ -315,28 +363,41 @@ Antes, al volver de Wompi la ficha se veía igual y «Comprar ahora» seguía ac
 6. Definir cómo escala el grid móvil más allá de los cinco espacios actuales.
 7. Revisar accesibilidad completa de carrusel y modales antes del lanzamiento público definitivo.
 
-## Evolución comercial · C3 probado en estructura; C4 siguiente
+## Evolución comercial · producción en C3; C4 construida en rama, pendiente publicar y medir
 
-El plano aprobado el 16-oct-2026 avanza por tramos:
+El plano aprobado el 16-oct-2026 avanza por tramos. Estado honesto al
+19-oct-2026:
 
 1. **C1 COMERCIAL · cantidad en compra inmediata:** desplegado y probado en
    estructura. El límite end-to-end para cantidad 2 se conserva.
 2. **C2 · carrito autenticado persistente:** desplegado y probado en estructura.
 3. **C3 · checkout multiproducto:** desplegado y probado en estructura; intención
-   v2, líneas/total y reutilización entre sesiones medidos sin completar pago. El
-   flag final está en `false`.
-4. **C4 · vínculo transaccional y ciclo postpago del carrito:** siguiente tramo.
-   Debe derivar `customer_id` en servidor, consumir solo líneas aprobadas y
-   desbloquear correctamente rechazo/revisión.
+   v2, líneas/total y reutilización entre sesiones medidos sin completar pago. Es
+   el estado que continúa en producción, con flag `false` y backend aplicado
+   hasta `20261104000000`.
+4. **C4 · vínculo transaccional y ciclo del carrito:** implementación en
+   `feat/comercial-c4-ciclo-carrito`, con PR de tienda #108 abierto; todavía sin
+   fusionar, publicar ni medir. Implementa `bloqueo_pago` autoritativo
+   `pendiente`/`revision`, retorno v2 recuperable con JWT aun sin memoria de
+   pestaña, expiración servidor de 30 minutos, recarga de snapshot en estados
+   terminales o revisión, nueva versión tras rechazo/expiración, consumo del
+   snapshot aprobado preservando extras, memoria terminal mínima con TTL local
+   de 6 horas que no desbloquea por sí solo y rehabilitación de controles según
+   el snapshot. Compra inmediata e invitada no cambian. Depende del PR backend
+   #283, su migración
+   `20261105000000_comercial_c4_cuenta_ciclo_carrito.sql` y el despliegue previo
+   de `crear-intencion-pago` y `estado-pago`.
 5. **Promocionar:** pendiente completo: enlace oficial y por canal, preview
    social, textos, QR, kit visual, registro de enlaces y atribución hasta la
    venta. Meta Ads, Pixel y Conversions API quedan fuera de esta fase.
 
 C3 no demuestra todavía aprobación, pedido multiproducto, movimientos de
 inventario, asiento, correo o repetición real del webhook. Esa medición queda
-pendiente hasta que el dueño autorice una compra productiva. El plano de
-decisiones y criterios vive en el back-office:
-`docs/PLANO-FASE-COMERCIAL.md`.
+pendiente hasta que el dueño autorice una compra productiva. C4 tampoco tiene
+al corte evidencia de despliegue, aplicación de su migración, postflight,
+redespliegue ni prueba productiva. El plano de decisiones y criterios vive en
+`docs/PLANO-FASE-COMERCIAL.md`; para continuar la implementación C4, remitirse
+al nuevo relevo C4 del backend/back-office.
 
 ## Fuentes de verdad
 
@@ -345,8 +406,13 @@ decisiones y criterios vive en el back-office:
 - Presentación pública: `index.html` y `producto/index.html`.
 - Cuenta C2 y gates de apertura: `cuenta/CONFIGURACION.md`.
 - Esquema/RLS/RPC/Edge Functions: repositorio del back-office, carpeta `supabase/`.
-- Relevo global y punto de entrada comercial vigente:
+- Relevo productivo y evidencia histórica de C3:
   `docs/RELEVO-COMERCIAL-C3-2026-10-17.md` del back-office.
+- Continuación de C4: PR de tienda #108 en
+  `feat/comercial-c4-ciclo-carrito` y PR backend #283 con migración
+  `20261105000000_comercial_c4_cuenta_ciclo_carrito.sql`,
+  `crear-intencion-pago` y `estado-pago`. Ambos PR permanecen abiertos; estas
+  referencias describen implementación, no publicación ni medición productiva.
 - Relevo temático de cuentas y sus gates:
   `docs/RELEVO-CUENTAS-C2-2026-10-16.md` del back-office.
 - Diseño y criterios de los siguientes tramos:
