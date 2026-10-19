@@ -1,6 +1,10 @@
 import { supabase } from '../supabase-config.js';
 
-const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+// Forma canónica 8-4-4-4-12 que acepta PostgreSQL para `uuid`. No exige versión
+// ni variante RFC 4122: las campañas sembradas en 2025 usan ids como
+// 00000000-0000-0000-0000-0000000c0001, válidos en la base. La autorización
+// real (campaña publicada, precio, máximo, propietario) la decide el servidor.
+const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 const CODIGO_CO = /\b(CO_[A-Z0-9_]+)(?::\s*(\d+))?/;
 
 export class ErrorCarrito extends Error {
@@ -154,7 +158,9 @@ export function mensajeErrorCarrito(error, accion = 'actualizar') {
       ? 'Este producto ya no está disponible por ahora.'
       : `Ahora puedes elegir hasta ${error.maxComprable} ${error.maxComprable === 1 ? 'unidad' : 'unidades'}. Revisa la cantidad.`;
   }
-  if (/NO_DISPONIBLE|RETIRAD|AGOTAD/.test(codigo)) return 'Este producto ya no está disponible por ahora.';
+  if (/NO_DISPONIBLE|NO_COMPRABLE|RETIRAD|AGOTAD/.test(codigo)) return 'Este producto ya no está disponible por ahora.';
+  if (codigo === 'CO_MAX_COMPRABLE') return 'Alcanzaste la cantidad máxima disponible de este producto. Revisa tu carrito.';
+  if (/SOLICITUD_INVALIDA|CANTIDAD_INVALIDA/.test(codigo)) return 'No pudimos procesar este producto. Recarga la página e inténtalo de nuevo.';
   if (/VERSION|CONFLICT|DESACTUALIZ/.test(codigo)) return 'El carrito cambió en otra pestaña o dispositivo. Ya mostramos su estado más reciente.';
   if (codigo === 'CO_CARRITO_BLOQUEADO') return 'Hay un pago pendiente o en revisión. Actualizamos el carrito; espera su confirmación antes de cambiarlo.';
   if (/LIMITE.*LINEA|MAX.*LINEA/.test(codigo)) return 'Tu carrito alcanzó el máximo de productos distintos. Retira uno para agregar otro.';

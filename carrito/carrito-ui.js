@@ -4,7 +4,7 @@ import {
   cambiarCantidadCarrito,
   quitarDelCarrito,
   mensajeErrorCarrito,
-} from './carrito-core.js?v=2';
+} from './carrito-core.js?v=3';
 import { configurarCheckoutCarrito } from './checkout-carrito.js?v=3';
 
 const vistas = ['loading', 'session', 'disabled', 'error', 'empty', 'content'];
