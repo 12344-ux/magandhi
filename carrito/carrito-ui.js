@@ -4,8 +4,8 @@ import {
   cambiarCantidadCarrito,
   quitarDelCarrito,
   mensajeErrorCarrito,
-} from './carrito-core.js';
-import { configurarCheckoutCarrito } from './checkout-carrito.js';
+} from './carrito-core.js?v=2';
+import { configurarCheckoutCarrito } from './checkout-carrito.js?v=2';
 
 const vistas = ['loading', 'session', 'disabled', 'error', 'empty', 'content'];
 let uidActual = null;
@@ -48,7 +48,7 @@ function mensajeCambio(item) {
   return '';
 }
 
-function crearLinea(item, version) {
+function crearLinea(item, version, pagoBloqueado) {
   const linea = document.createElement('article');
   linea.className = 'co-line';
   linea.dataset.campana = item.campana_id;
@@ -95,7 +95,7 @@ function crearLinea(item, version) {
   etiqueta.textContent = 'Cantidad';
   const select = document.createElement('select');
   select.id = idSelect;
-  select.disabled = !item.disponible || item.max_comprable === 0;
+  select.disabled = pagoBloqueado || !item.disponible || item.max_comprable === 0;
 
   if (item.requiere_ajuste || item.cantidad > item.max_comprable) {
     const opcion = document.createElement('option');
@@ -119,6 +119,7 @@ function crearLinea(item, version) {
   retirar.type = 'button';
   retirar.className = 'co-remove';
   retirar.textContent = 'Retirar';
+  retirar.disabled = pagoBloqueado;
   retirar.addEventListener('click', () => quitar(item, version, linea));
   acciones.append(campo, retirar);
   linea.appendChild(acciones);
@@ -128,25 +129,36 @@ function crearLinea(item, version) {
 function pintar(snapshot) {
   snapshotActual = snapshot;
   if (!snapshot.habilitado) {
-    limpiar();
+    porId('co-lines').replaceChildren();
+    aviso();
     mostrar('disabled');
+    checkout.actualizar();
     return;
   }
   if (snapshot.cantidad_lineas === 0) {
-    limpiar();
+    porId('co-lines').replaceChildren();
+    aviso();
     mostrar('empty');
+    checkout.actualizar();
     return;
   }
+  const pagoBloqueado = snapshot.bloqueo_pago === 'pendiente' || snapshot.bloqueo_pago === 'revision';
   const lineas = document.createDocumentFragment();
-  for (const item of snapshot.items) lineas.appendChild(crearLinea(item, snapshot.version));
+  for (const item of snapshot.items) lineas.appendChild(crearLinea(item, snapshot.version, pagoBloqueado));
   porId('co-lines').replaceChildren(lineas);
   porId('co-count').textContent = `${snapshot.cantidad_unidades} ${snapshot.cantidad_unidades === 1 ? 'unidad' : 'unidades'}`;
   const subtotalCompleto = snapshot.items.every((item) => item.precio_disponible);
   const subtotal = snapshot.items.reduce((total, item) =>
     total + (item.precio_disponible ? item.subtotal_actual : 0), 0);
   porId('co-subtotal').textContent = subtotalCompleto ? moneda(subtotal) : 'Por confirmar';
-  aviso(snapshot.items.some((item) => item.requiere_ajuste || !item.disponible || !item.precio_disponible)
-    ? 'Algunos productos cambiaron. Revísalos antes de continuar.' : '');
+  if (pagoBloqueado) {
+    aviso(snapshot.bloqueo_pago === 'revision'
+      ? 'Este pago está en revisión. No puedes cambiar el carrito ni iniciar otro pago hasta que termine la confirmación.'
+      : 'Hay un pago pendiente. No puedes cambiar el carrito ni iniciar otro pago mientras se confirma.');
+  } else {
+    aviso(snapshot.items.some((item) => item.requiere_ajuste || !item.disponible || !item.precio_disponible)
+      ? 'Algunos productos cambiaron. Revísalos antes de continuar.' : '');
+  }
   mostrar('content');
   checkout.actualizar();
 }
@@ -158,27 +170,36 @@ async function cargar() {
   mostrar('loading');
   try {
     const snapshot = await listarCarrito();
-    if (token !== generacion || uidAlPedir !== uidActual) return;
+    if (token !== generacion || uidAlPedir !== uidActual) return false;
     pintar(snapshot);
+    return true;
   } catch (error) {
-    if (token !== generacion || uidAlPedir !== uidActual) return;
+    if (token !== generacion || uidAlPedir !== uidActual) return false;
     if (error?.codigo === 'CO_CARRITO_DESHABILITADO') {
       mostrar('disabled');
       checkout.actualizar();
-      return;
+      return false;
     }
     if (error?.codigo === 'CO_CUENTA_NO_DISPONIBLE') {
       revalidarSesionCliente(true);
-      return;
+      return false;
     }
     porId('co-error-message').textContent = mensajeErrorCarrito(error, 'cargar');
     mostrar('error');
     checkout.actualizar();
+    return false;
   }
 }
 
 async function ejecutar(linea, tarea, accion, restaurarFoco) {
   if (operacion || !uidActual) return;
+  if (snapshotActual?.bloqueo_pago === 'pendiente' || snapshotActual?.bloqueo_pago === 'revision') {
+    aviso(snapshotActual.bloqueo_pago === 'revision'
+      ? 'Este pago está en revisión. Espera su confirmación antes de cambiar el carrito.'
+      : 'Hay un pago pendiente. Espera su confirmación antes de cambiar el carrito.');
+    checkout.actualizar();
+    return;
+  }
   const uidOperacion = uidActual;
   const generacionOperacion = generacion;
   operacion = true;
@@ -199,7 +220,8 @@ async function ejecutar(linea, tarea, accion, restaurarFoco) {
       mostrar('disabled');
     } else if (error?.codigo === 'CO_CUENTA_NO_DISPONIBLE') {
       revalidarSesionCliente(true);
-    } else if (/VERSION|CONFLICT|DESACTUALIZ/.test(String(error?.codigo || ''))) {
+    } else if (/VERSION|CONFLICT|DESACTUALIZ/.test(String(error?.codigo || '')) ||
+        error?.codigo === 'CO_CARRITO_BLOQUEADO') {
       await cargar();
       aviso(mensaje);
     } else {
