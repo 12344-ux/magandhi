@@ -1,5 +1,5 @@
 import { observarSesionCliente } from '../cliente/cliente-sesion.js';
-import { listarCarrito } from '../carrito/carrito-core.js';
+import { listarCarrito } from '../carrito/carrito-core.js?v=3';
 
 const slots = [...document.querySelectorAll('[data-cuenta-carrito]')];
 const observadores = new Set();
