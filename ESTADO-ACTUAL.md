@@ -11,14 +11,17 @@
 > exacto: `cuenta/CONFIGURACION.md` y el relevo temático
 > `docs/RELEVO-CUENTAS-C2-2026-10-16.md` del back-office.
 >
-> **C4 COMERCIAL · rama y PR abiertos; no publicada ni medida:** la
+> **C4 COMERCIAL · rama y PR abiertos; no aplicada, publicada ni medida:** la
 > implementación vive en `feat/comercial-c4-ciclo-carrito` y la tienda tiene el
-> PR #108 abierto. No está fusionada, publicada ni medida. Producción continúa
-> en C3, con `carrito_habilitado=false` y el backend aplicado solo hasta
-> `20261104000000`. El backend compañero también sigue abierto en el PR #283:
-> migración `20261105000000_comercial_c4_cuenta_ciclo_carrito.sql` y Edge
-> Functions `crear-intencion-pago`/`estado-pago`; ese backend debe desplegarse
-> antes que el frontend C4.
+> PR #108 abierto. La tienda pasó `node --check`, revisión de diff y revisión
+> semántica. El backend compañero sigue abierto en el PR #283 y pasó su Banco de
+> pruebas PostgreSQL 15/Deno en GitHub Actions, run `39319540269`: incluye la
+> migración `20261105000000_comercial_c4_cuenta_ciclo_carrito.sql` y las Edge
+> Functions `crear-intencion-pago`/`estado-pago`. Estas validaciones son de rama,
+> no evidencia productiva: C4 no está aplicada, fusionada, publicada ni medida;
+> el backend debe desplegarse antes que el frontend C4. Producción continúa en
+> C3, con `carrito_habilitado=false` y el backend aplicado solo hasta
+> `20261104000000`.
 >
 > La implementación real de la rama consume `bloqueo_pago` (`pendiente` o
 > `revision`) como autoridad del servidor para impedir edición y otro checkout
