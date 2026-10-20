@@ -5,8 +5,8 @@ import {
   quitarDelCarrito,
   mensajeErrorCarrito,
 } from './carrito-core.js?v=3';
-import { configurarCheckoutCarrito } from './checkout-carrito.js?v=5';
-import { sincronizarCuentaCarrito } from '../componentes/cuenta-carrito.js?v=4';
+import { configurarCheckoutCarrito } from './checkout-carrito.js?v=6';
+import { sincronizarCuentaCarrito } from '../componentes/cuenta-carrito.js?v=5';
 
 const vistas = ['loading', 'session', 'disabled', 'error', 'empty', 'content'];
 let uidActual = null;
@@ -60,7 +60,7 @@ function crearLinea(item, version, pagoBloqueado) {
   if (!item.retirada) {
     const enlace = document.createElement('a');
     enlace.href = item.slug
-      ? `../producto/?slug=${encodeURIComponent(item.slug)}`
+      ? `../producto/${encodeURIComponent(item.slug)}/`
       : `../producto/?id=${encodeURIComponent(item.campana_id)}`;
     enlace.textContent = item.nombre;
     titulo.appendChild(enlace);

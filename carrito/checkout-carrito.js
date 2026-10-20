@@ -1,5 +1,5 @@
 import { supabase } from '../supabase-config.js';
-import { abrirCentroCuenta, invalidarComprasCuenta } from '../componentes/cuenta-carrito.js?v=4';
+import { abrirCentroCuenta, invalidarComprasCuenta } from '../componentes/cuenta-carrito.js?v=5';
 
 const WOMPI_CHECKOUT_URL = 'https://checkout.wompi.co/p/';
 const CLAVE_PAGO = 'mg_pago_carrito_en_curso';

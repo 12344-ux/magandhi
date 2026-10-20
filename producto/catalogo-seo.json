@@ -1,0 +1,81 @@
+{
+  "version": 1,
+  "politicas": "borrador",
+  "productos": [
+    {
+      "id": "22af3f92-3085-49e1-89b2-0dc680f4c6e2",
+      "slug": "cubo-rubik-4x4-qiyi",
+      "aliases": [],
+      "retirado": false,
+      "nombre": "CUBO RUBIK 4X4 QIYI",
+      "subtitulo": "Listo para la competicion",
+      "descripcion": "Un producto de gran calidad, marca qiyi Una de las marcas de cubos de rubik MAS IMPORTANTES y mas usadas por amantes del rubik tanto como hobbie como para practicas en competencias profesionales.",
+      "imagenes": [],
+      "imagen_banner_path": "mvfu34x5-i2ii6jp5.webp",
+      "orden": 1
+    },
+    {
+      "id": "00000000-0000-0000-0000-0000000c0001",
+      "slug": "grisi-manzanilla-gold",
+      "aliases": [],
+      "retirado": false,
+      "nombre": "Shampoo Manzanilla GRISI Gold",
+      "subtitulo": "Con extracto de cúrcuma · 400 mL · Marca Grisi",
+      "descripcion": "Shampoo de manzanilla con extracto de cúrcuma de la marca Grisi, presentación de 400 mL. Pensado para quienes buscan un shampoo de uso diario con ingredientes de origen botánico.",
+      "imagenes": [
+        "muripc1h-mnuanpn5.webp",
+        "muriq80y-q4a1k6ph.webp"
+      ],
+      "imagen_banner_path": "muripb9m-9krlie57.webp",
+      "orden": 2
+    },
+    {
+      "id": "00000000-0000-0000-0000-0000000c0002",
+      "slug": "serum-facial-rosa-mosqueta",
+      "aliases": [],
+      "retirado": false,
+      "nombre": "Sérum Facial de Rosa Mosqueta",
+      "subtitulo": "Aceite botánico · 30 mL",
+      "descripcion": "Aceite de rosa mosqueta para rutina facial nocturna. Te contamos qué contiene, sin promesas de milagros.",
+      "imagenes": [],
+      "imagen_banner_path": "murjesma-x4cyf584.webp",
+      "orden": 3
+    },
+    {
+      "id": "00000000-0000-0000-0000-0000000c0003",
+      "slug": "balsamo-barba-cedro",
+      "aliases": [],
+      "retirado": false,
+      "nombre": "Bálsamo para Barba de Cedro",
+      "subtitulo": "Con aceite de argán · 60 mL",
+      "descripcion": "Bálsamo para dar forma y suavidad a la barba. Aroma de cedro; lo revisamos antes de ofrecerlo.",
+      "imagenes": [],
+      "imagen_banner_path": "murjfdj0-cdc9am4y.webp",
+      "orden": 4
+    },
+    {
+      "id": "00000000-0000-0000-0000-0000000c0004",
+      "slug": "jabon-coco-hogar",
+      "aliases": [],
+      "retirado": false,
+      "nombre": "Jabón de Coco para el Hogar",
+      "subtitulo": "Multiusos concentrado · 500 g",
+      "descripcion": "Jabón de coco para lavado y limpieza del hogar. Rinde y huele a limpio; nada de promesas de más.",
+      "imagenes": [],
+      "imagen_banner_path": "murjhm0k-1gi3dcqk.webp",
+      "orden": 5
+    },
+    {
+      "id": "00000000-0000-0000-0000-0000000c0005",
+      "slug": "miel-cafe-artesanal",
+      "aliases": [],
+      "retirado": false,
+      "nombre": "Miel de Café Artesanal",
+      "subtitulo": "Origen colombiano · 250 g",
+      "descripcion": "Miel con notas de café de finca colombiana. Producto natural, envasado tal como se cosecha.",
+      "imagenes": [],
+      "imagen_banner_path": "murji5px-992pkc7g.webp",
+      "orden": 6
+    }
+  ]
+}

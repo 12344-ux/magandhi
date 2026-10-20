@@ -75,6 +75,14 @@ function ruta() {
   if (base !== '/' && p.startsWith(base)) p = '/' + p.slice(base.length);
   return (p || '/').slice(0, 120);
 }
+function slugProducto(params) {
+  const query = (params.get('slug') || '').trim().toLowerCase();
+  if (/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(query)) return query;
+  const dataset = (document.body && document.body.dataset.productoSlug || '').trim().toLowerCase();
+  if (/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(dataset)) return dataset;
+  const match = ruta().match(/^\/producto\/([a-z0-9]+(?:-[a-z0-9]+)*)\/?$/);
+  return match ? match[1] : '';
+}
 
 // ---------------- Envío por lotes ----------------
 let cola = [], temporizador = null, visitante = null, sesion = null, apagada = false;
@@ -110,7 +118,7 @@ function iniciar() {
   visitante = localStorage.getItem(K_VISITANTE);
   if (!visitante || !/^[A-Za-z0-9_-]{16,40}$/.test(visitante)) { visitante = azar(16); try { localStorage.setItem(K_VISITANTE, visitante); } catch (_) {} }
   const s = sesionActual(); sesion = s.id;
-  const params = new URLSearchParams(location.search);
+  const params = new URLSearchParams(window.__mgBusquedaInicial || location.search);
   const utm = (params.get('utm_campaign') || '').toLowerCase();
   const utmOk = /^[a-z0-9-]{1,60}$/.test(utm) ? utm : undefined;
   // Se recuerda la campaña de llegada durante la visita para que la COMPRA
@@ -119,7 +127,10 @@ function iniciar() {
   const org = origen(params);
   const entrada = s.nueva || (org !== null && org !== 'directo');
   encolar('pagina_vista', { origen: entrada ? (org || 'directo') : undefined, entrada, utm_campaign: utmOk });
-  if (/^\/producto\/?$/.test(ruta())) encolar('producto_visto', { slug: (params.get('slug') || '').trim().toLowerCase() });
+  const productoSlug = slugProducto(params);
+  if (productoSlug && /^\/producto\/(?:[a-z0-9-]+\/?)?$/.test(ruta())) {
+    encolar('producto_visto', { slug: productoSlug });
+  }
   if (utmOk && (params.get('utm_source') || '').toLowerCase() === 'email') encolar('llegada_campana', { utm_campaign: utmOk, origen: 'email' });
   document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'hidden') enviar(true); });
   window.addEventListener('pagehide', () => enviar(true));
@@ -166,14 +177,14 @@ window.mgCookies = async () => { if (await configActiva()) aviso(); };
 // ---------------------------------------------------------------------------
 // window.mgProcedencia() · de dónde viene esta compra
 // ---------------------------------------------------------------------------
-// La usa la página de producto al iniciar el pago, para que el pedido web quede
-// atribuido con exactitud a la campaña que lo trajo (hoy la atribución de los
-// correos es aproximada) y para poder medir el embudo real hasta la compra.
+// La usa la página de producto al iniciar el pago. `utm_campaign` conserva
+// compatibilidad descriptiva con Email Marketing; la atribución exacta futura
+// pertenece al código propio P4. `mg_vid` permite medir el embudo consentido.
 //
 // DOS NIVELES, a propósito:
-//   · utm_campaign  = el identificador de NUESTRA propia campaña, tomado de la
-//     URL que la persona abrió. No identifica a nadie y viaja siempre: es lo
-//     que permite decir con honestidad "esta venta vino de este correo".
+//   · utm_campaign  = etiqueta descriptiva de una campaña propia tomada de la
+//     URL. No identifica a nadie, pero el navegador puede copiarla o alterarla:
+//     P0 la clasifica como legacy_email_utm, no verificada y no exacta.
 //   · mg_vid        = el identificador aleatorio del navegador. SOLO existe si
 //     la persona ACEPTÓ la analítica. Si la rechazó, aquí no hay nada y la
 //     compra no lleva identificador: no se crea uno para la ocasión.

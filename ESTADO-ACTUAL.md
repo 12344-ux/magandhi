@@ -83,15 +83,24 @@ Los JPG de `marca/` son referencias históricas. No gobiernan la identidad ni de
 - Banner Historia con composición independiente PC/móvil.
 - Vitrina dinámica desde `catalogo_publico`.
 - Tarjetas blancas, acento dorado fijo y disponibilidad derivada.
-- Enlaces hacia `producto/?slug=…` con respaldo por `?id=…`.
+- Enlaces hacia `producto/<slug>/` con respaldo por `?id=…`.
 - El acceso al carrito autenticado y su checkout C5 están desplegados bajo un
   único flag, **encendido al 20-oct-2026**. Apagado, el carrito permanece oculto
   y no altera la navegación ni la compra invitada.
 - Contacto real por WhatsApp y `contacto@magandhi.com`.
 
-### Producto — `producto/index.html`
+### Producto — `producto/index.html` + shells P1
 
-- Plantilla genérica para cualquier producto publicado.
+- `producto/index.html` sigue siendo la única plantilla funcional y la fuente de
+  todos los shells completos generados; no se mantiene lógica manual por producto.
+- La URL preferida es `/producto/<slug>/`; query por slug/UUID sigue compatible.
+  La plantilla resuelve query, `data-producto-id`, `data-producto-slug` y path.
+- Cada shell aporta HTML inicial compartible: título, description, canonical,
+  Open Graph, Twitter Card, JSON-LD `Product` sin `Offer`, H1, subtítulo, imagen y
+  descripción. Precio, stock, urgencia y máximo nunca se congelan: continúan
+  leyéndose de `catalogo_publico`.
+- Tras validar la fila viva, la plantilla actualiza metadata y contenido, habilita
+  compra/WhatsApp según corresponda y normaliza la URL sin perder el hash.
 - Consulta una fila de `catalogo_publico` por slug o UUID.
 - Galería dinámica: miniaturas, flechas PC, swipe móvil y navegación circular.
 - Foto principal grande y miniaturas `-sm` cuando existen.
@@ -110,6 +119,24 @@ Los JPG de `marca/` son referencias históricas. No gobiernan la identidad ni de
   Estos caminos no reemplazan «Comprar ahora».
 - WhatsApp contextual por producto.
 - Opiniones verificadas en vivo (ver sección siguiente). Estado vacío honesto mientras un producto no tenga opiniones.
+
+### Operación Promocionar P1 (rama de implementación; no declara despliegue)
+
+- Fuente versionada: `producto/catalogo-seo.json`. Conserva aliases por UUID y
+  marca como retiradas las filas que dejen de aparecer en la vista pública.
+- `node scripts/generar-productos.mjs --sync` hace una consulta de solo lectura a
+  `catalogo_publico` con la publishable key existente, actualiza el catálogo y
+  regenera shells, aliases, `sitemap.xml` y `robots.txt`.
+- `node scripts/generar-productos.mjs` regenera desde el catálogo versionado sin
+  red. `node scripts/generar-productos.mjs --check` no escribe y falla ante drift.
+- El generador nunca borra directorios y rechaza sobrescribir un `index.html` no
+  marcado como generado (salvo la migración explícita del redirect histórico de
+  Grisi). Los aliases activos redirigen al slug actual conservando query y hash.
+- Las imágenes salen del bucket público `campanas`; si una fila no tiene imagen,
+  se usa `https://magandhi.com/logo.png` como fallback estable de marca.
+- Plantilla y shells conservan `noindex,follow` mientras las políticas públicas
+  estén en borrador. P1 no debe declararse publicado ni retirar ese gate solo por
+  haber generado estos archivos.
 
 ### Mi cuenta — `cuenta/` (C2, preapertura 16-oct-2026)
 
@@ -206,7 +233,8 @@ Sistema aprobado el 7 de octubre de 2026. Es el esquema que siguen **todos** los
 - `Dejar una reseña` exige estrellas; el comentario es opcional. Envía el código del pedido a `enviar-opinion`.
 - Contorno dorado de marca en las tarjetas y en el botón de ver todas.
 
-La ruta `producto/grisi-manzanilla-gold/` es un redirect histórico de compatibilidad y no debe volver a convertirse en una ficha duplicada.
+Las rutas canónicas de producto se generan desde `producto/index.html`; no debe
+volver a existir una ficha manual o un precio escrito a mano por slug.
 
 ## Contrato de datos
 
@@ -341,11 +369,11 @@ Antes, al volver de Wompi la ficha se veía igual y «Comprar ahora» seguía ac
 
 ## Pendientes reales
 
-0. **Comercial C5 · despliegue productivo pendiente:** código fusionado en
-   backend #287 y tienda #113; falta reconciliar ledger C4, preparar paquete
-   operativo, desplegar Edge C5, apagar carrito, aplicar `20261106000000`,
-   postflight, reactivar y probar sin dinero. Pago real solo con autorización.
-   También falta el slug automático server-side como forward independiente.
+0. **Comercial C5 · cierre transaccional pendiente:** estructura, migraciones,
+   Edge y tienda están desplegadas y el carrito continúa encendido. Falta una
+   compra real por carrito, únicamente con autorización expresa, para medir
+   pedido único, `customer_id`, inventario/proveedor, asiento, correo e
+   idempotencia del webhook.
 1. **Opinión por cuenta:** el botón solo aparece después de entregado, pero su
    registro autenticado queda deliberadamente pendiente; el código de reseña
    histórico continúa funcionando.
@@ -356,7 +384,9 @@ Antes, al volver de Wompi la ficha se veía igual y «Comprar ahora» seguía ac
 2. Políticas reales: privacidad, condiciones, entregas, cambios/devoluciones y tratamiento de datos.
 3. Canal/página formal de PQRS; mientras tanto se usa el correo real.
 4. Repaso de textos de la sección de opiniones. El diseño quedó aprobado; solo falta pulir copias. Los copys del aviso de vuelta del pago son provisionales y entran en el mismo repaso.
-5. Metadata/canonical/OG por producto; mantener `noindex` hasta resolverlo.
+5. Promocionar P1 está preparado en código, pero sigue pendiente aplicar el
+   historial de slugs, publicar Pages y medir el HTML generado antes de retirar
+   `noindex` o declarar despliegue.
 6. Definir cómo escala el grid móvil más allá de los cinco espacios actuales.
 7. Revisar accesibilidad completa de carrusel y modales antes del lanzamiento público definitivo.
 
@@ -372,9 +402,9 @@ Estado al 20-oct-2026:
 3. Pendientes de tienda ligados a C5: opinión autenticada por cuenta (hoy
    «Próximamente») y los placeholders del centro de cuenta (Favoritos, Mis
    opiniones, Eliminar cuenta).
-4. Siguiente etapa del plano: **Promocionar P0 · taxonomía y privacidad**,
-   seguida de P1 (producto compartible), que también resuelve el pendiente de
-   metadata/canonical/OG.
+4. Promocionar P0 cerró su contrato documental. P1 queda preparado en código
+   con shells compartibles y gate `noindex`; no implica despliegue ni publicación
+   de políticas hasta completar el runbook y la medición.
 
 ## Fuentes de verdad
 

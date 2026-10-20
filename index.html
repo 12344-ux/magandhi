@@ -737,14 +737,10 @@
     return '$ ' + Math.round(n).toLocaleString('es-CO');
   }
 
-  // ENLACE DE CADA TARJETA A SU PAGINA DE PRODUCTO.
-  // Ahora existe UNA plantilla generica (producto/index.html) que se llena sola
-  // leyendo catalogo_publico por el ?slug= o ?id= de la URL. Por eso TODAS las
-  // tarjetas (incluido el Grisi) enlazan a la generica: 'producto/?slug=<slug>'
-  // Solo se renderizan filas con slug o id; una tarjeta nunca queda como enlace
-  // falso. El id UUID sigue siendo la clave estable de respaldo.
+  // Las tarjetas prefieren la URL canonica estable por slug. El UUID conserva
+  // la compatibilidad como query cuando una fila excepcional no tenga slug.
   function hrefProducto(fila){
-    if(fila.slug) return 'producto/?slug=' + encodeURIComponent(fila.slug);
+    if(fila.slug) return 'producto/' + encodeURIComponent(fila.slug) + '/';
     if(fila.id)   return 'producto/?id=' + encodeURIComponent(fila.id);
     return '';
   }
@@ -923,9 +919,9 @@
      ============================================================ -->
 <section id="mg-suscripcion" hidden></section>
 <script type="module" src="suscripcion/suscripcion.js?v=1"></script>
-<script type="module" src="componentes/cuenta-carrito.js?v=4"></script>
+<script type="module" src="componentes/cuenta-carrito.js?v=5"></script>
 <!-- Analitica propia (EM7): solo con el interruptor del back-office encendido y si la persona acepta. -->
-<script type="module" src="analitica/analitica.js?v=1"></script>
+<script type="module" src="analitica/analitica.js?v=2"></script>
 
 <!-- ============================================================
      FOOTER completo
