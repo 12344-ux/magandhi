@@ -1,6 +1,6 @@
 # MAGANDHI · estado actual de la tienda pública
 
-**Corte:** 19 de octubre de 2026 (el estado completo del proyecto vive en `CONTEXTO-MAGANDHI.md` del repo del back-office)
+**Corte:** 20 de octubre de 2026 (el estado completo del proyecto vive en `CONTEXTO-MAGANDHI.md` del repo del back-office)
 
 > **Cuentas C2 · infraestructura cerrada en preapertura:** `/cuenta/` está
 > publicado con correo/contraseña, recuperación, Google GIS y Turnstile. Se
@@ -11,28 +11,20 @@
 > exacto: `cuenta/CONFIGURACION.md` y el relevo temático
 > `docs/RELEVO-CUENTAS-C2-2026-10-16.md` del back-office.
 >
-> **C5 COMERCIAL · CÓDIGO FUSIONADO Y PAGES PUBLICADO; BACKEND AÚN EN C4.**
-> La nueva cabecera/centro de cuenta y la experiencia C5 están en `main` mediante
-> PR #113 (`4a0b439`), con Pages `built`. Incluye Mis compras real, filtros,
-> avisos, continuar/verificar pago, seguimiento logístico, recompra y opinión
-> visible solo tras entregado. El backend coordinado PR #287 también está
-> fusionado (`c8fd03c`) y su banco pasó, pero la migración `20261106000000` y
-> las Edge C5 **no se han desplegado en Supabase**. Hasta entonces checkout y
-> bloqueo siguen bajo C4; Mis compras no tendrá su proyección real. Relevo
-> vigente en el back-office:
-> `docs/RELEVO-COMERCIAL-C5-2026-10-19.md`.
+> **C5 COMERCIAL · EN PRODUCCIÓN Y CERRADO ESTRUCTURALMENTE (20-oct-2026);
+> carrito ENCENDIDO.** La tienda C5 (PR #113, `4a0b439`) ya opera sobre el
+> backend C5: migraciones `20261106000000` y `20261106000100` (slug automático)
+> aplicadas y Edge C5 desplegadas. Mis compras muestra datos reales. El dueño
+> confirmó sin dinero: carrito libre al crear la intención, compra en proceso,
+> «Continuar pago» sin duplicar y vencimiento sin transacción. Wompi sigue en
+> `prod`: una compra por carrito cobra dinero real. No hubo pago real por
+> carrito, así que no hay cierre transaccional. Relevo vigente en el
+> back-office: `docs/RELEVO-COMERCIAL-C5-CIERRE-2026-10-20.md`.
 >
-> **C4 COMERCIAL · EN PRODUCCIÓN desde el 19-oct-2026; carrito ENCENDIDO.**
-> Los PR de tienda #108 (C4) y #109 (ids de campaña) están fusionados y
-> publicados. El backend aplicó la migración `20261105000000` y desplegó
-> `crear-intencion-pago` y `estado-pago`. Se probó sin dinero: agregar,
-> consolidar, cambiar, checkout desde el carrito, apertura de Wompi con
-> temporizador y bloqueo mientras el pago está pendiente. **El carrito quedó
-> encendido** porque el trabajo continúa de inmediato. No hubo pago real.
-> Siguen abiertas tres decisiones: slug automático, el bloqueo de 30 minutos
-> (botón cancelar, o carrito libre + "Mis compras" como C5) y el valor final del
-> flag. Punto de arranque: `docs/RELEVO-COMERCIAL-C4-2026-10-19.md` del
-> back-office.
+> **C4 COMERCIAL · cerrado estructuralmente y superado por C5.** Los PR de
+> tienda #108 y #109 (ids de campaña) siguen fusionados; el bloqueo de 30
+> minutos ya no rige y las decisiones que dejó abiertas se resolvieron con C5.
+> Relevo histórico: `docs/RELEVO-COMERCIAL-C4-2026-10-19.md` del back-office.
 >
 > **Corregido el 19-oct (PR #109):** el carrito rechazaba los ids de las
 > campañas sembradas en 2025 (`00000000-…-0000000c000N`), que son válidos en
@@ -41,22 +33,7 @@
 > disponibilidad tienen mensajes propios y la caché se renovó
 > (`carrito-core.js?v=3`, `carrito-ui.js?v=5`).
 >
-> La implementación consume `bloqueo_pago` (`pendiente` o
-> `revision`) como autoridad del servidor para impedir edición y otro checkout
-> aun entre pestañas; cada pestaña refleja el estado al recargar el snapshot y
-> las mutaciones quedan protegidas también en servidor. El retorno v2 puede
-> recuperarse con la referencia y el JWT vigente aunque no exista
-> `sessionStorage`; usa `expiration-time` servidor de 30 minutos. Aprobación,
-> rechazo, expiración y revisión fuerzan recarga autoritativa: rechazo o
-> expiración liberan una versión nueva; aprobación consume solo lo congelado y
-> preserva extras. La memoria terminal minimiza PII y tiene TTL local de 6
-> horas, pero ese TTL nunca desbloquea por sí solo. Los controles se rehabilitan
-> según el snapshot resultante. Compra inmediata y compra invitada permanecen
-> intactas. Nada de esto constituye evidencia productiva: no se atribuyen a C4
-> merge, migración aplicada, postflight, redespliegue, pago, pedido, inventario,
-> asiento, correo, idempotencia ni medición real.
->
-> **C3 COMERCIAL · estado productivo vigente; probado en estructura:** backend
+> **C3 COMERCIAL · cerrado estructuralmente:** backend
 > PR #280 (implementación `424e7632d214a90afdb7c9265fbe758bfa3fc580`,
 > merge `275c0dd4548937075770ddd6dace1801c013c929`) y tienda PR #106
 > (implementación `c87934cd6034677be1c1888b8eadce95dcc348a4`, merge
@@ -64,8 +41,8 @@
 > Migración `20261104000000` aplicada, postflight correcto y Edge Functions
 > redesplegadas. Se midieron UI OFF/ON y una intención v2 productiva sin pago:
 > total/líneas exactos y una sola intención al reintentar entre sesiones. No
-> hubo aprobación, pedido, inventario, asiento, correo ni webhook repetido. El
-> flag productivo permanece en `false`.
+> hubo aprobación, pedido, inventario, asiento, correo ni webhook repetido. Su
+> checkout multiproducto sigue vigente dentro de C5.
 >
 > **C1 COMERCIAL · desplegado y probado en estructura:** backend #276 (merge
 > `e75dc1c…`) y tienda #102 (merge `db56c4f…`). La compra inmediata admite
@@ -107,8 +84,8 @@ Los JPG de `marca/` son referencias históricas. No gobiernan la identidad ni de
 - Vitrina dinámica desde `catalogo_publico`.
 - Tarjetas blancas, acento dorado fijo y disponibilidad derivada.
 - Enlaces hacia `producto/?slug=…` con respaldo por `?id=…`.
-- El acceso al carrito autenticado y su checkout C4 están desplegados bajo un
-  único flag, **encendido al 19-oct-2026**. Apagado, el carrito permanece oculto
+- El acceso al carrito autenticado y su checkout C5 están desplegados bajo un
+  único flag, **encendido al 20-oct-2026**. Apagado, el carrito permanece oculto
   y no altera la navegación ni la compra invitada.
 - Contacto real por WhatsApp y `contacto@magandhi.com`.
 
@@ -129,7 +106,7 @@ Los JPG de `marca/` son referencias históricas. No gobiernan la identidad ni de
 - Checkout Wompi iniciado mediante `crear-intencion-pago`, con la cantidad
   seleccionada también para compra invitada.
 - «Agregar al carrito» y el checkout multiproducto aparecen solo para una cuenta
-  autenticada válida mientras el flag esté encendido (lo está al 19-oct-2026).
+  autenticada válida mientras el flag esté encendido (lo está al 20-oct-2026).
   Estos caminos no reemplazan «Comprar ahora».
 - WhatsApp contextual por producto.
 - Opiniones verificadas en vivo (ver sección siguiente). Estado vacío honesto mientras un producto no tenga opiniones.
@@ -156,52 +133,39 @@ Los JPG de `marca/` son referencias históricas. No gobiernan la identidad ni de
   permanentemente y completar Google Production.
 - Estado y siguiente paso exacto en `cuenta/CONFIGURACION.md`.
 
-### Carrito autenticado — `carrito/` (C4 EN PRODUCCIÓN; flag ENCENDIDO al 19-oct-2026)
+### Carrito autenticado y Mis compras — `carrito/` + centro de cuenta (C5 EN PRODUCCIÓN; flag ENCENDIDO al 20-oct-2026)
 
-> Las viñetas siguientes conservan la descripción técnica escrita durante la
-> implementación. Donde dicen "rama", "PR abierto" o "flag `false`", léase
-> fusionado, publicado y flag encendido.
-
-- En producción, C3 persiste una cesta activa por cuenta, consolida líneas y
-  detecta conflictos de versión entre pestañas.
-- Permite cambiar cantidades y retirar; relee presentación, precio, máximo y
-  disponibilidad sin guardar el precio como autoridad.
-- C3 añade formulario de envío/facturación, intención multiproducto, apertura de
-  Wompi por el total firmado y retorno prudente con bloqueo de doble pago.
-- El navegador envía únicamente id/versión de carrito y comprador; no decide
-  líneas, precio, monto, UID ni `customer_id`.
-- Una prueba productiva C3 sin pago congeló líneas y subtotales exactos y
-  reutilizó una sola intención para la misma versión desde otra sesión.
-- Logout o cambio de cuenta retira inmediatamente la cesta visible; la compra
-  invitada continúa independiente.
-- No hubo aprobación real C3: pedido, inventario, asiento, correo y webhook
-  repetido no están medidos. La intención estructural permanece en `creada`,
-  sin pedido/evento, y no debe borrarse ni presentarse como venta.
-- El frontend C4 de `feat/comercial-c4-ciclo-carrito`/PR #108 consume
-  `bloqueo_pago: null | pendiente | revision` del snapshot. Es autoridad de
-  servidor para bloquear edición y otro checkout entre pestañas: una pestaña
-  actualiza la UI al recargar, y una mutación atrasada también es rechazada por
-  el backend.
-- El retorno v2 conserva la referencia de la URL y consulta `estado-pago` con el
-  JWT vigente, por lo que es recuperable aunque no exista `sessionStorage`. La
-  ventana Wompi usa el `expiration-time` exacto del servidor, de 30 minutos.
-- `aprobado`, `rechazado`, expiración y `revision` exigen recargar el snapshot
-  autoritativo antes de rehabilitar acciones. Rechazo o expiración liberan el
-  carrito en una versión nueva; aprobación consume las cantidades/campañas
-  congeladas y preserva unidades extra o líneas añadidas.
-- La memoria terminal se reduce a los identificadores mínimos, referencia,
-  estado y tiempo, sin conservar el formulario ni el payload con PII. Su TTL
-  local de 6 horas solo elimina esa recuperación local: nunca desbloquea el
-  carrito por sí mismo. Los selectores, retiros y checkout se rehabilitan según
-  el snapshot vigente, no por memoria local.
-- Compra inmediata y compra invitada permanecen en su flujo histórico e
-  independiente.
-- Todo lo descrito como C4 es implementación de rama asociada al PR #108
-  abierto, no evidencia productiva. Requiere desplegar antes el backend del PR
-  #283 —migración
-  `20261105000000_comercial_c4_cuenta_ciclo_carrito.sql` y Edge Functions
-  `crear-intencion-pago`/`estado-pago`—. Producción conserva C3, flag `false` y
-  backend hasta `20261104000000`.
+- Una cesta activa por cuenta, persistente entre dispositivos: consolida
+  líneas, cambia cantidades, retira y detecta conflictos de versión entre
+  pestañas. Relee presentación, precio, máximo y disponibilidad; nunca guarda el
+  precio como autoridad.
+- Checkout multiproducto con formulario de envío/facturación. El navegador
+  envía solo id/versión del carrito y comprador; nunca líneas, precio, monto,
+  UID ni `customer_id`.
+- **Carrito libre:** al crear la intención, el servidor congela las líneas, las
+  retira del carrito y avanza su versión en la misma transacción. El carrito
+  queda libre de inmediato y la compra vive en Mis compras. Ya no existe el
+  bloqueo de 30 minutos de C4.
+- **Mis compras** (Mi cuenta): filtros Todas / En proceso / Realizadas / No
+  completadas; tarjetas multiproducto con total, fecha, cantidades e imagen
+  actual o placeholder; seguimiento Recibido → Preparando → En camino →
+  Entregado desde `pedidos.estado`; incluye los pedidos históricos de la cuenta.
+- «Continuar pago» solo para una compra vigente sin transacción bancaria: vuelve
+  a firmar la misma intención, sin crear otra. «Verificar estado» para
+  confirmación bancaria o revisión. Sin transacción, la compra vence a los 30
+  minutos y pasa a No completadas sin tocar el carrito.
+- Aviso no bloqueante en el carrito y punto en «Mi cuenta» mientras haya
+  compras en proceso; refresco cada 15 s solo con procesos y página visible.
+- El retorno de Wompi y el enlace `/carrito/?cuenta=compras` abren Mis compras,
+  también después de volver a iniciar sesión, sin open redirect.
+- «Volver a comprar» abre la ficha actual, que recalcula precio y
+  disponibilidad. «Dar mi opinión» aparece solo tras entregado y sigue
+  «Próximamente»; la opinión por el código del correo no cambia.
+- Las intenciones C4 históricas conservan su contrato; compra inmediata e
+  invitada siguen independientes. Logout o cambio de cuenta retira de inmediato
+  la cesta y Mis compras visibles.
+- **Sin pago real por carrito:** pedido, inventario, asiento, correo e
+  idempotencia aprobados no están medidos para C3/C4/C5.
 
 ### Políticas — `politicas/` (ESTRUCTURA provisional, 8-oct-2026)
 
@@ -396,26 +360,21 @@ Antes, al volver de Wompi la ficha se veía igual y «Comprar ahora» seguía ac
 6. Definir cómo escala el grid móvil más allá de los cinco espacios actuales.
 7. Revisar accesibilidad completa de carrusel y modales antes del lanzamiento público definitivo.
 
-## Evolución comercial · C5 fusionado; despliegue Supabase pendiente
+## Evolución comercial · C1–C5 cerrados estructuralmente
 
-Estado honesto al 19-oct-2026:
+Estado al 20-oct-2026:
 
-1. C1–C3 están desplegados y probados en estructura, con los límites monetarios
-   históricos documentados.
-2. C4 está aplicado y operativo sin pago real; es el backend productivo actual.
-3. C5 fue aprobado, construido y fusionado: backend #287 (`c8fd03c`) y tienda
-   #113 (`4a0b439`). El banco `39354906924` pasó y Pages publicó la tienda.
-4. C5 **no está desplegado en Supabase**: `20261106000000`,
-   `crear-intencion-pago` C5 y `estado-pago` C5 siguen pendientes. La UI es
-   compatible mientras C4 continúe.
-5. Próximo paso: relevo C5 → ledger → paquete operativo → Edge → carrito OFF →
-   migración → postflight → carrito ON → pruebas sin dinero.
-6. Slug automático sigue pendiente. Promocionar P0–P5 continúa aparte.
-
-Un despliegue y pruebas sin dinero cierran C5 estructuralmente y dejan C4
-superado funcionalmente. El cierre transaccional exige un pago real C5
-expresamente autorizado con pedido único, inventario/proveedor, asiento, correo
-e idempotencia.
+1. C1–C5 están cerrados estructuralmente en producción; C4 quedó superado por
+   C5. El carrito está encendido y Wompi en `prod`.
+2. Ningún tramo de carrito tiene pago real: el cierre transaccional exige una
+   compra C5 expresamente autorizada con pedido único, inventario/proveedor,
+   asiento, correo e idempotencia.
+3. Pendientes de tienda ligados a C5: opinión autenticada por cuenta (hoy
+   «Próximamente») y los placeholders del centro de cuenta (Favoritos, Mis
+   opiniones, Eliminar cuenta).
+4. Siguiente etapa del plano: **Promocionar P0 · taxonomía y privacidad**,
+   seguida de P1 (producto compartible), que también resuelve el pendiente de
+   metadata/canonical/OG.
 
 ## Fuentes de verdad
 
@@ -425,11 +384,12 @@ e idempotencia.
 - Cuenta C2 y gates de apertura: `cuenta/CONFIGURACION.md`.
 - Esquema/RLS/RPC/Edge Functions: repositorio del back-office, carpeta `supabase/`.
 - Relevo general vigente:
-  `docs/RELEVO-COMERCIAL-C5-2026-10-19.md` del back-office. Distingue código
-  fusionado de despliegue Supabase y contiene la secuencia exacta de la próxima
-  sesión. Backend #287 y tienda #113 están fusionados.
-- Relevo productivo histórico C4:
-  `docs/RELEVO-COMERCIAL-C4-2026-10-19.md` del back-office.
+  `docs/RELEVO-COMERCIAL-C5-CIERRE-2026-10-20.md` del back-office: estado
+  productivo exacto tras el cierre estructural de C5, pendientes y prompt de la
+  próxima sesión.
+- Relevos históricos C4 y C5:
+  `docs/RELEVO-COMERCIAL-C4-2026-10-19.md` y
+  `docs/RELEVO-COMERCIAL-C5-2026-10-19.md` del back-office.
 - Relevo temático de cuentas y sus gates:
   `docs/RELEVO-CUENTAS-C2-2026-10-16.md` del back-office.
 - Diseño y criterios C5:
