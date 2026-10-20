@@ -11,6 +11,17 @@
 > exacto: `cuenta/CONFIGURACION.md` y el relevo temático
 > `docs/RELEVO-CUENTAS-C2-2026-10-16.md` del back-office.
 >
+> **C5 COMERCIAL · CÓDIGO FUSIONADO Y PAGES PUBLICADO; BACKEND AÚN EN C4.**
+> La nueva cabecera/centro de cuenta y la experiencia C5 están en `main` mediante
+> PR #113 (`4a0b439`), con Pages `built`. Incluye Mis compras real, filtros,
+> avisos, continuar/verificar pago, seguimiento logístico, recompra y opinión
+> visible solo tras entregado. El backend coordinado PR #287 también está
+> fusionado (`c8fd03c`) y su banco pasó, pero la migración `20261106000000` y
+> las Edge C5 **no se han desplegado en Supabase**. Hasta entonces checkout y
+> bloqueo siguen bajo C4; Mis compras no tendrá su proyección real. Relevo
+> vigente en el back-office:
+> `docs/RELEVO-COMERCIAL-C5-2026-10-19.md`.
+>
 > **C4 COMERCIAL · EN PRODUCCIÓN desde el 19-oct-2026; carrito ENCENDIDO.**
 > Los PR de tienda #108 (C4) y #109 (ids de campaña) están fusionados y
 > publicados. El backend aplicó la migración `20261105000000` y desplegó
@@ -366,13 +377,15 @@ Antes, al volver de Wompi la ficha se veía igual y «Comprar ahora» seguía ac
 
 ## Pendientes reales
 
-0. **Comercial C4 · decisiones abiertas** (relevo C4 del back-office, §4):
-   - slug automático en servidor, porque una campaña publicada sin slug rompe
-     el checkout del carrito;
-   - bloqueo de 30 minutos → botón "Cancelar este pago" o carrito libre +
-     "Mis compras" (C5);
-   - valor final del flag.
-1. **C2 queda cerrado técnicamente en preapertura:** signup permanece OFF y
+0. **Comercial C5 · despliegue productivo pendiente:** código fusionado en
+   backend #287 y tienda #113; falta reconciliar ledger C4, preparar paquete
+   operativo, desplegar Edge C5, apagar carrito, aplicar `20261106000000`,
+   postflight, reactivar y probar sin dinero. Pago real solo con autorización.
+   También falta el slug automático server-side como forward independiente.
+1. **Opinión por cuenta:** el botón solo aparece después de entregado, pero su
+   registro autenticado queda deliberadamente pendiente; el código de reseña
+   histórico continúa funcionando.
+2. **C2 queda cerrado técnicamente en preapertura:** signup permanece OFF y
    Google External/Testing hasta publicar políticas. Cuando se retome, completar
    políticas y avisos contextuales; luego preparar Google Production y activar
    signup permanente.
@@ -383,45 +396,26 @@ Antes, al volver de Wompi la ficha se veía igual y «Comprar ahora» seguía ac
 6. Definir cómo escala el grid móvil más allá de los cinco espacios actuales.
 7. Revisar accesibilidad completa de carrusel y modales antes del lanzamiento público definitivo.
 
-## Evolución comercial · C4 en producción con carrito encendido; cierre formal pendiente
+## Evolución comercial · C5 fusionado; despliegue Supabase pendiente
 
-> **Actualización 19-oct-2026 (noche):** el punto 4 ya está fusionado,
-> publicado y aplicado en producción. Ver el bloque C4 al inicio de este
-> documento y el relevo C4 del back-office.
+Estado honesto al 19-oct-2026:
 
-El plano aprobado el 16-oct-2026 avanza por tramos. Estado honesto al
-19-oct-2026:
+1. C1–C3 están desplegados y probados en estructura, con los límites monetarios
+   históricos documentados.
+2. C4 está aplicado y operativo sin pago real; es el backend productivo actual.
+3. C5 fue aprobado, construido y fusionado: backend #287 (`c8fd03c`) y tienda
+   #113 (`4a0b439`). El banco `39354906924` pasó y Pages publicó la tienda.
+4. C5 **no está desplegado en Supabase**: `20261106000000`,
+   `crear-intencion-pago` C5 y `estado-pago` C5 siguen pendientes. La UI es
+   compatible mientras C4 continúe.
+5. Próximo paso: relevo C5 → ledger → paquete operativo → Edge → carrito OFF →
+   migración → postflight → carrito ON → pruebas sin dinero.
+6. Slug automático sigue pendiente. Promocionar P0–P5 continúa aparte.
 
-1. **C1 COMERCIAL · cantidad en compra inmediata:** desplegado y probado en
-   estructura. El límite end-to-end para cantidad 2 se conserva.
-2. **C2 · carrito autenticado persistente:** desplegado y probado en estructura.
-3. **C3 · checkout multiproducto:** desplegado y probado en estructura; intención
-   v2, líneas/total y reutilización entre sesiones medidos sin completar pago. Es
-   el estado que continúa en producción, con flag `false` y backend aplicado
-   hasta `20261104000000`.
-4. **C4 · vínculo transaccional y ciclo del carrito:** implementación en
-   `feat/comercial-c4-ciclo-carrito`, con PR de tienda #108 abierto; todavía sin
-   fusionar, publicar ni medir. Implementa `bloqueo_pago` autoritativo
-   `pendiente`/`revision`, retorno v2 recuperable con JWT aun sin memoria de
-   pestaña, expiración servidor de 30 minutos, recarga de snapshot en estados
-   terminales o revisión, nueva versión tras rechazo/expiración, consumo del
-   snapshot aprobado preservando extras, memoria terminal mínima con TTL local
-   de 6 horas que no desbloquea por sí solo y rehabilitación de controles según
-   el snapshot. Compra inmediata e invitada no cambian. Depende del PR backend
-   #283, su migración
-   `20261105000000_comercial_c4_cuenta_ciclo_carrito.sql` y el despliegue previo
-   de `crear-intencion-pago` y `estado-pago`.
-5. **Promocionar:** pendiente completo: enlace oficial y por canal, preview
-   social, textos, QR, kit visual, registro de enlaces y atribución hasta la
-   venta. Meta Ads, Pixel y Conversions API quedan fuera de esta fase.
-
-C3 no demuestra todavía aprobación, pedido multiproducto, movimientos de
-inventario, asiento, correo o repetición real del webhook. Esa medición queda
-pendiente hasta que el dueño autorice una compra productiva. C4 tampoco tiene
-al corte evidencia de despliegue, aplicación de su migración, postflight,
-redespliegue ni prueba productiva. El plano de decisiones y criterios vive en
-`docs/PLANO-FASE-COMERCIAL.md`; para continuar la implementación C4, remitirse
-al nuevo relevo C4 del backend/back-office.
+Un despliegue y pruebas sin dinero cierran C5 estructuralmente y dejan C4
+superado funcionalmente. El cierre transaccional exige un pago real C5
+expresamente autorizado con pedido único, inventario/proveedor, asiento, correo
+e idempotencia.
 
 ## Fuentes de verdad
 
@@ -430,13 +424,14 @@ al nuevo relevo C4 del backend/back-office.
 - Presentación pública: `index.html` y `producto/index.html`.
 - Cuenta C2 y gates de apertura: `cuenta/CONFIGURACION.md`.
 - Esquema/RLS/RPC/Edge Functions: repositorio del back-office, carpeta `supabase/`.
-- Relevo productivo y evidencia histórica de C3:
-  `docs/RELEVO-COMERCIAL-C3-2026-10-17.md` del back-office.
-- Continuación de C4: `docs/RELEVO-COMERCIAL-C4-2026-10-19.md` del
-  back-office (ejecución productiva, defectos corregidos y decisiones
-  abiertas). PR #108, #109, #283, #284 y #285 están fusionados.
+- Relevo general vigente:
+  `docs/RELEVO-COMERCIAL-C5-2026-10-19.md` del back-office. Distingue código
+  fusionado de despliegue Supabase y contiene la secuencia exacta de la próxima
+  sesión. Backend #287 y tienda #113 están fusionados.
+- Relevo productivo histórico C4:
+  `docs/RELEVO-COMERCIAL-C4-2026-10-19.md` del back-office.
 - Relevo temático de cuentas y sus gates:
   `docs/RELEVO-CUENTAS-C2-2026-10-16.md` del back-office.
-- Diseño y criterios de los siguientes tramos:
-  `docs/PLANO-FASE-COMERCIAL.md` del back-office.
+- Diseño y criterios C5:
+  `docs/PLANO-COMERCIAL-C5.md` y `docs/PLANO-FASE-COMERCIAL.md` del back-office.
 - Inventario y publicación: back-office en `montaguth.institute`.
