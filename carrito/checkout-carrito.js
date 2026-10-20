@@ -1,4 +1,5 @@
 import { supabase } from '../supabase-config.js';
+import { abrirCentroCuenta, invalidarComprasCuenta } from '../componentes/cuenta-carrito.js?v=4';
 
 const WOMPI_CHECKOUT_URL = 'https://checkout.wompi.co/p/';
 const CLAVE_PAGO = 'mg_pago_carrito_en_curso';
@@ -113,8 +114,16 @@ function referenciaMemoria(memoria) {
   return typeof referencia === 'string' && FORMATO_REFERENCIA.test(referencia) ? referencia : '';
 }
 
+function tipoMemoriaPago(memoria) {
+  if (memoria?.checkout_tipo === 'compra' || memoria?.checkout_tipo === 'carrito') return memoria.checkout_tipo;
+  // Las memorias C4 publicadas antes del discriminador se reconocen por su
+  // payload de reapertura; las ya minimizadas también pertenecen a C4.
+  return memoria && typeof memoria === 'object' ? 'carrito' : '';
+}
+
 function baseMemoriaPagoValida(dato) {
-  return !!dato && typeof dato === 'object' && FORMATO_UUID.test(dato.uid || '') &&
+  return !!dato && typeof dato === 'object' &&
+    (dato.checkout_tipo === undefined || ['carrito', 'compra'].includes(dato.checkout_tipo)) && FORMATO_UUID.test(dato.uid || '') &&
     FORMATO_UUID.test(dato.carrito_id || '') &&
     Number.isSafeInteger(dato.carrito_version) && dato.carrito_version >= 0 &&
     Number.isSafeInteger(dato.startedAt) && dato.startedAt > 0 && dato.startedAt <= Date.now() + 60000 &&
@@ -123,14 +132,19 @@ function baseMemoriaPagoValida(dato) {
 }
 
 function memoriaPendienteCompleta(memoria) {
-  return baseMemoriaPagoValida(memoria) && memoria.lastState === 'pendiente' &&
+  return tipoMemoriaPago(memoria) === 'carrito' && baseMemoriaPagoValida(memoria) && memoria.lastState === 'pendiente' &&
     pagoPublicoValido(memoria.payload_publico) && datosWompiValidos(memoria.datos_wompi) &&
     referenciaMemoria(memoria) === memoria.payload_publico.referencia;
 }
 
 function memoriaPagoValida(dato) {
   if (!baseMemoriaPagoValida(dato)) return false;
-  if (dato.lastState === 'pendiente') return memoriaPendienteCompleta(dato);
+  if (dato.lastState === 'pendiente') {
+    if (tipoMemoriaPago(dato) === 'compra') {
+      return dato.payload_publico === undefined && dato.datos_wompi === undefined;
+    }
+    return memoriaPendienteCompleta(dato);
+  }
   return dato.lastState === 'revision' || dato.lastState === 'aprobado';
 }
 
@@ -138,6 +152,7 @@ function minimizarMemoriaPago(memoria, estado = memoria?.lastState) {
   const referencia = referenciaMemoria(memoria);
   if (!memoria || !referencia || !['revision', 'aprobado'].includes(estado)) return null;
   return {
+    checkout_tipo: tipoMemoriaPago(memoria),
     uid: memoria.uid,
     carrito_id: memoria.carrito_id,
     carrito_version: memoria.carrito_version,
@@ -211,14 +226,19 @@ function referenciaDeLaUrl() {
 
 function checkoutCarritoDeRespuesta(cuerpo) {
   const checkout = cuerpo?.checkout;
-  if (!checkout || typeof checkout !== 'object' || checkout.tipo !== 'carrito' ||
-      !FORMATO_UUID.test(checkout.id || '') ||
-      !Number.isSafeInteger(checkout.version) || checkout.version < 0 ||
-      checkout.recargar !== true) return null;
-  return { carritoId: checkout.id, version: checkout.version };
+  if (!checkout || typeof checkout !== 'object' || checkout.recargar !== true) return null;
+  if (checkout.tipo === 'compra') {
+    if (!FORMATO_REFERENCIA.test(checkout.referencia || '')) return null;
+    return { tipo: 'compra', referencia: checkout.referencia };
+  }
+  if (checkout.tipo !== 'carrito' || !FORMATO_UUID.test(checkout.id || '') ||
+      !Number.isSafeInteger(checkout.version) || checkout.version < 0) return null;
+  return { tipo: 'carrito', carritoId: checkout.id, version: checkout.version };
 }
 
 function checkoutCoincideConMemoria(checkout, memoria, referencia) {
+  if (!checkout) return false;
+  if (checkout.tipo === 'compra') return checkout.referencia === referencia;
   if (!memoria || referenciaMemoria(memoria) !== referencia) return true;
   return memoria.carrito_id === checkout.carritoId && memoria.carrito_version === checkout.version;
 }
@@ -322,6 +342,8 @@ function irAWompi(pago, datos) {
   try {
     formulario.submit();
     return true;
+  } catch {
+    return false;
   } finally {
     formulario.remove();
   }
@@ -354,6 +376,8 @@ export function configurarCheckoutCarrito({ obtenerEstado, recargarCarrito, reva
   let memoriaPago = leerMemoriaPago();
   let referenciaActiva = '';
   let estadoPago = '';
+  let tipoCheckoutActivo = tipoMemoriaPago(memoriaPago);
+  const referencias404Reintentadas = new Set();
   let consultandoPago = false;
   let reintentosPago = 0;
   let consultaIniciada = false;
@@ -365,7 +389,7 @@ export function configurarCheckoutCarrito({ obtenerEstado, recargarCarrito, reva
   let tokenSesionInvalidado = '';
   let retornoUrl = referenciaDeLaUrl();
   let referenciaRetornoPendiente = '';
-  let requiereRecargaPago = retornoUrl.presente || !!memoriaPago || memoriaDescartadaPorInvalida;
+  let requiereRecargaPago = tipoMemoriaPago(memoriaPago) === 'carrito' || memoriaDescartadaPorInvalida;
   let promesaRecargaPago = null;
 
   function sesionInvalidada() {
@@ -379,7 +403,7 @@ export function configurarCheckoutCarrito({ obtenerEstado, recargarCarrito, reva
     const bloqueoServidor = estado?.snapshot?.bloqueo_pago;
     if (bloqueoServidor === 'pendiente' || bloqueoServidor === 'revision') return true;
     const tupla = tuplaCarrito(estado);
-    return mismaTupla(memoriaPago, tupla) &&
+    return tipoMemoriaPago(memoriaPago) === 'carrito' && mismaTupla(memoriaPago, tupla) &&
       (memoriaPago.lastState === 'pendiente' || memoriaPago.lastState === 'revision');
   }
 
@@ -432,6 +456,7 @@ export function configurarCheckoutCarrito({ obtenerEstado, recargarCarrito, reva
     seccionPago.hidden = true;
     referenciaActiva = '';
     estadoPago = '';
+    tipoCheckoutActivo = '';
     cancelarConsultas();
   }
 
@@ -479,7 +504,13 @@ export function configurarCheckoutCarrito({ obtenerEstado, recargarCarrito, reva
   }
 
   function pintarEstadoPago(estado) {
-    const textos = {
+    const esCompra = tipoCheckoutActivo === 'compra';
+    const textos = esCompra ? {
+      pendiente: ['Estamos confirmando tu pago', 'Consulta esta compra en Mis compras. Tu carrito está disponible para seguir comprando.'],
+      revision: ['Tu pago está en revisión', 'Tu banco o MAGANDHI está terminando la confirmación. Consulta el seguimiento en Mis compras.'],
+      aprobado: ['¡Recibimos tu pago!', 'Tu pedido quedó registrado. Consulta su seguimiento en Mis compras.'],
+      rechazado: ['El pago no se completó', 'La compra quedó registrada como no completada. Tu carrito permanece disponible.'],
+    } : {
       pendiente: ['Estamos confirmando tu pago', 'Dale un momento. No inicies otro pago para este carrito; si esta pestaña conserva la intención, puedes volver al mismo pago seguro.'],
       revision: ['Tu pago está en revisión', 'No puedes cambiar el carrito ni iniciar otro pago mientras terminamos la confirmación. Te contactaremos si hace falta algo.'],
       aprobado: ['¡Recibimos tu pago!', 'Tu pedido quedó registrado. Actualizamos el carrito con el estado confirmado por el servidor.'],
@@ -495,7 +526,10 @@ export function configurarCheckoutCarrito({ obtenerEstado, recargarCarrito, reva
     seccionPago.hidden = false;
     reintentarPago.hidden = estadoPago === 'aprobado' || estadoPago === 'rechazado';
     const memoriaReabrible = memoriaDeReferencia();
-    volverPago.hidden = !memoriaPendienteCompleta(memoriaReabrible) || estadoPago !== 'pendiente';
+    volverPago.textContent = esCompra ? 'Revisar en Mis compras' : 'Volver al pago seguro';
+    volverPago.hidden = esCompra
+      ? estadoPago === 'aprobado' || estadoPago === 'rechazado'
+      : !memoriaPendienteCompleta(memoriaReabrible) || estadoPago !== 'pendiente';
   }
 
   function activarMemoria(memoria, consultar = true) {
@@ -503,6 +537,7 @@ export function configurarCheckoutCarrito({ obtenerEstado, recargarCarrito, reva
     const referencia = referenciaMemoria(memoria);
     const mismaReferencia = referenciaActiva === referencia;
     memoriaPago = memoria;
+    tipoCheckoutActivo = tipoMemoriaPago(memoria);
     referenciaActiva = referencia;
     estadoPago = memoria.lastState;
     programarCaducidadMemoria();
@@ -591,6 +626,10 @@ export function configurarCheckoutCarrito({ obtenerEstado, recargarCarrito, reva
     if (retornoUrl.presente) {
       const retorno = retornoUrl;
       retornoUrl = { presente: false, referencia: '', valida: true };
+      if (tipoCheckoutActivo === 'compra') {
+        invalidarComprasCuenta();
+        abrirCentroCuenta('compras');
+      }
       if (!retorno.valida) {
         limpiarMemoriaConTerminal(
           'No pudimos identificar el pago',
@@ -616,6 +655,10 @@ export function configurarCheckoutCarrito({ obtenerEstado, recargarCarrito, reva
 
     if (!memoriaPago) return;
     if (memoriaPago.uid !== estado.sesion.uid) {
+      olvidarPago();
+      memoriaPago = null;
+      cancelarTemporizadorMemoria();
+      limpiarDatosTemporalesPago();
       if (referenciaActiva || !seccionPago.hidden) ocultarPago();
       return;
     }
@@ -729,6 +772,26 @@ export function configurarCheckoutCarrito({ obtenerEstado, recargarCarrito, reva
       return;
     }
     if (http === 404) {
+      const memoriaLocal = memoriaDeReferencia(ref);
+      if (tipoCheckoutActivo === 'compra' && memoriaLocal && !referencias404Reintentadas.has(ref)) {
+        referencias404Reintentadas.add(ref);
+        consultaIniciada = false;
+        try { await revalidarSesion?.(true); } catch { /* El observador de sesión conserva el estado seguro. */ }
+        return;
+      }
+      if (tipoCheckoutActivo === 'compra') {
+        cancelarConsultas();
+        olvidarMemoriaDeReferencia(ref);
+        limpiarDatosTemporalesPago();
+        if (referenciaRetornoPendiente === ref) referenciaRetornoPendiente = '';
+        referenciaActiva = '';
+        invalidarComprasCuenta();
+        const mensaje = 'No pudimos confirmar esta compra desde el retorno del pago. Revisa su estado en Mis compras; no necesitas crear otra.';
+        pintarTerminal('Revisa el estado de tu compra', mensaje);
+        abrirCentroCuenta('compras', mensaje);
+        actualizarControles();
+        return;
+      }
       limpiarMemoriaConTerminal(
         'No encontramos esta intención de pago',
         'La referencia ya no se puede consultar. Revisa el estado actual del carrito antes de iniciar otro pago.',
@@ -748,13 +811,20 @@ export function configurarCheckoutCarrito({ obtenerEstado, recargarCarrito, reva
       if (referenciaRetornoPendiente === ref) referenciaRetornoPendiente = '';
       pintarTerminal(
         'No pudimos validar este pago',
-        'La respuesta no identifica un checkout de carrito válido. No modificamos el carrito; solicita ayuda si el problema continúa.'
+        'La respuesta no identifica un checkout válido. No modificamos el carrito; solicita ayuda si el problema continúa.'
       );
       actualizarControles();
       return;
     }
 
-    if (estado !== 'pendiente') requiereRecargaPago = true;
+    tipoCheckoutActivo = checkout.tipo;
+    if (memoriaPago && referenciaMemoria(memoriaPago) === ref && tipoMemoriaPago(memoriaPago) !== checkout.tipo) {
+      pintarTerminal('No pudimos validar este pago', 'La respuesta no coincide con el tipo de checkout guardado. No modificamos el carrito.');
+      actualizarControles();
+      return;
+    }
+    if (estado !== 'pendiente' && checkout.tipo === 'carrito') requiereRecargaPago = true;
+    if (checkout.tipo === 'compra') invalidarComprasCuenta();
     pintarEstadoPago(estado);
     if (estado === 'pendiente') {
       actualizar();
@@ -857,6 +927,7 @@ export function configurarCheckoutCarrito({ obtenerEstado, recargarCarrito, reva
 
   function caducarMemoriaLocal() {
     if (!memoriaPago) return false;
+    const esCompra = tipoMemoriaPago(memoriaPago) === 'compra';
     cancelarTemporizadorMemoria();
     cancelarConsultas();
     olvidarPago();
@@ -864,11 +935,20 @@ export function configurarCheckoutCarrito({ obtenerEstado, recargarCarrito, reva
     limpiarDatosTemporalesPago();
     referenciaActiva = '';
     referenciaRetornoPendiente = '';
-    requiereRecargaPago = true;
-    pintarTerminal(
-      'La recuperación local del pago venció',
-      'Eliminamos los datos temporales y estamos consultando el estado autoritativo del carrito antes de permitir otro pago.'
-    );
+    requiereRecargaPago = !esCompra;
+    if (esCompra) {
+      tipoCheckoutActivo = 'compra';
+      invalidarComprasCuenta();
+      pintarTerminal(
+        'Consulta el estado de tu compra',
+        'La ayuda local para este retorno venció. Mis compras conserva el estado confirmado; no necesitas crear otra compra.'
+      );
+    } else {
+      pintarTerminal(
+        'La recuperación local del pago venció',
+        'Eliminamos los datos temporales y estamos consultando el estado autoritativo del carrito antes de permitir otro pago.'
+      );
+    }
     actualizar();
     return true;
   }
@@ -908,6 +988,13 @@ export function configurarCheckoutCarrito({ obtenerEstado, recargarCarrito, reva
       tokenSesionInvalidado = '';
     }
     if (uidSiguiente) ultimoUidValido = uidSiguiente;
+    if (uidSiguiente && memoriaPago && memoriaPago.uid !== uidSiguiente) {
+      olvidarPago();
+      memoriaPago = null;
+      cancelarTemporizadorMemoria();
+      limpiarDatosTemporalesPago();
+      referenciaRetornoPendiente = '';
+    }
     if (!uidSiguiente || memoriaPago?.uid !== uidSiguiente) ocultarPago();
     else if (!requiereRecargaPago) activarMemoria(memoriaPago);
     if (!uidSiguiente) {
@@ -936,7 +1023,10 @@ export function configurarCheckoutCarrito({ obtenerEstado, recargarCarrito, reva
     if (!controles.length) return;
     const primero = controles[0];
     const ultimo = controles[controles.length - 1];
-    if (evento.shiftKey && document.activeElement === primero) {
+    if (!modal.contains(document.activeElement)) {
+      evento.preventDefault();
+      (evento.shiftKey ? ultimo : primero).focus();
+    } else if (evento.shiftKey && document.activeElement === primero) {
       evento.preventDefault();
       ultimo.focus();
     } else if (!evento.shiftKey && document.activeElement === ultimo) {
@@ -999,10 +1089,13 @@ export function configurarCheckoutCarrito({ obtenerEstado, recargarCarrito, reva
         },
       });
       const cuerpo = await cuerpoDeRespuesta(error, data);
-      const actual = tuplaCarrito(obtenerEstado());
 
-      if (identidad.generacion !== generacionCheckout || !actual || identidad.uid !== actual.uid ||
-          identidad.carritoId !== actual.carritoId || identidad.version !== actual.version) return;
+      // La Edge C5 puede separar/versionar el carrito antes de responder. Solo
+      // la identidad y la generación de esta solicitud deben seguir vigentes;
+      // la versión visible del carrito ya no tiene que coincidir.
+      if (identidad.generacion !== generacionCheckout ||
+          identidad.uid !== obtenerEstado()?.sesion?.uid ||
+          !sesionValida(obtenerEstado()?.sesion)) return;
 
       if (error || cuerpo.error) {
         const codigo = codigoPublico(error, cuerpo);
@@ -1011,6 +1104,14 @@ export function configurarCheckoutCarrito({ obtenerEstado, recargarCarrito, reva
           return;
         }
         restaurarEnvio();
+        if (codigo === 'INTENCION_NO_REABRIBLE') {
+          invalidarComprasCuenta();
+          Promise.resolve().then(() => recargarCarrito()).catch(() => {});
+          const mensaje = 'Esta compra ya existe o cambió de estado. Revísala en Mis compras; no necesitas crear otra.';
+          cerrarModal(false);
+          abrirCentroCuenta('compras', mensaje);
+          return;
+        }
         if (codigo === 'CARRITO_YA_PROCESADO') {
           requiereRecargaPago = true;
           memoriaPago = null;
@@ -1044,32 +1145,54 @@ export function configurarCheckoutCarrito({ obtenerEstado, recargarCarrito, reva
 
       const pagoPublico = extraerPagoPublico(cuerpo);
       const checkoutPreparado = checkoutCarritoDeRespuesta(cuerpo);
-      if (!pagoPublico || !checkoutPreparado || checkoutPreparado.carritoId !== identidad.carritoId) {
+      const checkoutValido = checkoutPreparado && (
+        (checkoutPreparado.tipo === 'carrito' && checkoutPreparado.carritoId === identidad.carritoId) ||
+        (checkoutPreparado.tipo === 'compra' && checkoutPreparado.referencia === pagoPublico?.referencia)
+      );
+      if (!pagoPublico || !checkoutValido) {
         restaurarEnvio();
         mostrarAlerta('No pudimos validar la respuesta del pago. No se abrió ningún cobro; inténtalo de nuevo.');
         return;
       }
 
+      tipoCheckoutActivo = checkoutPreparado.tipo;
       memoriaPago = {
+        checkout_tipo: checkoutPreparado.tipo,
         uid: identidad.uid,
         carrito_id: identidad.carritoId,
-        carrito_version: checkoutPreparado.version,
+        carrito_version: checkoutPreparado.tipo === 'carrito' ? checkoutPreparado.version : identidad.version,
         referencia: pagoPublico.referencia,
         startedAt: Date.now(),
         lastState: 'pendiente',
-        payload_publico: pagoPublico,
-        datos_wompi: datos,
+        ...(checkoutPreparado.tipo === 'carrito' ? { payload_publico: pagoPublico, datos_wompi: datos } : {}),
       };
-      if (!guardarMemoriaPago(memoriaPago)) {
+      const memoriaGuardada = guardarMemoriaPago(memoriaPago);
+      if (!memoriaGuardada && checkoutPreparado.tipo === 'carrito') {
         memoriaPago = null;
         restaurarEnvio();
         mostrarAlerta('No pudimos guardar de forma segura la intención para el retorno. No se abrió ningún cobro; inténtalo de nuevo.');
         return;
       }
+      if (!memoriaGuardada) memoriaPago = null;
 
       if (window.mgEvento) window.mgEvento('checkout_iniciado', {});
-      activarMemoria(memoriaPago, false);
-      irAWompi(pagoPublico, datos);
+      if (memoriaPago) activarMemoria(memoriaPago, false);
+      if (checkoutPreparado.tipo === 'compra') {
+        invalidarComprasCuenta();
+        // La memoria C5 solo optimiza el retorno. El cobro usa la respuesta
+        // firmada y la cesta sucesora se sincroniza siempre en paralelo.
+        Promise.resolve().then(() => recargarCarrito()).catch(() => {});
+      }
+      if (!irAWompi(pagoPublico, datos)) {
+        restaurarEnvio();
+        if (checkoutPreparado.tipo === 'compra') {
+          const mensaje = 'La compra quedó creada, pero no pudimos abrir Wompi. Continúa desde Mis compras; no necesitas crear otra.';
+          cerrarModal(false);
+          abrirCentroCuenta('compras', mensaje);
+        } else {
+          mostrarAlerta('No pudimos abrir la ventana de pago segura. Usa “Volver al pago seguro” para intentarlo de nuevo.');
+        }
+      }
     } catch (error) {
       if (identidad.generacion !== generacionCheckout || identidad.uid !== obtenerEstado()?.sesion?.uid) return;
       console.error('No se pudo iniciar el pago del carrito:', error);
@@ -1087,6 +1210,11 @@ export function configurarCheckoutCarrito({ obtenerEstado, recargarCarrito, reva
 
   volverPago.addEventListener('click', () => {
     revalidarCaducidadMemoria();
+    if (tipoCheckoutActivo === 'compra') {
+      invalidarComprasCuenta();
+      abrirCentroCuenta('compras');
+      return;
+    }
     const memoria = memoriaDeReferencia();
     if (!memoriaPendienteCompleta(memoria) || memoria.uid !== obtenerEstado()?.sesion?.uid || sesionInvalidada()) return;
     if (estadoPago !== 'pendiente') return;
@@ -1109,10 +1237,10 @@ export function configurarCheckoutCarrito({ obtenerEstado, recargarCarrito, reva
     restaurarEnvio(false);
     limpiarDatosTemporalesPago();
     memoriaPago = leerMemoriaPago();
+    tipoCheckoutActivo = tipoMemoriaPago(memoriaPago);
     referenciaActiva = '';
     estadoPago = '';
-    requiereRecargaPago = requiereRecargaPago || retornoUrl.presente ||
-      !!referenciaRetornoPendiente || !!memoriaPago || memoriaDescartadaPorInvalida;
+    requiereRecargaPago = requiereRecargaPago || tipoMemoriaPago(memoriaPago) === 'carrito' || memoriaDescartadaPorInvalida;
     programarCaducidadMemoria();
 
     let preparado = true;
