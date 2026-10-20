@@ -22,7 +22,7 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="marca.css?v=3">
-<link rel="stylesheet" href="componentes/cuenta-carrito.css?v=1">
+<link rel="stylesheet" href="componentes/cuenta-carrito.css?v=2">
 
 <!--
   MAGANDHI · portada / home de la tienda.
@@ -66,60 +66,9 @@
   }
   a{color:inherit;text-decoration:none}
 
-  /* ---------- header compacto ----------
-     El lockup permanece centrado en escritorio y los accesos reales ocupan
-     un lateral sin alterar la composición de marca. */
-  .hg-head{
-    position:relative;max-width:1200px;margin:0 auto;padding:40px 24px 8px;
-    display:flex;justify-content:center;align-items:center;
-  }
-  /* el enlace envuelve logo-mark + texto como un solo lockup en fila, centrado
-     verticalmente entre si (mismo eje optico) con un gap comodo */
-  .hg-head__mark{display:flex;align-items:center;gap:16px}
-  .hg-head__mark img{width:58px;height:58px;display:block}
-  /* bloque de texto a la derecha del logo, alineado a la izquierda */
-  .hg-marca{display:flex;flex-direction:column;align-items:flex-start;gap:8px}
-  /* wordmark: todo negro, alineado a la izquierda del lockup (sin text-indent,
-     que solo compensaba el centrado optico de la version anterior) */
-  .hg-word{
-    font-weight:600;font-size:25px;letter-spacing:.16em;color:var(--negro);
-    line-height:1;
-  }
-  .hg-tag{font-size:11px;letter-spacing:.26em;text-transform:uppercase;color:var(--gris-cl);margin-left:-.13em}
-  .hg-head-actions{
-    position:absolute;right:24px;display:flex;align-items:center;gap:10px;
-  }
-  .hg-account{
-    display:inline-flex;align-items:center;gap:8px;
-    min-height:40px;padding:8px 13px;border:1px solid var(--ml-borde);border-radius:11px;
-    background:var(--ml-panel);color:var(--tinta);font-size:13px;font-weight:600;
-    box-shadow:var(--ml-sombra);transition:border-color .15s,color .15s,transform .08s;
-  }
-  .hg-account:hover{border-color:var(--rojo);color:var(--rojo);transform:translateY(-1px)}
-  .hg-account svg{width:17px;height:17px}
-  @media(max-width:760px){
-    .hg-head{padding:26px 14px 6px;justify-content:space-between;gap:12px}
-    .hg-head-actions{position:static;flex:none;gap:8px}
-    .hg-account{position:static;flex:none;padding:8px 10px;font-size:12px}
-    .hg-head__mark{gap:12px}
-    .hg-head__mark img{width:46px;height:46px}
-    .hg-word{font-size:20px}
-    .hg-tag{font-size:9px;letter-spacing:.22em;margin-left:-.11em}
-  }
-  @media(max-width:420px){
-    .hg-tag{display:none}
-  }
-  @media(max-width:360px){
-    .hg-account{width:42px;padding:8px;justify-content:center}
-    .hg-account span{display:none}
-  }
-
-  /* ---------- intro corta ---------- */
-  .hg-intro{max-width:620px;margin:12px auto 0;padding:0 24px;text-align:center}
-  .hg-intro h1{
-    font-size:clamp(24px,4vw,34px);font-weight:600;line-height:1.22;margin:0;letter-spacing:-.4px;
-  }
-  .hg-intro h1 em{font-style:normal;color:var(--rojo)}
+  /* ---------- nueva cabecera de tienda ----------
+     La retícula compartida vive en componentes/cuenta-carrito.css. En la
+     portada usa exactamente el mismo riel horizontal de 1200 px del hero. */
 
   /* ---------- vitrina: grid de productos ----------
      RIEL COMUN: la vitrina comparte el mismo ancho maximo (1200px) y el mismo
@@ -597,28 +546,34 @@
 </head>
 <body>
 
-<!-- header compacto: marca, cuenta y slot de carrito cerrado por defecto. -->
-<header class="hg-head">
-  <a class="hg-head__mark" href="index.html" aria-label="MAGANDHI, inicio">
+<!-- Cabecera escalable: marca, espacio de búsqueda y acciones según sesión. -->
+<header class="hg-head cc-store-header">
+  <a class="hg-head__mark cc-store-brand" href="index.html" aria-label="MAGANDHI, inicio">
     <img src="logo-mark-terracota.png" alt="">
-    <span class="hg-marca">
-      <span class="hg-word">MAGANDHI</span>
-      <span class="hg-tag">Hoy mereces lo mejor</span>
+    <span class="cc-store-brand__text">
+      <strong>MAGANDHI</strong>
+      <small>Hoy mereces lo mejor</small>
     </span>
   </a>
-  <div class="hg-head-actions">
-    <a class="hg-account" href="cuenta/" aria-label="Mi cuenta">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/></svg>
-      <span>Mi cuenta</span>
-    </a>
-    <span data-cuenta-carrito data-carrito-href="carrito/" hidden></span>
+  <form class="cc-search" role="search" data-buscador-catalogo>
+    <label for="hg-search">Buscar productos</label>
+    <input id="hg-search" type="search" inputmode="search" autocomplete="off" placeholder="¿Qué estás buscando?">
+    <button type="submit" aria-label="Buscar">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-4-4"/></svg>
+    </button>
+    <span class="cc-search__status" data-buscador-estado role="status" aria-live="polite"></span>
+  </form>
+  <div class="hg-head-actions cc-store-actions">
+    <span data-cuenta-carrito
+          data-inicio-href="./"
+          data-cuenta-href="cuenta/"
+          data-carrito-href="carrito/"
+          data-politicas-href="politicas/"
+          data-cookies-href="politicas/cookies/"
+          data-pqrs-href="mailto:contacto@magandhi.com?subject=PQRS%20MAGANDHI"
+          hidden></span>
   </div>
 </header>
-
-<!-- intro (breve: el producto es el protagonista, no el manifiesto) -->
-<div class="hg-intro">
-  <h1>Ahora, <em>descúbrelo</em>.</h1>
-</div>
 
 <!-- ============================================================
      CARRUSEL / BANNER HERO
@@ -968,7 +923,7 @@
      ============================================================ -->
 <section id="mg-suscripcion" hidden></section>
 <script type="module" src="suscripcion/suscripcion.js?v=1"></script>
-<script type="module" src="componentes/cuenta-carrito.js?v=1"></script>
+<script type="module" src="componentes/cuenta-carrito.js?v=2"></script>
 <!-- Analitica propia (EM7): solo con el interruptor del back-office encendido y si la persona acepta. -->
 <script type="module" src="analitica/analitica.js?v=1"></script>
 

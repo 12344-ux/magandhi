@@ -14,21 +14,35 @@
 <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="../marca.css?v=3">
 <link rel="stylesheet" href="carrito.css?v=1">
+<link rel="stylesheet" href="../componentes/cuenta-carrito.css?v=2">
 </head>
 <body>
-<header class="co-head">
-  <a class="co-back" href="../" aria-label="Volver a la tienda">
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
-    <span>Volver a la tienda</span>
-  </a>
-  <a class="co-brand" href="../" aria-label="MAGANDHI, inicio">
+<header class="co-head cc-store-header">
+  <a class="cc-store-brand" href="../" aria-label="MAGANDHI, inicio">
     <img src="../logo-mark-terracota.png" alt="">
-    <span><b>MAGANDHI</b><small>Hoy mereces lo mejor</small></span>
+    <span class="cc-store-brand__text">
+      <strong>MAGANDHI</strong>
+      <small>Hoy mereces lo mejor</small>
+    </span>
   </a>
-  <a class="co-account" href="../cuenta/" aria-label="Mi cuenta">
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/></svg>
-    <span>Mi cuenta</span>
-  </a>
+  <form class="cc-search" role="search" data-buscador-catalogo>
+    <label for="co-search">Buscar productos</label>
+    <input id="co-search" type="search" inputmode="search" autocomplete="off" placeholder="¿Qué estás buscando?">
+    <button type="submit" aria-label="Buscar">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-4-4"/></svg>
+    </button>
+    <span class="cc-search__status" data-buscador-estado role="status" aria-live="polite"></span>
+  </form>
+  <div class="cc-store-actions">
+    <span data-cuenta-carrito
+          data-inicio-href="../"
+          data-cuenta-href="../cuenta/"
+          data-carrito-href="./"
+          data-politicas-href="../politicas/"
+          data-cookies-href="../politicas/cookies/"
+          data-pqrs-href="mailto:contacto@magandhi.com?subject=PQRS%20MAGANDHI"
+          hidden></span>
+  </div>
 </header>
 
 <main class="co-main">

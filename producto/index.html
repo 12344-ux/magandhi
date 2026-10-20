@@ -15,7 +15,7 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="../marca.css?v=3">
-<link rel="stylesheet" href="../componentes/cuenta-carrito.css?v=1">
+<link rel="stylesheet" href="../componentes/cuenta-carrito.css?v=2">
 
 <!--
   MAGANDHI · Pagina de producto GENERICA. Mismo diseno boutique aprobado del
@@ -134,63 +134,16 @@
   .mg-prefooter span{display:inline-flex;align-items:center;gap:7px;opacity:.92}
   .mg-prefooter svg{width:15px;height:15px;flex:none}
 
-  /* ---------- header ---------- */
-  /* STICKY EN PC: el header blanco (Volver + logo + nav) queda pegado arriba
-     durante todo el scroll, siempre accesible (reemplaza al viejo FAB). La barra
-     negra va arriba en el flujo normal: al bajar sale de vista y el header se
-     pega al top. Fondo solido var(--fondo-pagina), el mismo arena mayor del home,
-     para que el contenido no se transparente por detras + borde inferior y sombra sutil para separarlo al estar pegado.
-     z-index por debajo del modal de Wompi (z-index:100). */
-  header{
+  /* ---------- cabecera compartida de tienda ----------
+     Conserva el comportamiento sticky de la ficha en PC. La composición de
+     marca, búsqueda y acciones vive en cuenta-carrito.css. */
+  header.mg-store-header{
     position:sticky;top:0;z-index:50;
     background:var(--fondo-pagina);border-bottom:1px solid var(--linea);
     box-shadow:0 1px 3px rgba(17,17,17,.06);
-    display:flex;align-items:center;justify-content:space-between;
-    max-width:1120px;margin:0 auto;padding:18px 24px;gap:16px;
   }
-  .mg-marca{display:flex;align-items:center;gap:11px;text-decoration:none}
-  .mg-marca img{width:38px;height:38px;display:block}
-  /* boton VOLVER claro y visible (PC y movil): forma directa de regresar a la
-     tienda, mas evidente que el logo o las migas. */
-  .mg-head-left{display:flex;align-items:center;gap:14px}
-  .mg-volver{
-    display:inline-flex;align-items:center;gap:7px;flex:none;
-    font-size:13.5px;font-weight:600;color:var(--tinta);text-decoration:none;
-    background:var(--blanco);border:1px solid var(--linea);border-radius:11px;
-    padding:9px 15px;transition:border-color .15s,color .15s,transform .08s;
-  }
-  .mg-volver:hover{border-color:var(--rojo);color:var(--rojo);transform:translateX(-2px)}
-  .mg-volver svg{width:16px;height:16px}
   @media(max-width:720px){
-    /* en movil el control de "volver" vive en la barra negra sticky (flecha a la
-       izquierda), asi que el boton del header blanco se oculta para no duplicarlo.
-       Ademas el header blanco deja de ser sticky: en movil lo fijo es la barra
-       negra (lleva la flecha); el logo scrollea normal. */
-    .mg-volver{display:none}
-    header{position:static;background:transparent;border-bottom:0;box-shadow:none}
-  }
-
-  .mg-word{font-weight:600;font-size:20px;letter-spacing:.16em;color:var(--negro);line-height:1}
-  .mg-head-actions{display:flex;align-items:center;gap:20px}
-  .mg-nav{display:flex;gap:24px;font-size:14px;font-weight:500}
-  .mg-nav a{text-decoration:none;color:var(--tinta);opacity:.8}
-  .mg-nav a:hover{opacity:1;color:var(--rojo)}
-  .mg-cuenta-link{
-    display:inline-flex;align-items:center;gap:7px;min-height:40px;padding:8px 12px;
-    border:1px solid var(--linea);border-radius:11px;background:var(--blanco);
-    color:var(--tinta);font-size:13px;font-weight:600;text-decoration:none;white-space:nowrap;
-  }
-  .mg-cuenta-link:hover{border-color:var(--rojo);color:var(--rojo)}
-  .mg-cuenta-link svg{width:17px;height:17px}
-  @media(max-width:720px){
-    .mg-nav{display:none}
-    header{padding:14px 16px;gap:10px}
-    .mg-head-left{min-width:0}.mg-marca{gap:8px}.mg-marca img{width:34px;height:34px}.mg-word{font-size:17px}
-    .mg-head-actions{gap:8px}.mg-cuenta-link{min-height:38px;padding:7px 9px;font-size:11.5px}
-  }
-  @media(max-width:380px){
-    .mg-cuenta-link{width:40px;padding:7px;justify-content:center}
-    .mg-cuenta-link span{display:none}
+    header.mg-store-header{position:static;background:transparent;border-bottom:0;box-shadow:none}
   }
   /* BARRA DE CONFIANZA EN MOVIL: queda STICKY arriba (es la que lleva la flecha de
      volver, debe estar siempre accesible) y se reduce a DOS items: "Envios
@@ -943,29 +896,32 @@
   <button type="button" class="mg-barra-btn mg-abrir-wompi" id="mg-abrir-wompi" aria-haspopup="dialog" aria-controls="mg-modal-wompi"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="5" width="20" height="14" rx="2"/><path d="M2 10h20"/></svg>Pagos seguros con Wompi</button>
 </div>
 
-<!-- header -->
-<header>
-  <div class="mg-head-left">
-    <a class="mg-volver" href="../index.html" aria-label="Volver a la tienda">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
-      <span>Volver a la tienda</span>
-    </a>
-    <a class="mg-marca" href="../index.html">
-      <img src="../logo-mark-terracota.png" alt="MAGANDHI">
-      <span class="mg-word">MAGANDHI</span>
-    </a>
-  </div>
-  <div class="mg-head-actions">
-    <nav class="mg-nav" aria-label="Navegación principal">
-      <a href="../index.html#descubrir">Productos</a>
-      <a href="../index.html#historia">Cómo trabajamos</a>
-      <a href="../index.html#contacto">Contacto</a>
-    </nav>
-    <a class="mg-cuenta-link" href="../cuenta/" aria-label="Mi cuenta">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/></svg>
-      <span>Mi cuenta</span>
-    </a>
-    <span data-cuenta-carrito data-carrito-href="../carrito/" hidden></span>
+<!-- Cabecera compartida de la tienda. La flecha móvil permanece en la barra negra. -->
+<header class="mg-store-header cc-store-header">
+  <a class="cc-store-brand" href="../index.html" aria-label="MAGANDHI, inicio">
+    <img src="../logo-mark-terracota.png" alt="">
+    <span class="cc-store-brand__text">
+      <strong>MAGANDHI</strong>
+      <small>Hoy mereces lo mejor</small>
+    </span>
+  </a>
+  <form class="cc-search" role="search" data-buscador-catalogo>
+    <label for="mg-search">Buscar productos</label>
+    <input id="mg-search" type="search" inputmode="search" autocomplete="off" placeholder="¿Qué estás buscando?">
+    <button type="submit" aria-label="Buscar">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-4-4"/></svg>
+    </button>
+    <span class="cc-search__status" data-buscador-estado role="status" aria-live="polite"></span>
+  </form>
+  <div class="cc-store-actions">
+    <span data-cuenta-carrito
+          data-inicio-href="../"
+          data-cuenta-href="../cuenta/"
+          data-carrito-href="../carrito/"
+          data-politicas-href="../politicas/"
+          data-cookies-href="../politicas/cookies/"
+          data-pqrs-href="mailto:contacto@magandhi.com?subject=PQRS%20MAGANDHI"
+          hidden></span>
   </div>
 </header>
 
@@ -1521,7 +1477,7 @@
     sincronizarCuentaCarrito,
     refrescarCuentaCarrito,
     ocultarCuentaCarrito,
-  } from '../componentes/cuenta-carrito.js';
+  } from '../componentes/cuenta-carrito.js?v=2';
   import { revalidarSesionCliente } from '../cliente/cliente-sesion.js';
 
   // Nombre del bucket publico de Campanas donde viven las imagenes de producto.
