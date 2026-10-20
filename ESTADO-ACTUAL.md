@@ -2,6 +2,16 @@
 
 **Corte:** 20 de octubre de 2026 (el estado completo del proyecto vive en `CONTEXTO-MAGANDHI.md` del repo del back-office)
 
+> **Promocionar P1 · DESPLEGADO Y CERRADO ESTRUCTURALMENTE (20-oct-2026).**
+> Backend PR #295 + corrección ACL #296; migraciones `20261107000000` y
+> `20261107000100` aplicadas una vez. El postflight final confirmó todos los
+> gates, incluida vista de aliases con solo SELECT. Tienda PR #116 fusionada y
+> Pages run `39384518735` correcto. Seis rutas canónicas responden HTTP 200 con
+> canonical/OG/JSON-LD y sin precio/stock estático; query slug/UUID, sitemap,
+> robots y vista pública de aliases medidos. PC 1280 y móvil 390 verificados.
+> Los shells permanecen `noindex,follow` y el sitemap solo publica la home hasta
+> que las políticas reales permitan abrir el gate editorial.
+>
 > **Cuentas C2 · infraestructura cerrada en preapertura:** `/cuenta/` está
 > publicado con correo/contraseña, recuperación, Google GIS y Turnstile. Se
 > midieron alta nueva por correo, confirmación, segundo login y alta Google con
@@ -120,10 +130,11 @@ Los JPG de `marca/` son referencias históricas. No gobiernan la identidad ni de
 - WhatsApp contextual por producto.
 - Opiniones verificadas en vivo (ver sección siguiente). Estado vacío honesto mientras un producto no tenga opiniones.
 
-### Operación Promocionar P1 (PR de tienda #116; despliegue pendiente)
+### Operación Promocionar P1 (EN PRODUCCIÓN · cierre 20-oct-2026)
 
-El historial/alias server-side está coordinado en back-office PR #295. Ningún
-PR por sí solo demuestra producción.
+Backend PR #295 y corrección #296 están desplegados; tienda PR #116 fue
+fusionada y publicada. El generador sincronizó 6 productos contra la vista de
+aliases productiva (0 aliases históricos en este corte).
 
 - Fuente versionada: `producto/catalogo-seo.json`. Conserva aliases por UUID y
   marca como retiradas las filas que dejen de aparecer en la vista pública.
@@ -138,8 +149,9 @@ PR por sí solo demuestra producción.
 - Las imágenes salen del bucket público `campanas`; si una fila no tiene imagen,
   se usa `https://magandhi.com/logo.png` como fallback estable de marca.
 - Plantilla y shells conservan `noindex,follow` mientras las políticas públicas
-  estén en borrador. P1 no debe declararse publicado ni retirar ese gate solo por
-  haber generado estos archivos.
+  estén en borrador. El sitemap solo contiene la home durante ese gate; al
+  registrar políticas publicadas, una regeneración conjunta habilita
+  `index,follow` y agrega los productos al sitemap.
 
 ### Mi cuenta — `cuenta/` (C2, preapertura 16-oct-2026)
 
@@ -387,9 +399,9 @@ Antes, al volver de Wompi la ficha se veía igual y «Comprar ahora» seguía ac
 2. Políticas reales: privacidad, condiciones, entregas, cambios/devoluciones y tratamiento de datos.
 3. Canal/página formal de PQRS; mientras tanto se usa el correo real.
 4. Repaso de textos de la sección de opiniones. El diseño quedó aprobado; solo falta pulir copias. Los copys del aviso de vuelta del pago son provisionales y entran en el mismo repaso.
-5. Promocionar P1 está preparado en código, pero sigue pendiente aplicar el
-   historial de slugs, publicar Pages y medir el HTML generado antes de retirar
-   `noindex` o declarar despliegue.
+5. **Promocionar P2 · Estudio:** siguiente tramo pendiente. P1 está desplegado;
+   construir P2 sin adelantar redirector P3, atribución P4 o métricas P5.
+   El gate `noindex` de P1 continúa ligado a publicar políticas, no a P2.
 6. Definir cómo escala el grid móvil más allá de los cinco espacios actuales.
 7. Revisar accesibilidad completa de carrusel y modales antes del lanzamiento público definitivo.
 
@@ -405,9 +417,9 @@ Estado al 20-oct-2026:
 3. Pendientes de tienda ligados a C5: opinión autenticada por cuenta (hoy
    «Próximamente») y los placeholders del centro de cuenta (Favoritos, Mis
    opiniones, Eliminar cuenta).
-4. Promocionar P0 cerró su contrato documental. P1 queda preparado en código
-   con shells compartibles y gate `noindex`; no implica despliegue ni publicación
-   de políticas hasta completar el runbook y la medición.
+4. Promocionar P0 cerró su contrato documental y P1 está desplegado/cerrado
+   estructuralmente con seis shells compartibles, historial de slugs y gate
+   editorial `noindex`. **Siguiente tramo: P2 · Estudio Promocionar.**
 
 ## Fuentes de verdad
 
@@ -427,4 +439,7 @@ Estado al 20-oct-2026:
   `docs/RELEVO-CUENTAS-C2-2026-10-16.md` del back-office.
 - Diseño y criterios C5:
   `docs/PLANO-COMERCIAL-C5.md` y `docs/PLANO-FASE-COMERCIAL.md` del back-office.
+- Diseño, evidencia y continuidad de Promocionar:
+  `docs/PLANO-PROMOCIONAR-P1.md` y
+  `docs/RELEVO-PROMOCIONAR-P1-2026-10-20.md` del back-office.
 - Inventario y publicación: back-office en `montaguth.institute`.
