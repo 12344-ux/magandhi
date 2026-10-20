@@ -1,6 +1,6 @@
 import { observarSesionCliente } from '../cliente/cliente-sesion.js';
 import { listarCarrito } from '../carrito/carrito-core.js?v=3';
-import { crearControlMisCompras } from './mis-compras.js?v=2';
+import { crearControlMisCompras } from './mis-compras.js?v=3';
 import { supabase } from '../supabase-config.js';
 
 const slots = [...document.querySelectorAll('[data-cuenta-carrito]')];

@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://magandhi.com/sitemap.xml

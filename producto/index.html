@@ -3,12 +3,30 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Producto · MAGANDHI</title>
-<meta name="description" content="Producto elegido y revisado por el equipo de MAGANDHI.">
-<!-- Se mantiene noindex mientras la ficha dinámica completa su etapa de
-     estabilización y todavía no existe metadata/canonical por producto. Las
-     opiniones de ejemplo fueron retiradas: solo se publicarán datos reales. -->
-<meta name="robots" content="noindex, nofollow">
+<base href="/producto/">
+<!-- PRODUCTO_SEO_INICIO: bloque reemplazado por scripts/generar-productos.mjs -->
+<title data-producto-seo="title">Producto · MAGANDHI</title>
+<meta name="description" data-producto-seo="description" content="Producto elegido y revisado por el equipo de MAGANDHI.">
+<!-- Las políticas públicas siguen en borrador: la plantilla y todos los shells
+     permanecen noindex,follow hasta completar el gate editorial de P1. -->
+<meta name="robots" content="noindex,follow">
+<link rel="canonical" data-producto-seo="canonical" href="https://magandhi.com/producto/">
+<meta property="og:type" data-producto-seo="og-type" content="product">
+<meta property="og:site_name" content="MAGANDHI">
+<meta property="og:locale" content="es_CO">
+<meta property="og:title" data-producto-seo="og-title" content="Producto · MAGANDHI">
+<meta property="og:description" data-producto-seo="og-description" content="Producto elegido y revisado por el equipo de MAGANDHI.">
+<meta property="og:url" data-producto-seo="og-url" content="https://magandhi.com/producto/">
+<meta property="og:image" data-producto-seo="og-image" content="https://magandhi.com/logo.png">
+<meta property="og:image:secure_url" data-producto-seo="og-image-secure" content="https://magandhi.com/logo.png">
+<meta property="og:image:alt" data-producto-seo="og-image-alt" content="Producto disponible en MAGANDHI">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" data-producto-seo="twitter-title" content="Producto · MAGANDHI">
+<meta name="twitter:description" data-producto-seo="twitter-description" content="Producto elegido y revisado por el equipo de MAGANDHI.">
+<meta name="twitter:image" data-producto-seo="twitter-image" content="https://magandhi.com/logo.png">
+<meta name="twitter:image:alt" data-producto-seo="twitter-image-alt" content="Producto disponible en MAGANDHI">
+<script type="application/ld+json" id="mg-producto-jsonld">{"@context":"https://schema.org","@type":"Product","name":"Producto MAGANDHI","description":"Producto elegido y revisado por el equipo de MAGANDHI.","image":["https://magandhi.com/logo.png"],"url":"https://magandhi.com/producto/"}</script>
+<!-- PRODUCTO_SEO_FIN -->
 <link rel="icon" type="image/png" href="../favicon.png?v=4">
 <meta name="theme-color" content="#A6332E">
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -18,17 +36,16 @@
 <link rel="stylesheet" href="../componentes/cuenta-carrito.css?v=4">
 
 <!--
-  MAGANDHI · Pagina de producto GENERICA. Mismo diseno boutique aprobado del
-  Grisi (magandhi/producto/grisi-manzanilla-gold/index.html), pero se llena SOLA
-  para CUALQUIER producto leyendo la vista catalogo_publico por el ?slug= o ?id=
-  de la URL (magandhi.com/producto/?slug=... o magandhi.com/producto/?id=...).
+  MAGANDHI · Plantilla funcional UNICA de producto. Se llena sola para cualquier
+  fila de catalogo_publico y tambien es la fuente de los shells estaticos P1.
+  Resuelve /producto/<slug>/, los datasets generados y la compatibilidad
+  /producto/?slug=... o /producto/?id=....
   DATOS: titulo, subtitulo, precio, descripcion, "Por que esta en MAGANDHI",
   "Sobre este producto", la ficha y la GALERIA se rellenan EN VIVO desde Campanas
   (ver el script del final). Las opiniones permanecen en estado vacío hasta
   que exista una fuente de compras verificadas; no se publican ejemplos.
-  · Esta pagina vive en magandhi/producto/ (UN nivel bajo la raiz): los assets se
-    referencian con '../' (la del Grisi usa '../../' por estar dos niveles) y el
-    import es '../supabase-config.js'.
+  · <base href="/producto/"> mantiene los assets e imports en la misma ruta tanto
+    en la plantilla genérica como en los shells /producto/<slug>/.
   · CSS de componentes autocontenido con prefijo mg-; los tokens estructurales
     compartidos (incluido el fondo arena) vienen de ../marca.css.
   · Sistema de marca (PALETA REDUCIDA, estilo Mercado Libre): rojo/terracota de
@@ -881,7 +898,7 @@
   }
 </style>
 </head>
-<body>
+<body data-producto-id="" data-producto-slug="">
 
 <!-- barra de confianza -->
 <div class="mg-barra">
@@ -1033,7 +1050,7 @@
          (producto_rating_publico por slug). Mientras no haya datos o sean 0,
          muestra el aviso honesto de "aun no hay opiniones". -->
     <div class="mg-estrellas mg-estrellas--vacia" id="mg-rating" aria-label="Calificación del producto">
-      Aún no hay opiniones verificadas.
+      Consulta las opiniones verificadas al cargar la ficha.
     </div>
 
     <p class="mg-desc" id="mg-desc" hidden></p>
@@ -1044,7 +1061,7 @@
     </div>
 
     <div class="mg-cta">
-      <button type="button" class="mg-btn mg-btn--primario" id="mg-comprar">
+      <button type="button" class="mg-btn mg-btn--primario" id="mg-comprar" disabled>
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="8" cy="21" r="1"/><circle cx="19" cy="21" r="1"/><path d="M2.05 2.05h2l2.66 12.42a2 2 0 0 0 2 1.58h9.78a2 2 0 0 0 1.95-1.57l1.65-7.43H5.12"/></svg>
         Comprar ahora
       </button>
@@ -1052,7 +1069,7 @@
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="8" cy="21" r="1"/><circle cx="19" cy="21" r="1"/><path d="M2.05 2.05h2l2.66 12.42a2 2 0 0 0 2 1.58h9.78a2 2 0 0 0 1.95-1.57l1.65-7.43H5.12"/><path d="M12 8v6M9 11h6"/></svg>
         <span>Agregar al carrito</span>
       </button>
-      <button type="button" class="mg-btn mg-btn--wa" id="mg-whatsapp">
+      <button type="button" class="mg-btn mg-btn--wa" id="mg-whatsapp" disabled>
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M7.9 20A9 9 0 1 0 4 16.1L2 22z"/></svg>
         Preguntar por WhatsApp
       </button>
@@ -1470,18 +1487,163 @@
        reales de compras verificadas.
      ============================================================ -->
 <script type="module">
-  import { supabase } from '../supabase-config.js';
+  import { supabase, SUPABASE_URL } from '../supabase-config.js';
   import { agregarAlCarrito, mensajeErrorCarrito } from '../carrito/carrito-core.js?v=3';
   import {
     observarEstadoCarrito,
     sincronizarCuentaCarrito,
     refrescarCuentaCarrito,
     ocultarCuentaCarrito,
-  } from '../componentes/cuenta-carrito.js?v=4';
+  } from '../componentes/cuenta-carrito.js?v=5';
   import { revalidarSesionCliente } from '../cliente/cliente-sesion.js';
 
   // Nombre del bucket publico de Campanas donde viven las imagenes de producto.
   const BUCKET_CAMPANAS = 'campanas';
+  const URL_SITIO = 'https://magandhi.com';
+  const IMAGEN_MARCA = URL_SITIO + '/logo.png';
+  const FORMATO_SLUG = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
+  // La URL se limpia tras validar el producto. Solo se conserva una copia
+  // efímera y acotada de las UTM que usa la analítica consentida; referencias
+  // de pago y otros parámetros nunca quedan expuestos en esta variable global.
+  window.__mgBusquedaInicial = (function(){
+    const entrada = new URLSearchParams(window.location.search);
+    const segura = new URLSearchParams();
+    const fuente = (entrada.get('utm_source') || '').trim().toLowerCase();
+    const campana = (entrada.get('utm_campaign') || '').trim().toLowerCase();
+    const slug = (entrada.get('slug') || '').trim().toLowerCase();
+    if(/^[a-z0-9_-]{1,40}$/.test(fuente)) segura.set('utm_source', fuente);
+    if(/^[a-z0-9-]{1,60}$/.test(campana)) segura.set('utm_campaign', campana);
+    if(FORMATO_SLUG.test(slug)) segura.set('slug', slug);
+    return segura.toString() ? '?' + segura.toString() : '';
+  })();
+
+  // Una misma plantilla resuelve la compatibilidad query, los shells generados
+  // (dataset), y la ruta canonica. En shells manda el UUID estable; el slug se
+  // conserva para canonical, analitica y retorno de Wompi.
+  function identidadProductoSolicitado(){
+    const params = new URLSearchParams(window.location.search);
+    const querySlug = (params.get('slug') || '').trim().toLowerCase();
+    const queryId = (params.get('id') || '').trim();
+    const dataSlug = (document.body.dataset.productoSlug || '').trim().toLowerCase();
+    const dataId = (document.body.dataset.productoId || '').trim();
+    let pathSlug = '';
+    const match = window.location.pathname.match(/\/producto\/([^/]+)\/?$/i);
+    if(match){
+      try{ pathSlug = decodeURIComponent(match[1]).trim().toLowerCase(); }catch(_){ pathSlug = ''; }
+    }
+    const slug = FORMATO_SLUG.test(querySlug) ? querySlug
+      : (FORMATO_SLUG.test(dataSlug) ? dataSlug
+        : (FORMATO_SLUG.test(pathSlug) ? pathSlug : ''));
+    if(querySlug || queryId) return {
+      slug: FORMATO_SLUG.test(querySlug) ? querySlug : '', id: queryId, porId: !querySlug && !!queryId
+    };
+    if(dataId) return { slug: slug, id: dataId, porId: true };
+    return { slug: slug, id: '', porId: false };
+  }
+
+  function slugProductoActual(){
+    if(filaProducto && FORMATO_SLUG.test(String(filaProducto.slug || '').toLowerCase())){
+      return String(filaProducto.slug).toLowerCase();
+    }
+    return identidadProductoSolicitado().slug;
+  }
+
+  function textoSeo(fila){
+    const base = String(fila.hook_largo || fila.caracteristica_adicional ||
+      'Producto elegido y revisado por el equipo de MAGANDHI.')
+      .replace(/\s+/g, ' ').trim();
+    if(base.length <= 160) return base;
+    return base.slice(0, 157).replace(/\s+\S*$/, '') + '…';
+  }
+
+  function imagenSeo(fila){
+    const paths = Array.isArray(fila.imagenes)
+      ? fila.imagenes.filter(function(item){ return typeof item === 'string' && item.trim(); })
+        .map(function(item){ return item.trim(); })
+      : [];
+    const path = String(paths[0] || fila.imagen_banner_path || '').trim();
+    if(!path) return IMAGEN_MARCA;
+    if(!/^https:\/\//i.test(path)){
+      const segmentos = path.split('/');
+      if(!segmentos.length) return IMAGEN_MARCA;
+      for(const segmento of segmentos){
+        let decodificado = '';
+        try{ decodificado = decodeURIComponent(segmento); }catch(_){ return IMAGEN_MARCA; }
+        if(!segmento || decodificado === '.' || decodificado === '..' || /[\\/]/.test(decodificado)){
+          return IMAGEN_MARCA;
+        }
+      }
+      const codificado = segmentos.map(function(segmento){ return encodeURIComponent(segmento); }).join('/');
+      const candidata = new URL(
+        SUPABASE_URL + '/storage/v1/object/public/' + BUCKET_CAMPANAS + '/' + codificado
+      );
+      const prefijo = '/storage/v1/object/public/' + BUCKET_CAMPANAS + '/';
+      return candidata.pathname.startsWith(prefijo) ? candidata.href : IMAGEN_MARCA;
+    }
+    try{
+      const candidata = new URL(path);
+      const storage = new URL(SUPABASE_URL);
+      const prefijo = '/storage/v1/object/public/' + BUCKET_CAMPANAS + '/';
+      if(candidata.hostname !== storage.hostname || candidata.port ||
+         candidata.username || candidata.password || !candidata.pathname.startsWith(prefijo)){
+        return IMAGEN_MARCA;
+      }
+      return candidata.href;
+    }catch(_){ return IMAGEN_MARCA; }
+  }
+
+  function ponerMeta(selector, atributo, valor){
+    const nodo = document.querySelector(selector);
+    if(nodo) nodo.setAttribute(atributo, valor);
+  }
+
+  function actualizarSeoProducto(fila){
+    const slug = String(fila.slug || '').trim().toLowerCase();
+    if(!FORMATO_SLUG.test(slug)) return;
+    const canonical = URL_SITIO + '/producto/' + encodeURIComponent(slug) + '/';
+    const titulo = String(fila.nombre || 'Producto') + ' · MAGANDHI';
+    const descripcion = textoSeo(fila);
+    const imagen = imagenSeo(fila);
+    document.title = titulo;
+    ponerMeta('[data-producto-seo="description"]', 'content', descripcion);
+    ponerMeta('[data-producto-seo="canonical"]', 'href', canonical);
+    ponerMeta('[data-producto-seo="og-title"]', 'content', titulo);
+    ponerMeta('[data-producto-seo="og-description"]', 'content', descripcion);
+    ponerMeta('[data-producto-seo="og-url"]', 'content', canonical);
+    ponerMeta('[data-producto-seo="og-image"]', 'content', imagen);
+    ponerMeta('[data-producto-seo="og-image-secure"]', 'content', imagen);
+    ponerMeta('[data-producto-seo="og-image-alt"]', 'content', String(fila.nombre || 'Producto disponible en MAGANDHI'));
+    ponerMeta('[data-producto-seo="twitter-title"]', 'content', titulo);
+    ponerMeta('[data-producto-seo="twitter-description"]', 'content', descripcion);
+    ponerMeta('[data-producto-seo="twitter-image"]', 'content', imagen);
+    ponerMeta('[data-producto-seo="twitter-image-alt"]', 'content', String(fila.nombre || 'Producto disponible en MAGANDHI'));
+    const jsonLd = document.getElementById('mg-producto-jsonld');
+    if(jsonLd){
+      jsonLd.textContent = JSON.stringify({
+        '@context': 'https://schema.org',
+        '@type': 'Product',
+        name: String(fila.nombre || 'Producto'),
+        description: descripcion,
+        image: [imagen],
+        url: canonical,
+      }).replace(/</g, '\\u003c');
+    }
+    document.body.dataset.productoId = String(fila.id || '');
+    document.body.dataset.productoSlug = slug;
+  }
+
+  function limpiarUrlCanonica(fila){
+    const slug = String(fila && fila.slug || '').trim().toLowerCase();
+    if(!FORMATO_SLUG.test(slug)) return;
+    try{
+      const params = new URLSearchParams(window.__mgBusquedaInicial || window.location.search);
+      const campana = (params.get('utm_campaign') || '').trim().toLowerCase();
+      if(/^[a-z0-9-]{1,60}$/.test(campana)) sessionStorage.setItem('mg_utm', campana);
+    }catch(_){ /* La atribución descriptiva es opcional. */ }
+    try{
+      window.history.replaceState(null, '', '/producto/' + encodeURIComponent(slug) + '/' + window.location.hash);
+    }catch(_){ /* La ficha sigue funcionando aunque el navegador impida limpiar. */ }
+  }
 
   function esc(v){
     if(v === null || v === undefined) return '';
@@ -1937,6 +2099,8 @@
     if(el) el.setAttribute('data-visible', 'true');
     const btn = document.getElementById('mg-comprar');
     if(btn) btn.disabled = true;
+    const btnWhatsApp = document.getElementById('mg-whatsapp');
+    if(btnWhatsApp) btnWhatsApp.disabled = true;
     actualizarBotonCarrito();
     set('mg-titulo', 'Producto no disponible');
     set('mg-sub', '');
@@ -2088,10 +2252,12 @@
   }
 
   async function cargarProducto(){
-    // Lee el parametro de la URL: preferir ?slug=, si no ?id=.
-    const params = new URLSearchParams(window.location.search);
-    const slug = (params.get('slug') || '').trim();
-    const id = (params.get('id') || '').trim();
+    // Compatibilidad: query histórica, dataset de shell generado o slug del path.
+    const identidad = identidadProductoSolicitado();
+    // Los shells consultan por UUID para sobrevivir a un cambio de slug hasta
+    // la siguiente sincronización; query/path históricos conservan su contrato.
+    const slug = identidad.porId ? '' : identidad.slug;
+    const id = identidad.id;
 
     if(!slug && !id){
       // URL sin parametro: aviso sobrio, sin romper la pagina.
@@ -2129,8 +2295,8 @@
 
       // (acento fijo de marca; ya no se aplica color por categoria)
       pintarSello(filaProducto);
+      actualizarSeoProducto(filaProducto);
       set('mg-titulo', filaProducto.nombre || '');
-      document.title = (filaProducto.nombre ? filaProducto.nombre + ' · MAGANDHI' : 'Producto · MAGANDHI');
       set('mg-miga-nom', filaProducto.nombre || 'Producto');
       if(filaProducto.categoria_nombre) set('mg-miga-cat', filaProducto.categoria_nombre);
       if(filaProducto.caracteristica_adicional) set('mg-sub', filaProducto.caracteristica_adicional);
@@ -2147,6 +2313,8 @@
       pintarUrgencia(filaProducto);
       pintarCantidad(false);
       pintarAgotado(filaProducto);
+      const btnWhatsApp = document.getElementById('mg-whatsapp');
+      if(btnWhatsApp) btnWhatsApp.disabled = false;
       actualizarBotonCarrito();
       // Opiniones verificadas: se leen por SLUG de las vistas publicas.
       cargarResenas(filaProducto.slug || null);
@@ -2156,6 +2324,11 @@
         const cod = codigoDesdeCorreo; codigoDesdeCorreo = null;
         abrirResenaConCodigo(cod);
       }
+      // Una vuelta histórica puede haber guardado el UUID antes de que P1
+      // conociera el slug. Se normaliza antes de limpiar la URL para conservar
+      // el candado prudente en recargas posteriores.
+      normalizarPagoPendiente(filaProducto);
+      limpiarUrlCanonica(filaProducto);
     }catch(e){
       // Falla de red/consulta: no se pudo confirmar el producto ni su
       // disponibilidad, asi que se muestra el aviso sobrio de no disponible y
@@ -2204,6 +2377,7 @@
   // defecto, para que la compra funcione aunque el aviso no se pueda montar.
   let marcarPagoIniciado   = function(){};
   let revisarPagoPendiente = function(){};
+  let normalizarPagoPendiente = function(){};
 
   function configurarVueltaDelPago(){
     // sessionStorage y NO localStorage: el recuerdo muere con la pestaña, que es
@@ -2261,8 +2435,11 @@
     // Identidad del producto de ESTA pagina, tal como viaja en la URL. Sirve
     // para no avisar de un pago del producto A estando en la ficha del B.
     function claveProducto(){
-      const p = new URLSearchParams(window.location.search);
-      return ((p.get('slug') || p.get('id') || '')).trim().toLowerCase();
+      if(filaProducto && FORMATO_SLUG.test(String(filaProducto.slug || '').toLowerCase())){
+        return String(filaProducto.slug).toLowerCase();
+      }
+      const identidad = identidadProductoSolicitado();
+      return (identidad.slug || identidad.id || '').trim().toLowerCase();
     }
 
     // --- Memoria de la pestaña ----------------------------------------------
@@ -2397,6 +2574,16 @@
     // --- API para configurarCompra() -----------------------------------------
     marcarPagoIniciado = function(ref){
       if(typeof ref === 'string' && ref) recordar(ref);
+    };
+    normalizarPagoPendiente = function(fila){
+      const d = recordado();
+      if(!d || !fila) return;
+      const slug = String(fila.slug || '').trim().toLowerCase();
+      const id = String(fila.id || '').trim().toLowerCase();
+      if(!FORMATO_SLUG.test(slug) || (d.prod !== slug && d.prod !== id)) return;
+      try{
+        sessionStorage.setItem(CLAVE, JSON.stringify({ ref: d.ref, prod: slug, ts: d.ts }));
+      }catch(_){ /* El aviso actual sigue visible aunque no se pueda normalizar. */ }
     };
     revisarPagoPendiente = function(){
       const d = recordado();
@@ -2539,7 +2726,7 @@
 
     btnComprar.addEventListener('click', abrir);
     // Metricas (EM7): solo se envia si la persona acepto la analitica.
-    btnComprar.addEventListener('click', function(){ if(window.mgEvento) window.mgEvento('clic_comprar', { slug: (new URLSearchParams(location.search).get('slug') || '').trim().toLowerCase() }); });
+    btnComprar.addEventListener('click', function(){ if(window.mgEvento) window.mgEvento('clic_comprar', { slug: slugProductoActual() }); });
     cerrar.addEventListener('click', ocultar);
     modal.addEventListener('click', function(e){ if(e.target === modal) ocultar(); });
     document.addEventListener('keydown', function(e){
@@ -2756,7 +2943,7 @@
 
         // Se abre el pago seguro de Wompi con EXACTAMENTE los valores del servidor
         // (referencia, monto, moneda, firma, llave). Nunca se recalculan aqui.
-        if(window.mgEvento) window.mgEvento('checkout_iniciado', { slug: (new URLSearchParams(location.search).get('slug') || '').trim().toLowerCase() });
+        if(window.mgEvento) window.mgEvento('checkout_iniciado', { slug: slugProductoActual() });
         // Se anota el pago en la memoria de la pestaña ANTES de salir. Es lo que
         // permite avisar y bloquear la compra si la persona vuelve con el boton
         // 'atras' del navegador, donde no hay ?ref= en la URL.
@@ -2915,6 +3102,7 @@
     const btn = document.getElementById('mg-whatsapp');
     if(!btn) return;
     btn.addEventListener('click', function(){
+      if(btn.disabled || !filaProducto) return;
       const nombre = (filaProducto && filaProducto.nombre) ? filaProducto.nombre : '';
       const mensaje = nombre
         ? 'Hola, me interesa el producto ' + nombre + ' de MAGANDHI'
@@ -3390,6 +3578,6 @@
 </script>
 
 <!-- Analitica propia (EM7) -->
-<script type="module" src="../analitica/analitica.js?v=1"></script>
+<script type="module" src="../analitica/analitica.js?v=2"></script>
 </body>
 </html>

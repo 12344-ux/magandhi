@@ -107,7 +107,7 @@ function normalizarLinea(valor) {
       slug === null || (slug && !/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(slug)) ||
       typeof valor.puede_opinar !== 'boolean') throw falloContrato();
   const destino = id ? urlMagandhi(slug
-    ? `https://magandhi.com/producto/?slug=${encodeURIComponent(slug)}`
+    ? `https://magandhi.com/producto/${encodeURIComponent(slug)}/`
     : `https://magandhi.com/producto/?id=${encodeURIComponent(id)}`, 'producto') : '';
   return Object.freeze({
     nombre,
