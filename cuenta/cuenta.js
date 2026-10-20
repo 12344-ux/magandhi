@@ -24,6 +24,19 @@ let googleScriptPromise = null;
 let googleButtonGeneration = 0;
 let googleCredentialGeneration = null;
 
+function destinoRetornoSeguro() {
+  const valor = new URLSearchParams(window.location.search).get('return_to');
+  if (!valor || valor.length > 120) return '';
+  let destino;
+  try { destino = new URL(valor, window.location.origin); } catch { return ''; }
+  if (destino.origin !== window.location.origin || destino.username || destino.password || destino.hash ||
+      destino.pathname !== '/carrito/' || destino.searchParams.size !== 1 ||
+      destino.searchParams.get('cuenta') !== 'compras') return '';
+  return '/carrito/?cuenta=compras';
+}
+
+let retornoTrasAcceso = destinoRetornoSeguro();
+
 const byId = (id) => document.getElementById(id);
 
 function showView(name, shouldFocus = true) {
@@ -158,13 +171,19 @@ async function initializeAccount(session) {
   }
 }
 
-async function showSession(session, status) {
+async function showSession(session, status, permitirRetorno = true) {
   showView('session');
   byId('ct-session-email').textContent = session?.user?.email || '';
   message('ct-session-message', 'Terminando de preparar tu cuenta…', 'info');
 
   try {
     await initializeAccount(session);
+    if (permitirRetorno && retornoTrasAcceso) {
+      const destino = retornoTrasAcceso;
+      retornoTrasAcceso = '';
+      window.location.assign(destino);
+      return;
+    }
     if (status === 'confirmed') message('ct-session-message', 'Correo confirmado. Tu cuenta está lista.', 'success');
     else if (status === 'password-updated') message('ct-session-message', 'Tu contraseña quedó actualizada.', 'success');
     else if (status === 'session-warning') message('ct-session-message', 'La preparación pendiente terminó correctamente. Tu cuenta está lista.', 'success');
@@ -616,7 +635,7 @@ async function submitNewPassword(event) {
     const { data, error } = await supabase.auth.updateUser({ password: passwordInput.value });
     if (error) throw error;
     const { data: sessionData } = await supabase.auth.getSession();
-    await showSession(sessionData.session || { user: data.user }, 'password-updated');
+    await showSession(sessionData.session || { user: data.user }, 'password-updated', false);
     history.replaceState(null, '', window.location.pathname);
   } catch (error) {
     message('ct-password-message', humanAuthError(error, 'password'), 'error');
@@ -679,7 +698,7 @@ async function boot() {
     if (data.session && consumeRecoveryProof(data.session)) {
       showView('password');
     } else if (data.session) {
-      await showSession(data.session);
+      await showSession(data.session, undefined, false);
     } else {
       showView('recovery');
       message('ct-recovery-message', 'El enlace ya no es válido. Solicita uno nuevo.', 'error');

@@ -1,5 +1,6 @@
 import { observarSesionCliente } from '../cliente/cliente-sesion.js';
 import { listarCarrito } from '../carrito/carrito-core.js?v=3';
+import { crearControlMisCompras } from './mis-compras.js?v=2';
 import { supabase } from '../supabase-config.js';
 
 const slots = [...document.querySelectorAll('[data-cuenta-carrito]')];
@@ -11,6 +12,27 @@ let estado = Object.freeze({ visible: false, uid: null, snapshot: null, error: f
 let centro = null;
 let botonQueAbrio = null;
 let rutasCentro = null;
+const DESTINO_COMPRAS = '/carrito/?cuenta=compras';
+const CLAVE_DESTINO_CUENTA = 'mg_destino_cuenta';
+let abrirComprasPorDeepLink = false;
+
+try {
+  const url = new URL(window.location.href);
+  if (url.searchParams.get('cuenta') === 'compras') {
+    abrirComprasPorDeepLink = true;
+    let persistido = false;
+    try {
+      sessionStorage.setItem(CLAVE_DESTINO_CUENTA, DESTINO_COMPRAS);
+      persistido = true;
+    } catch { /* Si storage falla, la URL conserva el destino. */ }
+    if (persistido) {
+      url.searchParams.delete('cuenta');
+      history.replaceState(null, '', url.pathname + url.search + url.hash);
+    }
+  } else {
+    try { abrirComprasPorDeepLink = sessionStorage.getItem(CLAVE_DESTINO_CUENTA) === DESTINO_COMPRAS; } catch { /* Sin memoria, no se inventa destino. */ }
+  }
+} catch { /* El centro sigue disponible aunque la URL no pueda normalizarse. */ }
 
 const ICONO_CARRITO = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="8" cy="21" r="1"/><circle cx="19" cy="21" r="1"/><path d="M2.05 2.05h2l2.66 12.42a2 2 0 0 0 2 1.58h9.78a2 2 0 0 0 1.95-1.57l1.65-7.43H5.12"/></svg>';
 const ICONO_CUENTA_MENU = '<svg class="cc-menu-icon" viewBox="0 0 48 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 6h12M2 12h12M2 18h12"/><circle cx="34" cy="7.5" r="4.5"/><path d="M25 22c.7-5 4-7.5 9-7.5S42.3 17 43 22"/></svg>';
@@ -65,16 +87,22 @@ function crearEnlaceCarrito(slot) {
   return enlace;
 }
 
+function urlCuenta(slot, tab) {
+  const base = rutasDelSlot(slot).cuenta;
+  const separador = base.includes('?') ? '&' : '?';
+  const retorno = abrirComprasPorDeepLink ? `&return_to=${encodeURIComponent(DESTINO_COMPRAS)}` : '';
+  return `${base}${separador}tab=${encodeURIComponent(tab)}${retorno}`;
+}
+
 function crearAccionesInvitado(slot) {
-  const rutas = rutasDelSlot(slot);
   const crear = document.createElement('a');
   crear.className = 'cc-auth-action cc-auth-action--secondary';
-  crear.href = `${rutas.cuenta}?tab=register`;
+  crear.href = urlCuenta(slot, 'register');
   crear.textContent = 'Crear cuenta';
 
   const ingresar = document.createElement('a');
   ingresar.className = 'cc-auth-action cc-auth-action--primary';
-  ingresar.href = `${rutas.cuenta}?tab=login`;
+  ingresar.href = urlCuenta(slot, 'login');
   ingresar.textContent = 'Ingresar';
   return [crear, ingresar];
 }
@@ -82,7 +110,7 @@ function crearAccionesInvitado(slot) {
 function crearAccesoRecuperacion(slot) {
   const enlace = document.createElement('a');
   enlace.className = 'cc-auth-action cc-auth-action--secondary';
-  enlace.href = `${rutasDelSlot(slot).cuenta}?tab=login`;
+  enlace.href = urlCuenta(slot, 'login');
   enlace.textContent = 'Ingresar';
   return enlace;
 }
@@ -97,7 +125,7 @@ function crearBotonCentro(slot) {
   boton.setAttribute('aria-expanded', 'false');
   boton.setAttribute('aria-controls', 'cc-account-center');
   boton.innerHTML = ICONO_CUENTA_MENU + '<span class="cc-action__label cc-action__label--account">Mi cuenta</span>';
-  boton.addEventListener('click', () => abrirCentro(boton, rutasDelSlot(slot)));
+  boton.addEventListener('click', () => abrirCentroDesdeBoton(boton, rutasDelSlot(slot), 'compras'));
   return boton;
 }
 
@@ -125,7 +153,52 @@ function pintarSlots() {
     slot.replaceChildren(...elementos);
     slot.hidden = false;
   }
+  actualizarIndicadoresCompras(controlCompras.estado());
 }
+
+function actualizarIndicadoresCompras(compras) {
+  const cantidad = compras?.procesos || 0;
+  document.querySelectorAll('[data-cc-account-button]').forEach((boton) => {
+    boton.setAttribute('aria-label', cantidad > 0
+      ? `Abrir mi cuenta, ${cantidad} ${cantidad === 1 ? 'compra en proceso' : 'compras en proceso'}`
+      : 'Abrir mi cuenta');
+    let punto = boton.querySelector('[data-cc-purchases-dot]');
+    if (cantidad > 0 && !punto) {
+      punto = document.createElement('span');
+      punto.className = 'cc-purchases-dot';
+      punto.dataset.ccPurchasesDot = '';
+      punto.setAttribute('aria-hidden', 'true');
+      boton.appendChild(punto);
+    } else if (cantidad === 0) punto?.remove();
+  });
+  const badge = centro?.querySelector('[data-cc-purchases-badge]');
+  if (badge) {
+    badge.textContent = cantidad > 0 ? String(cantidad) : '';
+    badge.hidden = cantidad === 0;
+    badge.setAttribute('aria-label', cantidad > 0
+      ? `${cantidad} ${cantidad === 1 ? 'compra en proceso' : 'compras en proceso'}`
+      : 'Sin compras en proceso');
+  }
+  const aviso = document.querySelector('[data-cc-cart-purchases]');
+  if (!aviso) return;
+  aviso.hidden = cantidad === 0;
+  const texto = aviso.querySelector('[data-cc-cart-purchases-text]');
+  if (texto && cantidad > 0) texto.textContent = cantidad === 1
+    ? 'Tienes una compra en proceso. Revísala en Mis compras'
+    : `Tienes ${cantidad} compras en proceso. Revísalas en Mis compras`;
+  const boton = aviso.querySelector('[data-cc-cart-purchases-open]');
+  if (boton && !boton.dataset.ccReady) {
+    boton.dataset.ccReady = 'true';
+    boton.addEventListener('click', () => abrirCentroCuenta('compras'));
+  }
+}
+
+const controlCompras = crearControlMisCompras({
+  supabase,
+  obtenerSesion: () => sesionActual,
+  obtenerRutas: () => rutasCentro || (slots[0] ? rutasDelSlot(slots[0]) : null),
+  alCambiar: actualizarIndicadoresCompras,
+});
 
 function limpiarCarrito(error = false) {
   estado = Object.freeze({ visible: false, uid: uidActual, snapshot: null, error });
@@ -182,11 +255,6 @@ export async function refrescarCuentaCarrito() {
 
 function plantillaVacia(tipo) {
   const contenidos = {
-    compras: {
-      kicker: 'Tu historial', titulo: 'Mis compras', icono: ICONOS_VISTA.compras,
-      texto: 'Aquí encontrarás tus compras, pagos en proceso y el estado de cada pedido.',
-      vacio: 'Este será el centro de tus compras', detalle: 'En la siguiente etapa conectaremos aquí tus compras, pagos en proceso y estados reales, sin depender del carrito.',
-    },
     favoritos: {
       kicker: 'Tu selección', titulo: 'Favoritos', icono: ICONOS_VISTA.favoritos,
       texto: 'Guarda los productos que quieras recordar y vuelve a ellos cuando sea el momento.',
@@ -198,7 +266,7 @@ function plantillaVacia(tipo) {
       vacio: 'Aquí vivirán tus opiniones', detalle: 'En la siguiente etapa conectaremos tus opiniones verificadas y los productos que ya puedas calificar.',
     },
   };
-  const dato = contenidos[tipo] || contenidos.compras;
+  const dato = contenidos[tipo] || contenidos.favoritos;
   return `
     <div class="cc-view-head">
       <span class="cc-view-kicker">${dato.kicker}</span>
@@ -209,7 +277,6 @@ function plantillaVacia(tipo) {
       <span class="cc-empty-state__icon">${dato.icono}</span>
       <h3>${dato.vacio}</h3>
       <p>${dato.detalle}</p>
-      ${tipo === 'compras' ? '<a class="cc-view-cta" data-cc-shop href="#">Descubrir productos</a>' : ''}
     </div>`;
 }
 
@@ -263,7 +330,7 @@ function asegurarCentro() {
       <div class="cc-center__layout">
         <nav class="cc-center__nav" aria-label="Secciones de mi cuenta">
           <a class="cc-nav-item" data-cc-home href="#"><span class="cc-nav-item__icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m3 11 9-8 9 8"/><path d="M5 10v11h14V10M9 21v-7h6v7"/></svg></span>Inicio</a>
-          <button class="cc-nav-item" type="button" data-cc-view="compras">${ICONOS_VISTA.compras}<span>Mis compras</span><span class="cc-nav-arrow" aria-hidden="true">›</span></button>
+          <button class="cc-nav-item" type="button" data-cc-view="compras">${ICONOS_VISTA.compras}<span>Mis compras</span><span class="cc-nav-purchase-badge" data-cc-purchases-badge aria-label="Compras en proceso" hidden></span><span class="cc-nav-arrow" aria-hidden="true">›</span></button>
           <button class="cc-nav-item" type="button" data-cc-view="favoritos">${ICONOS_VISTA.favoritos}<span>Favoritos</span><span class="cc-nav-arrow" aria-hidden="true">›</span></button>
           <button class="cc-nav-item" type="button" data-cc-view="opiniones">${ICONOS_VISTA.opiniones}<span>Mis opiniones</span><span class="cc-nav-arrow" aria-hidden="true">›</span></button>
           <button class="cc-nav-item" type="button" data-cc-view="pqrs">${ICONOS_VISTA.pqrs}<span>PQRS</span><span class="cc-nav-arrow" aria-hidden="true">›</span></button>
@@ -274,11 +341,12 @@ function asegurarCentro() {
           <p class="cc-session-alert" data-cc-session-alert role="alert" hidden></p>
           <button class="cc-nav-item cc-nav-item--danger" type="button" data-cc-view="eliminar">${ICONOS_VISTA.eliminar}<span>Eliminar cuenta</span><span class="cc-nav-arrow" aria-hidden="true">›</span></button>
         </nav>
-        <div class="cc-center__content" data-cc-content role="region" aria-live="polite"></div>
+        <div class="cc-center__content" data-cc-content role="region"></div>
       </div>
     </section>`;
   document.body.appendChild(raiz);
   centro = raiz;
+  actualizarIndicadoresCompras(controlCompras.estado());
 
   raiz.querySelector('.cc-center__close').addEventListener('click', cerrarCentro);
   raiz.addEventListener('mousedown', (evento) => {
@@ -302,7 +370,7 @@ function actualizarRutasCentro() {
   centro.querySelectorAll('[data-cc-shop]').forEach((enlace) => { enlace.href = `${rutasCentro.inicio}#descubrir`; });
 }
 
-function mostrarVista(vista = 'compras') {
+function mostrarVista(vista = 'compras', enfocarTitulo = true) {
   asegurarCentro();
   const permitidas = new Set(['compras', 'favoritos', 'opiniones', 'pqrs', 'eliminar']);
   const seleccion = permitidas.has(vista) ? vista : 'compras';
@@ -313,26 +381,52 @@ function mostrarVista(vista = 'compras') {
     else boton.removeAttribute('aria-current');
   });
   const contenido = centro.querySelector('[data-cc-content]');
-  contenido.innerHTML = seleccion === 'pqrs'
-    ? plantillaPqrs()
-    : seleccion === 'eliminar' ? plantillaEliminar() : plantillaVacia(seleccion);
+  controlCompras.desmontar();
+  if (seleccion === 'compras') {
+    contenido.replaceChildren();
+    controlCompras.montar(contenido);
+  } else {
+    contenido.innerHTML = seleccion === 'pqrs'
+      ? plantillaPqrs()
+      : seleccion === 'eliminar' ? plantillaEliminar() : plantillaVacia(seleccion);
+  }
   actualizarRutasCentro();
   contenido.scrollTop = 0;
+  const titulo = contenido.querySelector('#cc-view-title');
+  if (titulo) titulo.tabIndex = -1;
+  if (enfocarTitulo) requestAnimationFrame(() => titulo?.focus());
 }
 
-function abrirCentro(boton, rutas) {
+function abrirCentroDesdeBoton(boton, rutas, vista = 'compras') {
+  if (sesionActual.estado !== 'valida') return false;
   const raiz = asegurarCentro();
-  botonQueAbrio = boton;
+  botonQueAbrio = boton || null;
   rutasCentro = rutas;
-  mostrarVista('compras');
+  mostrarVista(vista, false);
   raiz.hidden = false;
   document.body.classList.add('cc-center-open');
-  boton.setAttribute('aria-expanded', 'true');
+  boton?.setAttribute('aria-expanded', 'true');
+  actualizarIndicadoresCompras(controlCompras.estado());
   requestAnimationFrame(() => raiz.querySelector('#cc-center-title')?.focus());
+  return true;
+}
+
+export function abrirCentroCuenta(vista = 'compras', mensaje = '') {
+  if (vista !== 'compras' || sesionActual.estado !== 'valida') return false;
+  if (mensaje) controlCompras.mostrarAviso(mensaje);
+  const boton = document.querySelector('[data-cc-account-button]');
+  const slot = boton?.closest('[data-cuenta-carrito]') || slots[0];
+  if (!slot) return false;
+  return abrirCentroDesdeBoton(boton, rutasDelSlot(slot), vista);
+}
+
+export function invalidarComprasCuenta() {
+  window.dispatchEvent(new CustomEvent('magandhi:compras-invalidar'));
 }
 
 function cerrarCentro() {
   if (!centro || centro.hidden) return;
+  controlCompras.desmontar();
   centro.hidden = true;
   document.body.classList.remove('cc-center-open');
   if (botonQueAbrio?.isConnected) {
@@ -371,12 +465,15 @@ function manejarTecladoCentro(evento) {
     return;
   }
   if (evento.key !== 'Tab') return;
-  const controles = [...centro.querySelectorAll('a[href],button:not([disabled]),[tabindex="-1"]')]
+  const controles = [...centro.querySelectorAll('a[href],button:not([disabled]),[tabindex="0"]')]
     .filter((elemento) => elemento.offsetParent !== null);
   if (!controles.length) return;
   const primero = controles[0];
   const ultimo = controles[controles.length - 1];
-  if (evento.shiftKey && document.activeElement === primero) {
+  if (!centro.contains(document.activeElement)) {
+    evento.preventDefault();
+    (evento.shiftKey ? ultimo : primero).focus();
+  } else if (evento.shiftKey && document.activeElement === primero) {
     evento.preventDefault();
     ultimo.focus();
   } else if (!evento.shiftKey && document.activeElement === ultimo) {
@@ -404,9 +501,14 @@ function configurarBuscadores() {
   });
 }
 
+window.addEventListener('magandhi:compras-invalidar', () => {
+  controlCompras.invalidar();
+});
+
 observarSesionCliente((sesion) => {
   ++generacion;
   sesionActual = sesion;
+  controlCompras.cambiarSesion(sesion);
   if (sesion.estado !== 'valida') {
     uidActual = null;
     estado = Object.freeze({ visible: false, uid: null, snapshot: null, error: sesion.estado === 'error' });
@@ -421,6 +523,11 @@ observarSesionCliente((sesion) => {
   }
   pintarSlots();
   refrescarCuentaCarrito().catch(() => { /* La cuenta sigue accesible aunque falle la lectura del carrito. */ });
+  if (abrirComprasPorDeepLink) {
+    abrirComprasPorDeepLink = false;
+    try { sessionStorage.removeItem(CLAVE_DESTINO_CUENTA); } catch { /* El destino ya se consumió en memoria. */ }
+    queueMicrotask(() => abrirCentroCuenta('compras'));
+  }
 });
 
 configurarBuscadores();
