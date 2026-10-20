@@ -120,7 +120,10 @@ Los JPG de `marca/` son referencias históricas. No gobiernan la identidad ni de
 - WhatsApp contextual por producto.
 - Opiniones verificadas en vivo (ver sección siguiente). Estado vacío honesto mientras un producto no tenga opiniones.
 
-### Operación Promocionar P1 (rama de implementación; no declara despliegue)
+### Operación Promocionar P1 (PR de tienda #116; despliegue pendiente)
+
+El historial/alias server-side está coordinado en back-office PR #295. Ningún
+PR por sí solo demuestra producción.
 
 - Fuente versionada: `producto/catalogo-seo.json`. Conserva aliases por UUID y
   marca como retiradas las filas que dejen de aparecer en la vista pública.
