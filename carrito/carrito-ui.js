@@ -6,6 +6,7 @@ import {
   mensajeErrorCarrito,
 } from './carrito-core.js?v=3';
 import { configurarCheckoutCarrito } from './checkout-carrito.js?v=3';
+import { sincronizarCuentaCarrito } from '../componentes/cuenta-carrito.js?v=2';
 
 const vistas = ['loading', 'session', 'disabled', 'error', 'empty', 'content'];
 let uidActual = null;
@@ -128,6 +129,7 @@ function crearLinea(item, version, pagoBloqueado) {
 
 function pintar(snapshot) {
   snapshotActual = snapshot;
+  sincronizarCuentaCarrito(snapshot);
   if (!snapshot.habilitado) {
     porId('co-lines').replaceChildren();
     aviso();

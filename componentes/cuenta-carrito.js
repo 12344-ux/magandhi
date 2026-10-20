@@ -1,13 +1,28 @@
 import { observarSesionCliente } from '../cliente/cliente-sesion.js';
 import { listarCarrito } from '../carrito/carrito-core.js?v=3';
+import { supabase } from '../supabase-config.js';
 
 const slots = [...document.querySelectorAll('[data-cuenta-carrito]')];
 const observadores = new Set();
 let generacion = 0;
 let uidActual = null;
+let sesionActual = Object.freeze({ estado: 'comprobando', uid: null, sesion: null, codigo: '' });
 let estado = Object.freeze({ visible: false, uid: null, snapshot: null, error: false });
+let centro = null;
+let botonQueAbrio = null;
+let rutasCentro = null;
 
-const ICONO = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="8" cy="21" r="1"/><circle cx="19" cy="21" r="1"/><path d="M2.05 2.05h2l2.66 12.42a2 2 0 0 0 2 1.58h9.78a2 2 0 0 0 1.95-1.57l1.65-7.43H5.12"/></svg>';
+const ICONO_CARRITO = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="8" cy="21" r="1"/><circle cx="19" cy="21" r="1"/><path d="M2.05 2.05h2l2.66 12.42a2 2 0 0 0 2 1.58h9.78a2 2 0 0 0 1.95-1.57l1.65-7.43H5.12"/></svg>';
+const ICONO_CUENTA_MENU = '<svg class="cc-menu-icon" viewBox="0 0 48 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 6h12M2 12h12M2 18h12"/><circle cx="34" cy="7.5" r="4.5"/><path d="M25 22c.7-5 4-7.5 9-7.5S42.3 17 43 22"/></svg>';
+const ICONO_CERRAR = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18"/></svg>';
+
+const ICONOS_VISTA = {
+  compras: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 2h12v20l-3-2-3 2-3-2-3 2z"/><path d="M9 7h6M9 11h6"/></svg>',
+  favoritos: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.6l-1-1a5.5 5.5 0 0 0-7.8 7.8l1 1L12 21l7.8-7.6 1-1a5.5 5.5 0 0 0 0-7.8z"/></svg>',
+  opiniones: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 15a4 4 0 0 1-4 4H8l-5 3V7a4 4 0 0 1 4-4h10a4 4 0 0 1 4 4z"/><path d="m12 7 1.1 2.2 2.4.3-1.7 1.7.4 2.4-2.2-1.1-2.2 1.1.4-2.4-1.7-1.7 2.4-.3z"/></svg>',
+  pqrs: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 4h16v13H7l-3 3z"/><path d="M8 8h8M8 12h5"/></svg>',
+  eliminar: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 6h18M8 6V4h8v2M19 6l-1 15H6L5 6M10 10v7M14 10v7"/></svg>',
+};
 
 function anunciar() {
   for (const observar of observadores) {
@@ -16,43 +31,115 @@ function anunciar() {
   window.dispatchEvent(new CustomEvent('magandhi:carrito', { detail: estado }));
 }
 
-function limpiar(error = false) {
-  estado = Object.freeze({ visible: false, uid: null, snapshot: null, error });
-  for (const slot of slots) {
-    slot.hidden = true;
-    slot.replaceChildren();
-  }
-  anunciar();
+function rutasDelSlot(slot) {
+  return {
+    inicio: slot.dataset.inicioHref || '../',
+    cuenta: slot.dataset.cuentaHref || '../cuenta/',
+    carrito: slot.dataset.carritoHref || '../carrito/',
+    politicas: slot.dataset.politicasHref || '../politicas/',
+    cookies: slot.dataset.cookiesHref || '../politicas/cookies/',
+    pqrs: slot.dataset.pqrsHref || 'mailto:contacto@magandhi.com?subject=PQRS%20MAGANDHI',
+    whatsapp: slot.dataset.whatsappHref || 'https://wa.me/573132451188',
+  };
 }
 
-function etiqueta(unidades) {
+function etiquetaCarrito(unidades) {
   if (unidades === 0) return 'Carrito, sin productos';
   return `Carrito, ${unidades} ${unidades === 1 ? 'unidad' : 'unidades'}`;
 }
 
+function crearEnlaceCarrito(slot) {
+  if (!estado.visible || !estado.snapshot) return null;
+  const enlace = document.createElement('a');
+  enlace.className = 'cc-action cc-action--cart';
+  enlace.href = rutasDelSlot(slot).carrito;
+  enlace.setAttribute('aria-label', etiquetaCarrito(estado.snapshot.cantidad_unidades));
+  enlace.innerHTML = ICONO_CARRITO + '<span class="cc-action__label">Carrito</span>';
+
+  const badge = document.createElement('span');
+  badge.className = 'cc-carrito__badge';
+  badge.setAttribute('aria-hidden', 'true');
+  badge.textContent = String(estado.snapshot.cantidad_unidades);
+  badge.hidden = estado.snapshot.cantidad_unidades === 0;
+  enlace.appendChild(badge);
+  return enlace;
+}
+
+function crearAccionesInvitado(slot) {
+  const rutas = rutasDelSlot(slot);
+  const crear = document.createElement('a');
+  crear.className = 'cc-auth-action cc-auth-action--secondary';
+  crear.href = `${rutas.cuenta}?tab=register`;
+  crear.textContent = 'Crear cuenta';
+
+  const ingresar = document.createElement('a');
+  ingresar.className = 'cc-auth-action cc-auth-action--primary';
+  ingresar.href = `${rutas.cuenta}?tab=login`;
+  ingresar.textContent = 'Ingresar';
+  return [crear, ingresar];
+}
+
+function crearAccesoRecuperacion(slot) {
+  const enlace = document.createElement('a');
+  enlace.className = 'cc-auth-action cc-auth-action--secondary';
+  enlace.href = `${rutasDelSlot(slot).cuenta}?tab=login`;
+  enlace.textContent = 'Ingresar';
+  return enlace;
+}
+
+function crearBotonCentro(slot) {
+  const boton = document.createElement('button');
+  boton.type = 'button';
+  boton.className = 'cc-action cc-action--account';
+  boton.dataset.ccAccountButton = '';
+  boton.setAttribute('aria-label', 'Abrir mi cuenta');
+  boton.setAttribute('aria-haspopup', 'dialog');
+  boton.setAttribute('aria-expanded', 'false');
+  boton.setAttribute('aria-controls', 'cc-account-center');
+  boton.innerHTML = ICONO_CUENTA_MENU + '<span class="cc-action__label cc-action__label--account">Mi cuenta</span>';
+  boton.addEventListener('click', () => abrirCentro(boton, rutasDelSlot(slot)));
+  return boton;
+}
+
+function pintarSlots() {
+  for (const slot of slots) {
+    const botonExistente = slot.querySelector('[data-cc-account-button]');
+    slot.replaceChildren();
+    if (sesionActual.estado === 'sin-sesion') {
+      slot.append(...crearAccionesInvitado(slot));
+      slot.hidden = false;
+      continue;
+    }
+    if (sesionActual.estado === 'error') {
+      slot.append(crearAccesoRecuperacion(slot));
+      slot.hidden = false;
+      continue;
+    }
+    if (sesionActual.estado !== 'valida') {
+      slot.hidden = true;
+      continue;
+    }
+    const carrito = crearEnlaceCarrito(slot);
+    const botonCentro = botonExistente || crearBotonCentro(slot);
+    const elementos = carrito ? [carrito, botonCentro] : [botonCentro];
+    slot.replaceChildren(...elementos);
+    slot.hidden = false;
+  }
+}
+
+function limpiarCarrito(error = false) {
+  estado = Object.freeze({ visible: false, uid: uidActual, snapshot: null, error });
+  pintarSlots();
+  anunciar();
+}
+
 function pintar(snapshot) {
   if (!uidActual || !snapshot?.habilitado) {
-    limpiar(false);
+    limpiarCarrito(false);
     return;
   }
   estado = Object.freeze({ visible: true, uid: uidActual, snapshot, error: false });
-  for (const slot of slots) {
-    const enlace = document.createElement('a');
-    enlace.className = 'cc-carrito';
-    enlace.href = slot.dataset.carritoHref || '../carrito/';
-    enlace.setAttribute('aria-label', etiqueta(snapshot.cantidad_unidades));
-    enlace.innerHTML = ICONO + '<span class="cc-carrito__texto">Carrito</span>';
-
-    const badge = document.createElement('span');
-    badge.className = 'cc-carrito__badge';
-    badge.setAttribute('aria-hidden', 'true');
-    badge.textContent = String(snapshot.cantidad_unidades);
-    badge.hidden = snapshot.cantidad_unidades === 0;
-    enlace.appendChild(badge);
-
-    slot.replaceChildren(enlace);
-    slot.hidden = false;
-  }
+  pintarSlots();
   anunciar();
 }
 
@@ -72,14 +159,14 @@ export function sincronizarCuentaCarrito(snapshot) {
 
 export function ocultarCuentaCarrito(error = false) {
   ++generacion;
-  limpiar(error);
+  limpiarCarrito(error);
 }
 
 export async function refrescarCuentaCarrito() {
   const uidAlPedir = uidActual;
   const token = ++generacion;
   if (!uidAlPedir) {
-    limpiar(false);
+    limpiarCarrito(false);
     return null;
   }
   try {
@@ -88,19 +175,252 @@ export async function refrescarCuentaCarrito() {
     pintar(snapshot);
     return snapshot;
   } catch (error) {
-    if (token === generacion && uidAlPedir === uidActual) limpiar(true);
+    if (token === generacion && uidAlPedir === uidActual) limpiarCarrito(true);
     throw error;
   }
 }
 
-observarSesionCliente((sesion) => {
-  ++generacion;
-  if (sesion.estado !== 'valida') {
-    uidActual = null;
-    limpiar(sesion.estado === 'error');
+function plantillaVacia(tipo) {
+  const contenidos = {
+    compras: {
+      kicker: 'Tu historial', titulo: 'Mis compras', icono: ICONOS_VISTA.compras,
+      texto: 'Aquí encontrarás tus compras, pagos en proceso y el estado de cada pedido.',
+      vacio: 'Este será el centro de tus compras', detalle: 'En la siguiente etapa conectaremos aquí tus compras, pagos en proceso y estados reales, sin depender del carrito.',
+    },
+    favoritos: {
+      kicker: 'Tu selección', titulo: 'Favoritos', icono: ICONOS_VISTA.favoritos,
+      texto: 'Guarda los productos que quieras recordar y vuelve a ellos cuando sea el momento.',
+      vacio: 'Tu lista de favoritos está esperando', detalle: 'La función para guardar productos se conectará en la siguiente etapa.',
+    },
+    opiniones: {
+      kicker: 'Tu experiencia', titulo: 'Mis opiniones', icono: ICONOS_VISTA.opiniones,
+      texto: 'Consulta las opiniones que has compartido sobre tus compras verificadas.',
+      vacio: 'Aquí vivirán tus opiniones', detalle: 'En la siguiente etapa conectaremos tus opiniones verificadas y los productos que ya puedas calificar.',
+    },
+  };
+  const dato = contenidos[tipo] || contenidos.compras;
+  return `
+    <div class="cc-view-head">
+      <span class="cc-view-kicker">${dato.kicker}</span>
+      <h2 id="cc-view-title">${dato.titulo}</h2>
+      <p>${dato.texto}</p>
+    </div>
+    <div class="cc-empty-state">
+      <span class="cc-empty-state__icon">${dato.icono}</span>
+      <h3>${dato.vacio}</h3>
+      <p>${dato.detalle}</p>
+      ${tipo === 'compras' ? '<a class="cc-view-cta" data-cc-shop href="#">Descubrir productos</a>' : ''}
+    </div>`;
+}
+
+function plantillaPqrs() {
+  return `
+    <div class="cc-view-head">
+      <span class="cc-view-kicker">Estamos para escucharte</span>
+      <h2 id="cc-view-title">PQRS</h2>
+      <p>Cuéntanos si tienes una petición, queja, reclamo o sugerencia. Te responderá el equipo MAGANDHI.</p>
+    </div>
+    <div class="cc-contact-grid">
+      <a class="cc-contact-card" data-cc-pqrs href="#">
+        <span class="cc-contact-card__icon">${ICONOS_VISTA.pqrs}</span>
+        <span><strong>Escribir por correo</strong><small>Deja el detalle de tu solicitud.</small></span>
+        <span aria-hidden="true">→</span>
+      </a>
+      <a class="cc-contact-card" data-cc-whatsapp href="#" target="_blank" rel="noopener">
+        <span class="cc-contact-card__icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7.9 20A9 9 0 1 0 4 16.1L2 22z"/></svg></span>
+        <span><strong>Hablar por WhatsApp</strong><small>Atención directa de nuestro equipo.</small></span>
+        <span aria-hidden="true">→</span>
+      </a>
+    </div>`;
+}
+
+function plantillaEliminar() {
+  return `
+    <div class="cc-view-head">
+      <span class="cc-view-kicker cc-view-kicker--danger">Privacidad y control</span>
+      <h2 id="cc-view-title">Eliminar cuenta</h2>
+      <p>Esta acción requerirá verificar tu identidad y explicar con claridad qué información debe conservarse por obligaciones de compra.</p>
+    </div>
+    <div class="cc-danger-card">
+      <span class="cc-danger-card__icon">${ICONOS_VISTA.eliminar}</span>
+      <div><h3>La eliminación todavía no está habilitada</h3><p>Estamos construyendo el proceso seguro antes de permitir una acción irreversible. Tu sesión y tus datos no se modificarán desde esta pantalla.</p></div>
+      <button type="button" disabled>Eliminar mi cuenta</button>
+    </div>`;
+}
+
+function asegurarCentro() {
+  if (centro) return centro;
+  const raiz = document.createElement('div');
+  raiz.className = 'cc-center';
+  raiz.id = 'cc-account-center';
+  raiz.hidden = true;
+  raiz.innerHTML = `
+    <section class="cc-center__dialog" role="dialog" aria-modal="true" aria-labelledby="cc-center-title">
+      <header class="cc-center__top">
+        <div><span>Tu espacio</span><h1 id="cc-center-title" tabindex="-1">Mi cuenta MAGANDHI</h1></div>
+        <button class="cc-center__close" type="button" aria-label="Cerrar mi cuenta">${ICONO_CERRAR}</button>
+      </header>
+      <div class="cc-center__layout">
+        <nav class="cc-center__nav" aria-label="Secciones de mi cuenta">
+          <a class="cc-nav-item" data-cc-home href="#"><span class="cc-nav-item__icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m3 11 9-8 9 8"/><path d="M5 10v11h14V10M9 21v-7h6v7"/></svg></span>Inicio</a>
+          <button class="cc-nav-item" type="button" data-cc-view="compras">${ICONOS_VISTA.compras}<span>Mis compras</span><span class="cc-nav-arrow" aria-hidden="true">›</span></button>
+          <button class="cc-nav-item" type="button" data-cc-view="favoritos">${ICONOS_VISTA.favoritos}<span>Favoritos</span><span class="cc-nav-arrow" aria-hidden="true">›</span></button>
+          <button class="cc-nav-item" type="button" data-cc-view="opiniones">${ICONOS_VISTA.opiniones}<span>Mis opiniones</span><span class="cc-nav-arrow" aria-hidden="true">›</span></button>
+          <button class="cc-nav-item" type="button" data-cc-view="pqrs">${ICONOS_VISTA.pqrs}<span>PQRS</span><span class="cc-nav-arrow" aria-hidden="true">›</span></button>
+          <a class="cc-nav-item" data-cc-politicas href="#"><span class="cc-nav-item__icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 2h9l4 4v16H6z"/><path d="M14 2v5h5M9 12h6M9 16h6"/></svg></span>Políticas</a>
+          <a class="cc-nav-item" data-cc-cookies href="#"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20.5 13.2A9 9 0 1 1 10.8 3.5a4.7 4.7 0 0 0 6.1 6.1 4.7 4.7 0 0 0 3.6 3.6z"/><circle cx="8" cy="12" r=".7" fill="currentColor"/><circle cx="12" cy="17" r=".7" fill="currentColor"/></svg><span>Cookies</span></a>
+          <span class="cc-nav-separator" aria-hidden="true"></span>
+          <button class="cc-nav-item" type="button" data-cc-logout><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10 17l5-5-5-5M15 12H3M14 3h5a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-5"/></svg><span>Cerrar sesión</span></button>
+          <p class="cc-session-alert" data-cc-session-alert role="alert" hidden></p>
+          <button class="cc-nav-item cc-nav-item--danger" type="button" data-cc-view="eliminar">${ICONOS_VISTA.eliminar}<span>Eliminar cuenta</span><span class="cc-nav-arrow" aria-hidden="true">›</span></button>
+        </nav>
+        <div class="cc-center__content" data-cc-content role="region" aria-live="polite"></div>
+      </div>
+    </section>`;
+  document.body.appendChild(raiz);
+  centro = raiz;
+
+  raiz.querySelector('.cc-center__close').addEventListener('click', cerrarCentro);
+  raiz.addEventListener('mousedown', (evento) => {
+    if (evento.target === raiz) cerrarCentro();
+  });
+  raiz.querySelectorAll('[data-cc-view]').forEach((boton) => {
+    boton.addEventListener('click', () => mostrarVista(boton.dataset.ccView));
+  });
+  raiz.querySelector('[data-cc-logout]').addEventListener('click', cerrarSesion);
+  document.addEventListener('keydown', manejarTecladoCentro);
+  return centro;
+}
+
+function actualizarRutasCentro() {
+  if (!centro || !rutasCentro) return;
+  centro.querySelector('[data-cc-home]').href = rutasCentro.inicio;
+  centro.querySelector('[data-cc-politicas]').href = rutasCentro.politicas;
+  centro.querySelector('[data-cc-cookies]').href = rutasCentro.cookies;
+  centro.querySelectorAll('[data-cc-pqrs]').forEach((enlace) => { enlace.href = rutasCentro.pqrs; });
+  centro.querySelectorAll('[data-cc-whatsapp]').forEach((enlace) => { enlace.href = rutasCentro.whatsapp; });
+  centro.querySelectorAll('[data-cc-shop]').forEach((enlace) => { enlace.href = `${rutasCentro.inicio}#descubrir`; });
+}
+
+function mostrarVista(vista = 'compras') {
+  asegurarCentro();
+  const permitidas = new Set(['compras', 'favoritos', 'opiniones', 'pqrs', 'eliminar']);
+  const seleccion = permitidas.has(vista) ? vista : 'compras';
+  centro.querySelectorAll('[data-cc-view]').forEach((boton) => {
+    const activa = boton.dataset.ccView === seleccion;
+    boton.classList.toggle('is-active', activa);
+    if (activa) boton.setAttribute('aria-current', 'page');
+    else boton.removeAttribute('aria-current');
+  });
+  const contenido = centro.querySelector('[data-cc-content]');
+  contenido.innerHTML = seleccion === 'pqrs'
+    ? plantillaPqrs()
+    : seleccion === 'eliminar' ? plantillaEliminar() : plantillaVacia(seleccion);
+  actualizarRutasCentro();
+  contenido.scrollTop = 0;
+}
+
+function abrirCentro(boton, rutas) {
+  const raiz = asegurarCentro();
+  botonQueAbrio = boton;
+  rutasCentro = rutas;
+  mostrarVista('compras');
+  raiz.hidden = false;
+  document.body.classList.add('cc-center-open');
+  boton.setAttribute('aria-expanded', 'true');
+  requestAnimationFrame(() => raiz.querySelector('#cc-center-title')?.focus());
+}
+
+function cerrarCentro() {
+  if (!centro || centro.hidden) return;
+  centro.hidden = true;
+  document.body.classList.remove('cc-center-open');
+  if (botonQueAbrio?.isConnected) {
+    botonQueAbrio.setAttribute('aria-expanded', 'false');
+    botonQueAbrio.focus();
+  }
+  botonQueAbrio = null;
+}
+
+async function cerrarSesion(evento) {
+  const boton = evento.currentTarget;
+  if (boton.disabled) return;
+  const alerta = centro?.querySelector('[data-cc-session-alert]');
+  boton.disabled = true;
+  boton.querySelector('span').textContent = 'Cerrando sesión…';
+  if (alerta) alerta.hidden = true;
+  try {
+    const { error } = await supabase.auth.signOut({ scope: 'local' });
+    if (error) throw error;
+    cerrarCentro();
+  } catch {
+    boton.disabled = false;
+    boton.querySelector('span').textContent = 'Cerrar sesión';
+    if (alerta) {
+      alerta.textContent = 'No pudimos cerrar tu sesión. Inténtalo de nuevo.';
+      alerta.hidden = false;
+    }
+  }
+}
+
+function manejarTecladoCentro(evento) {
+  if (!centro || centro.hidden) return;
+  if (evento.key === 'Escape') {
+    evento.preventDefault();
+    cerrarCentro();
     return;
   }
-  if (uidActual !== sesion.uid) limpiar(false);
-  uidActual = sesion.uid;
-  refrescarCuentaCarrito().catch(() => { /* Falla cerrada: el slot permanece oculto. */ });
+  if (evento.key !== 'Tab') return;
+  const controles = [...centro.querySelectorAll('a[href],button:not([disabled]),[tabindex="-1"]')]
+    .filter((elemento) => elemento.offsetParent !== null);
+  if (!controles.length) return;
+  const primero = controles[0];
+  const ultimo = controles[controles.length - 1];
+  if (evento.shiftKey && document.activeElement === primero) {
+    evento.preventDefault();
+    ultimo.focus();
+  } else if (!evento.shiftKey && document.activeElement === ultimo) {
+    evento.preventDefault();
+    primero.focus();
+  }
+}
+
+function configurarBuscadores() {
+  document.querySelectorAll('[data-buscador-catalogo]').forEach((formulario) => {
+    formulario.addEventListener('submit', (evento) => {
+      evento.preventDefault();
+      const entrada = formulario.querySelector('input[type="search"]');
+      const estadoBusqueda = formulario.querySelector('[data-buscador-estado]');
+      if (!entrada?.value.trim()) {
+        entrada?.focus();
+        return;
+      }
+      if (estadoBusqueda) estadoBusqueda.textContent = 'La búsqueda estará disponible muy pronto.';
+    });
+    formulario.querySelector('input[type="search"]')?.addEventListener('input', () => {
+      const estadoBusqueda = formulario.querySelector('[data-buscador-estado]');
+      if (estadoBusqueda) estadoBusqueda.textContent = '';
+    });
+  });
+}
+
+observarSesionCliente((sesion) => {
+  ++generacion;
+  sesionActual = sesion;
+  if (sesion.estado !== 'valida') {
+    uidActual = null;
+    estado = Object.freeze({ visible: false, uid: null, snapshot: null, error: sesion.estado === 'error' });
+    cerrarCentro();
+    pintarSlots();
+    anunciar();
+    return;
+  }
+  if (uidActual !== sesion.uid) {
+    uidActual = sesion.uid;
+    estado = Object.freeze({ visible: false, uid: uidActual, snapshot: null, error: false });
+  }
+  pintarSlots();
+  refrescarCuentaCarrito().catch(() => { /* La cuenta sigue accesible aunque falle la lectura del carrito. */ });
 });
+
+configurarBuscadores();
