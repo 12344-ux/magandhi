@@ -69,6 +69,50 @@
   /* ---------- nueva cabecera de tienda ----------
      La retícula compartida vive en componentes/cuenta-carrito.css. En la
      portada usa exactamente el mismo riel horizontal de 1200 px del hero. */
+  /* En movil se replica localmente el buscador visual de la ficha. No es un
+     control ni promete una función: el formulario real de escritorio permanece
+     intacto y esta pieza, aria-hidden, conserva logo → búsqueda → cuenta. */
+  .hg-head .hg-search-visual{
+    display:none;min-width:0;height:44px;padding:0 12px 0 14px;
+    align-items:center;gap:9px;border:1px solid var(--linea);border-radius:999px;
+    background:var(--ml-panel);color:var(--gris);box-shadow:var(--ml-sombra);
+    cursor:default;pointer-events:none;user-select:none;
+  }
+  .hg-head .hg-search-visual svg{width:18px;height:18px;flex:none;color:var(--rojo)}
+  .hg-head .hg-search-visual span{min-width:0;font-size:12.5px;font-weight:500}
+  @media(max-width:860px){
+    .hg-head.cc-store-header{
+      width:100%;padding:14px 16px 10px;
+      grid-template-columns:auto minmax(76px,1fr) auto;gap:12px;
+    }
+    .hg-head .cc-search{display:none}
+    .hg-head .cc-store-brand{gap:9px}
+    .hg-head .cc-store-brand img{width:42px;height:42px}
+    .hg-head .cc-store-brand__text small{display:none}
+    .hg-head .cc-store-brand__text strong{font-size:18px}
+    .hg-head .hg-search-visual{display:flex;width:100%;height:44px;padding-inline:12px 9px}
+    .hg-head .cc-store-actions{min-width:0}
+    .hg-head [data-cuenta-carrito]{gap:6px}
+    .hg-head .cc-auth-action,.hg-head .cc-action{min-height:44px}
+  }
+  @media(max-width:520px){
+    .hg-head.cc-store-header{padding-inline:12px;gap:8px}
+    .hg-head .cc-store-brand__text{display:none}
+    .hg-head .cc-store-brand img{width:38px;height:38px}
+    .hg-head .hg-search-visual{padding-inline:10px 7px;gap:6px}
+    .hg-head .hg-search-visual span{font-size:11.5px}
+    .hg-head .cc-auth-action{padding-inline:8px;font-size:10.5px}
+    .hg-head .cc-action{width:44px;padding:8px}
+    .hg-head .cc-action--account{width:52px}
+  }
+  @media(max-width:370px){
+    .hg-head.cc-store-header{gap:6px;padding-inline:10px}
+    .hg-head .cc-store-brand img{width:36px;height:36px}
+    .hg-head .hg-search-visual{gap:5px;padding-inline:8px 6px}
+    .hg-head .hg-search-visual svg{width:16px;height:16px}
+    .hg-head .hg-search-visual span{font-size:10.5px}
+    .hg-head .cc-auth-action{padding-inline:6px;font-size:10px}
+  }
 
   /* ---------- vitrina: grid de productos ----------
      RIEL COMUN: la vitrina comparte el mismo ancho maximo (1200px) y el mismo
@@ -563,6 +607,10 @@
     </button>
     <span class="cc-search__status" data-buscador-estado role="status" aria-live="polite"></span>
   </form>
+  <div class="hg-search-visual" aria-hidden="true">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-4-4"/></svg>
+    <span>Buscar productos</span>
+  </div>
   <div class="hg-head-actions cc-store-actions">
     <span data-cuenta-carrito
           data-inicio-href="./"
