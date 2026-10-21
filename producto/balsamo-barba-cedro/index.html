@@ -298,32 +298,39 @@
     width:100%;height:100%;display:flex;align-items:center;justify-content:center;
     touch-action:pan-y;user-select:none;-webkit-user-select:none;
   }
-  /* Controles superpuestos exclusivos de movil. Permanecen fuera del contenido
-     reemplazable de la foto para sobrevivir a swipe, teclado y cambios de indice. */
+  /* Controles superpuestos exclusivos de móvil. Son dos piezas independientes
+     en la esquina superior derecha: comunican sin convertirse en otra tarjeta. */
   .mg-galeria-overlay{display:none}
   @media(max-width:860px){
     .mg-galeria-overlay:not([hidden]){
-      position:absolute;right:12px;bottom:12px;z-index:4;
-      display:flex;align-items:center;min-height:44px;overflow:hidden;
-      color:var(--tinta);background:rgba(255,255,255,.82);
-      border:1px solid rgba(17,17,17,.10);border-radius:999px;
-      box-shadow:0 6px 20px rgba(17,17,17,.14);
-      backdrop-filter:blur(9px);-webkit-backdrop-filter:blur(9px);
+      position:absolute;right:10px;top:10px;z-index:4;
+      display:flex;align-items:center;gap:6px;
+      color:var(--tinta);background:transparent;
     }
     .mg-galeria-contador{
-      min-width:54px;padding:0 12px;font-size:12px;font-weight:600;
-      line-height:44px;text-align:center;font-variant-numeric:tabular-nums;
-      border-right:1px solid rgba(17,17,17,.10);
+      min-width:38px;height:28px;padding:0 9px;
+      display:inline-flex;align-items:center;justify-content:center;
+      color:#fff;background:rgba(17,17,17,.58);
+      border:1px solid rgba(255,255,255,.28);border-radius:999px;
+      box-shadow:0 3px 10px rgba(17,17,17,.13);
+      backdrop-filter:blur(7px);-webkit-backdrop-filter:blur(7px);
+      font-size:10.5px;font-weight:600;line-height:1;
+      text-align:center;font-variant-numeric:tabular-nums;
     }
     .mg-favorito-local{
-      width:44px;height:44px;flex:none;padding:0;border:0;background:transparent;
-      color:var(--gris);cursor:pointer;display:inline-flex;align-items:center;
-      justify-content:center;transition:color .15s,background .15s;
+      width:40px;height:40px;flex:none;padding:0;
+      border:1px solid rgba(17,17,17,.09);border-radius:50%;
+      background:rgba(255,255,255,.82);color:var(--gris);cursor:pointer;
+      display:inline-flex;align-items:center;justify-content:center;
+      box-shadow:0 3px 10px rgba(17,17,17,.13);
+      backdrop-filter:blur(7px);-webkit-backdrop-filter:blur(7px);
+      transition:color .15s,background .15s,transform .12s;
     }
-    .mg-favorito-local:hover{background:rgba(166,51,46,.08);color:var(--rojo)}
-    .mg-favorito-local:focus-visible{outline:3px solid var(--acento-cl);outline-offset:-4px}
-    .mg-favorito-local svg{width:21px;height:21px;fill:transparent;transition:fill .15s}
-    .mg-favorito-local[aria-pressed="true"]{color:var(--rojo)}
+    .mg-favorito-local:hover{background:rgba(255,255,255,.94);color:var(--rojo)}
+    .mg-favorito-local:active{transform:scale(.95)}
+    .mg-favorito-local:focus-visible{outline:3px solid var(--acento-cl);outline-offset:2px}
+    .mg-favorito-local svg{width:19px;height:19px;fill:transparent;transition:fill .15s}
+    .mg-favorito-local[aria-pressed="true"]{color:var(--rojo);background:rgba(255,255,255,.94)}
     .mg-favorito-local[aria-pressed="true"] svg{fill:currentColor}
   }
   /* Flechas discretas SOLO en PC, con el mismo lenguaje del hero. La navegacion
@@ -629,17 +636,18 @@
     .mg-migas{padding:8px 16px 0}
     .mg-ficha{margin-top:10px;padding:0 16px;gap:22px}
     .mg-info{min-width:0;padding-top:0}
+    .mg-meta{margin-bottom:14px}
     .mg-meta + .mg-titulo{margin-top:0}
     .mg-titulo{font-size:clamp(24px,7vw,30px);line-height:1.18}
-    .mg-sub{margin-bottom:12px;font-size:13.5px}
-    .mg-precio{margin-bottom:8px}
+    .mg-sub{margin-bottom:18px;font-size:13.5px}
+    .mg-precio{margin-bottom:14px}
     .mg-precio b{font-size:27px}
-    .mg-desc{max-width:none;margin-bottom:16px;font-size:14px;line-height:1.6}
+    .mg-desc{max-width:none;margin-bottom:22px;font-size:14px;line-height:1.65}
 
     /* Una sola fila visual: etiqueta/select a la izquierda; total y máximo a la
        derecha. El aviso excepcional conserva una segunda fila de ancho completo. */
     .mg-cantidad{
-      width:100%;max-width:460px;margin:10px 0 14px;padding:10px 12px;
+      width:100%;max-width:460px;margin:14px 0 20px;padding:10px 12px;
       grid-template-columns:minmax(128px,.9fr) minmax(138px,1.1fr);
       align-items:center;gap:8px 12px;border-radius:12px;
       background:var(--fondo-pagina);border-color:var(--linea);
@@ -661,7 +669,7 @@
 
     /* Jerarquía inequívoca: acciones de compra apiladas, táctiles y de ancho
        completo. WhatsApp conserva el verde reservado para confianza/atención. */
-    .mg-cta{width:100%;max-width:520px;display:grid;grid-template-columns:1fr;gap:10px;margin-bottom:0}
+    .mg-cta{width:100%;max-width:520px;display:grid;grid-template-columns:1fr;gap:12px;margin-bottom:0}
     .mg-btn{
       width:100%;min-height:52px;padding:13px 18px;border-radius:12px;
       display:inline-flex;align-items:center;justify-content:center;font-size:14px;
@@ -669,8 +677,8 @@
     .mg-btn--primario{box-shadow:0 5px 14px var(--acento-sombra)}
     .mg-btn--carrito{min-height:50px;background:var(--ml-panel)}
     .mg-btn--wa{min-height:48px;background:var(--verde-sombra);color:var(--verde);border-color:var(--verde)}
-    .mg-carrito-status{width:100%;margin:0;padding:2px 3px;font-size:11.5px}
-    .mg-curaduria{max-width:520px;margin:20px 0 0;padding:14px 16px}
+    .mg-carrito-status{width:100%;margin:2px 0 0;padding:2px 3px;font-size:11.5px}
+    .mg-curaduria{max-width:520px;margin:28px 0 0;padding:16px}
   }
   @media(max-width:430px){
     .mg-migas{padding-inline:12px}
@@ -698,7 +706,9 @@
 
   /* ---------- detalle largo ---------- */
   .mg-detalle{max-width:1120px;margin:56px auto 0;padding:0 24px;display:grid;grid-template-columns:1.3fr 1fr;gap:40px}
-  @media(max-width:860px){.mg-detalle{grid-template-columns:1fr;gap:24px}}
+  @media(max-width:860px){
+    .mg-detalle{grid-template-columns:1fr;gap:24px;margin-top:36px;padding:0 16px}
+  }
   .mg-detalle h2{font-size:19px;font-weight:600;margin:0 0 14px}
   .mg-detalle p{font-size:14.5px;color:#333;margin:0 0 14px}
   .mg-tabla{width:100%;border-collapse:collapse;font-size:14px}
