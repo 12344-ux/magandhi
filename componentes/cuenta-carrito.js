@@ -1,3 +1,4 @@
+import '../scripts/atribucion-promocional.js?v=1';
 import { observarSesionCliente } from '../cliente/cliente-sesion.js';
 import { listarCarrito } from '../carrito/carrito-core.js?v=3';
 import { crearControlMisCompras } from './mis-compras.js?v=3';

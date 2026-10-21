@@ -1491,8 +1491,9 @@
     sincronizarCuentaCarrito,
     refrescarCuentaCarrito,
     ocultarCuentaCarrito,
-  } from '../componentes/cuenta-carrito.js?v=5';
+  } from '../componentes/cuenta-carrito.js?v=6';
   import { revalidarSesionCliente } from '../cliente/cliente-sesion.js';
+  import { codigoAtribucionParaIntencion } from '../scripts/atribucion-promocional.js?v=1';
 
   // Nombre del bucket publico de Campanas donde viven las imagenes de producto.
   const BUCKET_CAMPANAS = 'campanas';
@@ -2836,6 +2837,8 @@
 
       ponerCargando();
       try{
+        let atribucionCodigo;
+        try{ atribucionCodigo = await codigoAtribucionParaIntencion(); }catch(_){ atribucionCodigo = undefined; }
         // El navegador NO envia precio ni monto: el servidor relee el precio,
         // vuelve a validar la cantidad y calcula el total firmado.
         //
@@ -2845,9 +2848,9 @@
         // de pago, y cuando Wompi confirme el pago el pedido se creara con
         // ESTOS datos: Wompi solo confirma la plata, no dicta quien compro.
         //
-        // La procedencia tiene dos niveles (ver window.mgProcedencia):
-        // utm_campaign viaja siempre (es el id de NUESTRA campana, no identifica
-        // a nadie) y mg_vid solo si la persona acepto la analitica.
+        // La procedencia descriptiva conserva utm_campaign para compatibilidad
+        // legacy y mg_vid solo si la persona aceptó analítica. La atribución P4
+        // viaja separada y siempre vuelve a validarse en el servidor.
         const procedencia = (typeof window.mgProcedencia === 'function')
           ? window.mgProcedencia() : {};
 
@@ -2884,6 +2887,7 @@
               },
               utm_campaign: procedencia.utm_campaign,
               mg_vid:       procedencia.mg_vid,
+              atribucion_codigo: atribucionCodigo,
             } }
         );
 

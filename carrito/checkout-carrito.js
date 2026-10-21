@@ -1,5 +1,6 @@
 import { supabase } from '../supabase-config.js';
-import { abrirCentroCuenta, invalidarComprasCuenta } from '../componentes/cuenta-carrito.js?v=5';
+import { abrirCentroCuenta, invalidarComprasCuenta } from '../componentes/cuenta-carrito.js?v=6';
+import { codigoAtribucionParaIntencion } from '../scripts/atribucion-promocional.js?v=1';
 
 const WOMPI_CHECKOUT_URL = 'https://checkout.wompi.co/p/';
 const CLAVE_PAGO = 'mg_pago_carrito_en_curso';
@@ -1070,6 +1071,8 @@ export function configurarCheckoutCarrito({ obtenerEstado, recargarCarrito, reva
     const direccionCompleta = datos.detalles ? `${datos.direccion} · ${datos.detalles}` : datos.direccion;
     const procedencia = typeof window.mgProcedencia === 'function' ? window.mgProcedencia() : {};
     ponerEnviando();
+    let atribucionCodigo;
+    try { atribucionCodigo = await codigoAtribucionParaIntencion(); } catch { atribucionCodigo = undefined; }
 
     try {
       const { data, error } = await supabase.functions.invoke('crear-intencion-pago', {
@@ -1086,6 +1089,7 @@ export function configurarCheckoutCarrito({ obtenerEstado, recargarCarrito, reva
           },
           utm_campaign: procedencia.utm_campaign,
           mg_vid: procedencia.mg_vid,
+          atribucion_codigo: atribucionCodigo,
         },
       });
       const cuerpo = await cuerpoDeRespuesta(error, data);
