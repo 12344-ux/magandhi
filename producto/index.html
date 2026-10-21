@@ -574,6 +574,7 @@
   .mg-meta .mg-sello[hidden] + .mg-estrellas,
   .mg-meta .mg-sello--cede + .mg-estrellas{justify-content:flex-start;text-align:left}
   .mg-meta .mg-estrellas--vacia{line-height:1.35}
+  .mg-favorito-escritorio{display:none}
   @media(max-width:860px){
     .mg-meta{align-items:center;flex-wrap:nowrap;margin-bottom:10px}
     .mg-meta .mg-sello{flex:0 1 auto;min-width:0;max-width:56%;padding:5px 9px;font-size:9px;letter-spacing:.08em;line-height:1.35}
@@ -630,6 +631,88 @@
 
   .mg-entrega{font-size:13px;color:var(--gris);display:flex;align-items:center;gap:8px}
   .mg-entrega svg{width:16px;height:16px;color:var(--acento)}
+
+  /* ---------- composición de escritorio: columna de decisión ----------
+     No cambia la retícula ni la galería. Ordena la columna derecha con una
+     cabecera útil, ritmo editorial y acciones que comparten el mismo ancho. */
+  @media(min-width:861px){
+    .mg-info{width:100%;min-width:0;padding-top:2px}
+    .mg-meta{
+      min-height:44px;margin-bottom:18px;padding-bottom:14px;
+      border-bottom:1px solid var(--linea);flex-wrap:wrap;
+    }
+    .mg-meta .mg-estrellas{justify-content:flex-start;text-align:left}
+    .mg-meta + .mg-titulo{margin-top:0}
+    .mg-favorito-escritorio:not([hidden]){
+      width:42px;height:42px;flex:none;margin-left:auto;padding:0;
+      display:inline-flex;align-items:center;justify-content:center;
+      border:1px solid var(--linea);border-radius:50%;
+      background:rgba(255,255,255,.82);color:var(--gris);cursor:pointer;
+      box-shadow:var(--ml-sombra);
+      transition:color .15s,background .15s,border-color .15s,transform .12s;
+    }
+    .mg-favorito-escritorio:hover{
+      color:var(--rojo);border-color:rgba(166,51,46,.28);
+      background:rgba(166,51,46,.07);transform:translateY(-1px);
+    }
+    .mg-favorito-escritorio:focus-visible{outline:3px solid var(--acento-sombra);outline-offset:2px}
+    .mg-favorito-escritorio svg{width:20px;height:20px;fill:transparent;transition:fill .15s}
+    .mg-favorito-escritorio[aria-pressed="true"]{
+      color:var(--rojo);border-color:rgba(166,51,46,.30);background:rgba(166,51,46,.08);
+    }
+    .mg-favorito-escritorio[aria-pressed="true"] svg{fill:currentColor}
+
+    .mg-titulo{margin-bottom:6px;letter-spacing:-.45px}
+    .mg-sub{margin-bottom:24px}
+    .mg-precio{margin-bottom:14px}
+    .mg-desc{max-width:none;margin-bottom:24px;line-height:1.68}
+
+    .mg-cantidad{
+      width:100%;max-width:none;margin:0 0 16px;padding:12px 14px;
+      grid-template-columns:minmax(0,.9fr) minmax(0,1.1fr);
+      align-items:center;gap:10px 16px;border-radius:12px;
+      background:rgba(255,255,255,.62);
+    }
+    .mg-cantidad__campo{
+      min-width:0;display:grid;grid-template-columns:auto 92px;
+      align-items:center;gap:12px;
+    }
+    .mg-cantidad__campo select{width:92px;min-width:92px}
+    .mg-cantidad__detalle{min-width:0;gap:2px;text-align:right;justify-items:end}
+    .mg-cantidad__total{order:1;font-size:13px;font-weight:600;white-space:nowrap}
+    .mg-cantidad__total strong{font-size:16px}
+    .mg-cantidad__max{order:2;font-size:10.5px}
+
+    .mg-cta{
+      width:100%;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));
+      gap:10px;margin:0 0 18px;
+    }
+    .mg-btn{
+      width:100%;min-height:48px;padding:12px 16px;
+      display:inline-flex;align-items:center;justify-content:center;
+      font-size:13.5px;white-space:nowrap;
+    }
+    .mg-btn--primario{box-shadow:0 5px 14px var(--acento-sombra)}
+    .mg-btn--wa{
+      grid-column:1 / -1;min-height:46px;
+      background:var(--verde-sombra);
+    }
+    .mg-cta:not(:has(.mg-btn--carrito:not([hidden]))) .mg-btn--primario{grid-column:1 / -1}
+    .mg-carrito-status{grid-column:1 / -1;margin:0;padding:2px 3px}
+    .mg-curaduria{width:100%;margin:0;padding:16px 18px}
+  }
+  /* En el borde exacto entre tableta y escritorio la columna derecha es más
+     estrecha. Se conserva la misma composición reduciendo solo el selector. */
+  @media(min-width:861px) and (max-width:940px){
+    .mg-cantidad{
+      grid-template-columns:145px minmax(0,1fr);column-gap:12px;
+    }
+    .mg-cantidad__campo{grid-template-columns:auto 76px;gap:8px}
+    .mg-cantidad__campo select{width:76px;min-width:76px;padding-inline:9px}
+    .mg-cantidad__total{font-size:12px}
+    .mg-cantidad__total strong{font-size:15px}
+    .mg-cantidad__max{font-size:10px}
+  }
 
   /* ---------- composición móvil premium de la compra ---------- */
   @media(max-width:860px){
@@ -1182,7 +1265,7 @@
            reemplaza al navegar, pero contador y favorito permanecen estables. -->
       <div class="mg-galeria-overlay" id="mg-galeria-overlay" hidden>
         <span class="mg-galeria-contador" id="mg-galeria-contador" hidden aria-hidden="true"></span>
-        <button type="button" class="mg-favorito-local" id="mg-favorito-local"
+        <button type="button" class="mg-favorito-local" id="mg-favorito-local" data-favorito-local
                 aria-pressed="false" aria-label="Marcar como favorito" hidden>
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.6l-1-1a5.5 5.5 0 0 0-7.8 7.8l1 1L12 21l7.8-7.6 1-1a5.5 5.5 0 0 0 0-7.8z"/></svg>
         </button>
@@ -1225,6 +1308,10 @@
       <div class="mg-estrellas mg-estrellas--vacia" id="mg-rating" aria-label="Calificación del producto">
         Consulta las opiniones verificadas al cargar la ficha.
       </div>
+      <button type="button" class="mg-favorito-escritorio" data-favorito-local
+              aria-pressed="false" aria-label="Marcar como favorito" hidden>
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.6l-1-1a5.5 5.5 0 0 0-7.8 7.8l1 1L12 21l7.8-7.6 1-1a5.5 5.5 0 0 0 0-7.8z"/></svg>
+      </button>
     </div>
     <h1 class="mg-titulo" id="mg-titulo">Producto</h1>
     <p class="mg-sub" id="mg-sub">Cargando información del producto…</p>
@@ -2180,18 +2267,19 @@
   let favoritoLocalActivo = false;
 
   function pintarFavoritoLocal(){
-    const boton = document.getElementById('mg-favorito-local');
-    if(!boton) return;
-    boton.setAttribute('aria-pressed', favoritoLocalActivo ? 'true' : 'false');
-    boton.setAttribute('aria-label', favoritoLocalActivo
-      ? 'Desmarcar como favorito' : 'Marcar como favorito');
+    document.querySelectorAll('[data-favorito-local]').forEach(function(boton){
+      boton.setAttribute('aria-pressed', favoritoLocalActivo ? 'true' : 'false');
+      boton.setAttribute('aria-label', favoritoLocalActivo
+        ? 'Desmarcar como favorito' : 'Marcar como favorito');
+    });
   }
 
   function habilitarOverlayGaleria(){
     const overlay = document.getElementById('mg-galeria-overlay');
-    const boton = document.getElementById('mg-favorito-local');
     if(overlay) overlay.hidden = false;
-    if(boton) boton.hidden = false;
+    document.querySelectorAll('[data-favorito-local]').forEach(function(boton){
+      boton.hidden = false;
+    });
     pintarFavoritoLocal();
   }
 
@@ -2204,13 +2292,15 @@
   }
 
   function configurarFavoritoLocal(){
-    const boton = document.getElementById('mg-favorito-local');
-    if(!boton) return;
+    const botones = document.querySelectorAll('[data-favorito-local]');
+    if(!botones.length) return;
     pintarFavoritoLocal();
-    boton.addEventListener('click', function(){
-      if(boton.hidden || !filaProducto) return;
-      favoritoLocalActivo = !favoritoLocalActivo;
-      pintarFavoritoLocal();
+    botones.forEach(function(boton){
+      boton.addEventListener('click', function(){
+        if(boton.hidden || !filaProducto) return;
+        favoritoLocalActivo = !favoritoLocalActivo;
+        pintarFavoritoLocal();
+      });
     });
   }
 
