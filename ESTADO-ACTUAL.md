@@ -2,6 +2,19 @@
 
 **Corte:** 21 de octubre de 2026 (el estado completo del proyecto vive en `CONTEXTO-MAGANDHI.md` del repo del back-office)
 
+> **Promocionar P5 · CERRADO ESTRUCTURAL/PRODUCTIVAMENTE EN BACK-OFFICE Y SUPABASE (21-oct-2026).**
+> Implementación PR #308, merge `3205e1b0cfcd5fc98126ccf2f37aa3cb2bf914f1`;
+> CI `39643360479` `success` (88 migraciones, matriz 230/0, `Todo pasa.`);
+> migración `20261110000000` ejecutada una sola vez según confirmó el dueño y
+> Pages producción `39645791554` `success` sobre el merge. El dueño recorrió
+> Resultados, Métricas y Ventas y dijo «Todo en orden». No hubo postflight
+> productivo separado, categorías con datos reales, compra, pago `APPROVED`,
+> pedido atribuido ni ingreso. **La tienda no cambió con P5:** su captura P4
+> continúa vigente. Relevo actual en el back-office:
+> `docs/RELEVO-PROMOCIONAR-P5-CIERRE-ESTRUCTURAL-2026-10-21.md`. No hay P6
+> definido; permanece el pendiente monetario común C5/P4/P5, siempre sujeto a
+> autorización expresa.
+>
 > **Promocionar P4 · DESPLEGADO, ACTIVO Y CERRADO ESTRUCTURALMENTE (21-oct-2026).**
 > Tienda PR #118 (`1b22d24`) publicada por Pages y backend PR #306
 > (`75b14b4`) desplegado. La tienda recibe `#mg_promo`, valida el código, limpia
@@ -11,7 +24,7 @@
 > dinero abrió un enlace activo, capturó la visita, creó una intención atribuida
 > y llegó a Wompi. Estado final: 1 intención atribuida sintética, 0 pedidos, 0
 > divergencias y 0 incidencias. No hubo pago: no afirmar webhook/pedido ni cierre
-> transaccional. Relevo vigente en el back-office:
+> transaccional. Relevo histórico en el back-office:
 > `docs/RELEVO-PROMOCIONAR-P4-CIERRE-ESTRUCTURAL-2026-10-21.md`.
 >
 > **Promocionar P1 · DESPLEGADO Y CERRADO ESTRUCTURALMENTE (20-oct-2026).**
@@ -411,17 +424,12 @@ Antes, al volver de Wompi la ficha se veía igual y «Comprar ahora» seguía ac
 2. Políticas reales: privacidad, condiciones, entregas, cambios/devoluciones y tratamiento de datos.
 3. Canal/página formal de PQRS; mientras tanto se usa el correo real.
 4. Repaso de textos de la sección de opiniones. El diseño quedó aprobado; solo falta pulir copias. Los copys del aviso de vuelta del pago son provisionales y entran en el mismo repaso.
-5. **Promocionar P5 · Lectura comercial:** siguiente tramo. P0–P3 están
-   cerrados y P4 está desplegado/activo/cerrado estructuralmente. Construir
-   tablero, pedidos, ingresos y conversión con denominadores explícitos, sin
-   tratar la intención sintética P4 como venta. El gate `noindex` de P1 sigue
-   ligado a políticas, no a P5.
-6. Definir cómo escala el grid móvil más allá de los cinco espacios actuales.
-7. Revisar accesibilidad completa de carrusel y modales antes del lanzamiento público definitivo.
+5. Definir cómo escala el grid móvil más allá de los cinco espacios actuales.
+6. Revisar accesibilidad completa de carrusel y modales antes del lanzamiento público definitivo.
 
 ## Evolución comercial · C1–C5 cerrados estructuralmente
 
-Estado al 20-oct-2026:
+Estado al 21-oct-2026:
 
 1. C1–C5 están cerrados estructuralmente en producción; C4 quedó superado por
    C5. El carrito está encendido y Wompi en `prod`.
@@ -431,9 +439,12 @@ Estado al 20-oct-2026:
 3. Pendientes de tienda ligados a C5: opinión autenticada por cuenta (hoy
    «Próximamente») y los placeholders del centro de cuenta (Favoritos, Mis
    opiniones, Eliminar cuenta).
-4. Promocionar P0–P3 están cerrados; P3 está cerrado FINAL. P4 está
-   desplegado, activo y cerrado estructuralmente con una intención atribuida
-   sintética sin pago. **Siguiente tramo: P5 · Lectura comercial.**
+4. Promocionar P0 está cerrado como contrato documental, sin implementación ni
+   producción. P1–P5 están desplegados y cerrados en sus alcances respectivos:
+   P3 está cerrado FINAL, P4 permanece desplegado/activo y P5 está cerrado
+   productivamente como lectura en back-office/Supabase. La tienda no cambió
+   con P5 y conserva la captura P4. No hay P6 definido. Permanece el pendiente
+   monetario común C5/P4/P5.
 
 ## Fuentes de verdad
 
@@ -443,8 +454,12 @@ Estado al 20-oct-2026:
 - Cuenta C2 y gates de apertura: `cuenta/CONFIGURACION.md`.
 - Esquema/RLS/RPC/Edge Functions: repositorio del back-office, carpeta `supabase/`.
 - Relevo general vigente de Promocionar:
-  `docs/RELEVO-PROMOCIONAR-P4-CIERRE-ESTRUCTURAL-2026-10-21.md` del back-office:
-  P4 productivo, gate ON, prueba sin dinero, límites y continuidad hacia P5.
+  `docs/RELEVO-PROMOCIONAR-P5-CIERRE-ESTRUCTURAL-2026-10-21.md` del back-office:
+  P5 productivo como lectura, diagnóstico final, límites sin dinero y
+  continuidad sin P6 definido.
+- Relevo histórico y contrato de captura P4:
+  `docs/RELEVO-PROMOCIONAR-P4-CIERRE-ESTRUCTURAL-2026-10-21.md` y
+  `docs/PLANO-PROMOCIONAR-P4.md` del back-office.
 - Relevo Comercial vigente:
   `docs/RELEVO-COMERCIAL-C5-CIERRE-2026-10-20.md` del back-office: estado
   productivo de carrito y pendiente transaccional con dinero.
@@ -456,6 +471,7 @@ Estado al 20-oct-2026:
 - Diseño y criterios C5:
   `docs/PLANO-COMERCIAL-C5.md` y `docs/PLANO-FASE-COMERCIAL.md` del back-office.
 - Diseño, evidencia y continuidad de Promocionar:
-  `docs/PLANO-PROMOCIONAR-P4.md` y
-  `docs/RELEVO-PROMOCIONAR-P4-CIERRE-ESTRUCTURAL-2026-10-21.md` del back-office.
+  `docs/PLANO-PROMOCIONAR-P5.md`,
+  `docs/RELEVO-PROMOCIONAR-P5-CIERRE-ESTRUCTURAL-2026-10-21.md` y
+  `supabase/operacion/PROMOCIONAR-P5-DESPLIEGUE.md` del back-office.
 - Inventario y publicación: back-office en `montaguth.institute`.

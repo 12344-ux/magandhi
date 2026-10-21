@@ -8,9 +8,10 @@ Antes de tocar la tienda pública:
 
 1. Leer `ESTADO-ACTUAL.md`.
 2. Si la tarea toca enlaces, Promocionar, checkout o atribución, empezar por el
-   relevo del back-office
-   `docs/RELEVO-PROMOCIONAR-P4-CIERRE-ESTRUCTURAL-2026-10-21.md`, después
-   `docs/PLANO-PROMOCIONAR-P4.md` y `docs/PLANO-FASE-COMERCIAL.md`.
+   relevo vigente del back-office
+   `docs/RELEVO-PROMOCIONAR-P5-CIERRE-ESTRUCTURAL-2026-10-21.md` y
+   `docs/PLANO-PROMOCIONAR-P5.md`. Para captura/checkout, leer después el
+   contrato P4 y su relevo histórico, además de `docs/PLANO-FASE-COMERCIAL.md`.
 3. Para carrito/Mis compras consultar además `docs/PLANO-COMERCIAL-C5.md` y
    `docs/RELEVO-COMERCIAL-C5-CIERRE-2026-10-20.md` del back-office.
 4. Si la tarea toca Auth o cuentas públicas, leer `cuenta/CONFIGURACION.md` y el
@@ -20,7 +21,9 @@ Antes de tocar la tienda pública:
 
 ## Promocionar · estado al 21-oct-2026
 
-- P0–P3 están cerrados; P3 permanece cerrado FINAL.
+- **P0 está cerrado como contrato documental, sin implementación ni producción.**
+- **P1–P3 están desplegados y cerrados en sus alcances respectivos; P3
+  permanece cerrado FINAL.**
 - **P4 está fusionado, publicado, activo y cerrado estructuralmente.** Tienda
   #118 (`1b22d24`) y backend #306 (`75b14b4`); migración `20261109000000`
   aplicada una vez; Edge `enlace-promocional` y `crear-intencion-pago`
@@ -33,8 +36,18 @@ Antes de tocar la tienda pública:
 - `scripts/atribucion-promocional.js` conserva únicamente código y dos
   timestamps durante 30 minutos por pestaña; es independiente de `mg_vid`,
   cookies y consentimiento analítico.
-- **P5 es el siguiente tramo:** tablero/lecturas de clics aproximados, sesiones
-  consentidas, checkout, pedidos, ingresos y conversión con denominador.
+- **P5 está cerrado estructural/productivamente en back-office/Supabase.** PR
+  #308, merge `3205e1b0cfcd5fc98126ccf2f37aa3cb2bf914f1`; migración
+  `20261110000000` ejecutada una vez según confirmó el dueño; CI
+  `39643360479` `success` (88 migraciones, matriz 230/0, `Todo pasa.`) y Pages
+  producción `39645791554` `success` sobre el merge. El dueño recorrió
+  Resultados, Métricas y Ventas y dijo «Todo en orden».
+- P5 no cambió la tienda: `scripts/atribucion-promocional.js` y la captura P4
+  siguen vigentes. No quedaron confirmados preflight ni postflight productivos
+  separados. Tampoco se acreditaron categorías con datos reales, compra, pago
+  `APPROVED`, pedido atribuido ni ingreso.
+- No hay P6 definido. El pendiente monetario común C5/P4/P5 requiere una
+  compra real expresamente autorizada.
 
 ## Comercial · estado vigente
 
