@@ -1,3 +1,4 @@
+import '../scripts/atribucion-promocional.js?v=1';
 import { supabase } from '../supabase-config.js';
 import {
   SIGNUP_CALLBACK_URL,
