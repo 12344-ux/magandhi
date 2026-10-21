@@ -1,7 +1,19 @@
 # MAGANDHI · estado actual de la tienda pública
 
-**Corte:** 20 de octubre de 2026 (el estado completo del proyecto vive en `CONTEXTO-MAGANDHI.md` del repo del back-office)
+**Corte:** 21 de octubre de 2026 (el estado completo del proyecto vive en `CONTEXTO-MAGANDHI.md` del repo del back-office)
 
+> **Promocionar P4 · DESPLEGADO, ACTIVO Y CERRADO ESTRUCTURALMENTE (21-oct-2026).**
+> Tienda PR #118 (`1b22d24`) publicada por Pages y backend PR #306
+> (`75b14b4`) desplegado. La tienda recibe `#mg_promo`, valida el código, limpia
+> la URL y conserva `{codigo, recibido_en, ultima_actividad}` durante 30 minutos
+> por pestaña, separado de `mg_vid`; compra inmediata y carrito envían solo el
+> código. Gate P4 ON desde `2026-10-21T15:21:59.626776Z`. La prueba integral sin
+> dinero abrió un enlace activo, capturó la visita, creó una intención atribuida
+> y llegó a Wompi. Estado final: 1 intención atribuida sintética, 0 pedidos, 0
+> divergencias y 0 incidencias. No hubo pago: no afirmar webhook/pedido ni cierre
+> transaccional. Relevo vigente en el back-office:
+> `docs/RELEVO-PROMOCIONAR-P4-CIERRE-ESTRUCTURAL-2026-10-21.md`.
+>
 > **Promocionar P1 · DESPLEGADO Y CERRADO ESTRUCTURALMENTE (20-oct-2026).**
 > Backend PR #295 + corrección ACL #296; migraciones `20261107000000` y
 > `20261107000100` aplicadas una vez. El postflight final confirmó todos los
@@ -399,9 +411,11 @@ Antes, al volver de Wompi la ficha se veía igual y «Comprar ahora» seguía ac
 2. Políticas reales: privacidad, condiciones, entregas, cambios/devoluciones y tratamiento de datos.
 3. Canal/página formal de PQRS; mientras tanto se usa el correo real.
 4. Repaso de textos de la sección de opiniones. El diseño quedó aprobado; solo falta pulir copias. Los copys del aviso de vuelta del pago son provisionales y entran en el mismo repaso.
-5. **Promocionar P2 · Estudio:** siguiente tramo pendiente. P1 está desplegado;
-   construir P2 sin adelantar redirector P3, atribución P4 o métricas P5.
-   El gate `noindex` de P1 continúa ligado a publicar políticas, no a P2.
+5. **Promocionar P5 · Lectura comercial:** siguiente tramo. P0–P3 están
+   cerrados y P4 está desplegado/activo/cerrado estructuralmente. Construir
+   tablero, pedidos, ingresos y conversión con denominadores explícitos, sin
+   tratar la intención sintética P4 como venta. El gate `noindex` de P1 sigue
+   ligado a políticas, no a P5.
 6. Definir cómo escala el grid móvil más allá de los cinco espacios actuales.
 7. Revisar accesibilidad completa de carrusel y modales antes del lanzamiento público definitivo.
 
@@ -417,9 +431,9 @@ Estado al 20-oct-2026:
 3. Pendientes de tienda ligados a C5: opinión autenticada por cuenta (hoy
    «Próximamente») y los placeholders del centro de cuenta (Favoritos, Mis
    opiniones, Eliminar cuenta).
-4. Promocionar P0 cerró su contrato documental y P1 está desplegado/cerrado
-   estructuralmente con seis shells compartibles, historial de slugs y gate
-   editorial `noindex`. **Siguiente tramo: P2 · Estudio Promocionar.**
+4. Promocionar P0–P3 están cerrados; P3 está cerrado FINAL. P4 está
+   desplegado, activo y cerrado estructuralmente con una intención atribuida
+   sintética sin pago. **Siguiente tramo: P5 · Lectura comercial.**
 
 ## Fuentes de verdad
 
@@ -428,10 +442,12 @@ Estado al 20-oct-2026:
 - Presentación pública: `index.html` y `producto/index.html`.
 - Cuenta C2 y gates de apertura: `cuenta/CONFIGURACION.md`.
 - Esquema/RLS/RPC/Edge Functions: repositorio del back-office, carpeta `supabase/`.
-- Relevo general vigente:
+- Relevo general vigente de Promocionar:
+  `docs/RELEVO-PROMOCIONAR-P4-CIERRE-ESTRUCTURAL-2026-10-21.md` del back-office:
+  P4 productivo, gate ON, prueba sin dinero, límites y continuidad hacia P5.
+- Relevo Comercial vigente:
   `docs/RELEVO-COMERCIAL-C5-CIERRE-2026-10-20.md` del back-office: estado
-  productivo exacto tras el cierre estructural de C5, pendientes y prompt de la
-  próxima sesión.
+  productivo de carrito y pendiente transaccional con dinero.
 - Relevos históricos C4 y C5:
   `docs/RELEVO-COMERCIAL-C4-2026-10-19.md` y
   `docs/RELEVO-COMERCIAL-C5-2026-10-19.md` del back-office.
@@ -440,6 +456,6 @@ Estado al 20-oct-2026:
 - Diseño y criterios C5:
   `docs/PLANO-COMERCIAL-C5.md` y `docs/PLANO-FASE-COMERCIAL.md` del back-office.
 - Diseño, evidencia y continuidad de Promocionar:
-  `docs/PLANO-PROMOCIONAR-P1.md` y
-  `docs/RELEVO-PROMOCIONAR-P1-2026-10-20.md` del back-office.
+  `docs/PLANO-PROMOCIONAR-P4.md` y
+  `docs/RELEVO-PROMOCIONAR-P4-CIERRE-ESTRUCTURAL-2026-10-21.md` del back-office.
 - Inventario y publicación: back-office en `montaguth.institute`.
