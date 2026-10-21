@@ -141,7 +141,7 @@
   /* En PC la franja negra de confianza NO va arriba (ahi manda el header blanco
      sticky): va al final, justo antes del footer, como "prefooter". Mismo lenguaje
      visual que .mg-barra (fondo negro, texto blanco, iconos). Se oculta en movil
-     (@media max-width:720px -> display:none), donde la franja vive arriba (.mg-barra).
+     (@media max-width:860px -> display:none), donde la franja vive arriba (.mg-barra).
      Reusa .mg-barra-btn para el boton de Wompi. */
   .mg-prefooter{
     background:var(--negro);color:#fff;font-size:12.5px;letter-spacing:.3px;
@@ -159,7 +159,7 @@
     background:var(--fondo-pagina);border-bottom:1px solid var(--linea);
     box-shadow:0 1px 3px rgba(17,17,17,.06);
   }
-  @media(max-width:720px){
+  @media(max-width:860px){
     header.mg-store-header{position:static;background:transparent;border-bottom:0;box-shadow:none}
   }
 
@@ -206,43 +206,31 @@
     .mg-store-header .mg-search-visual span{font-size:10.5px}
     .mg-store-header .cc-auth-action{padding-inline:6px;font-size:10px}
   }
-  /* BARRA DE CONFIANZA EN MOVIL: queda STICKY arriba (es la que lleva la flecha de
-     volver, debe estar siempre accesible) y se reduce a DOS items: "Envios
-     nacionales" + "Pagos seguros con Wompi"; se oculta "Cada producto revisado por
-     el equipo" para que la franja quepa en una linea delgada junto a la flecha de
-     la izquierda. La flecha (.mg-barra-volver) aparece a la izquierda. z-index por
-     debajo del modal de Wompi (z-index:100). */
-  @media(max-width:720px){
-    /* SIN scroll horizontal: los 3 elementos (flecha + "Envios nacionales" +
-       "Pagos seguros con Wompi") deben CABER en una sola linea sin deslizar ni
-       cortarse en moviles tipicos (360-414px). Se reduce font-size y gap, y las
-       etiquetas pueden partir en 2 lineas si hace falta (sin nowrap) para que
-       nada quede fuera de la franja. */
+  /* BARRA DE CONFIANZA EN MOVIL: la flecha queda fuera del flujo y los dos
+     mensajes comparten un centro geometrico estable en todo el rango movil. El
+     padding lateral simetrico reserva el mismo espacio a ambos lados, permite
+     dos lineas cuando hace falta y evita overflow entre 360 y 860 px. */
+  @media(max-width:860px){
     .mg-barra{
-      display:flex;position:sticky;top:0;z-index:50;
-      flex-wrap:nowrap;justify-content:flex-start;gap:10px;
-      font-size:9.5px;letter-spacing:.1px;padding:8px 12px;
+      display:grid;position:sticky;top:0;z-index:50;
+      grid-template-columns:repeat(2,minmax(0,180px));align-items:center;
+      justify-content:center;gap:clamp(6px,2vw,16px);
+      min-height:52px;padding:6px 56px;
+      font-size:clamp(9.5px,2.3vw,11.5px);letter-spacing:.1px;
     }
-    .mg-barra span,.mg-barra-btn{flex:0 1 auto;min-width:0}
+    .mg-barra > span,.mg-barra-btn{
+      width:100%;min-width:0;min-height:40px;justify-content:center;
+      text-align:center;line-height:1.25;white-space:normal;
+    }
     .mg-barra svg{width:12px;height:12px}
-    /* la flecha de retroceso se muestra a la izquierda, pegada al borde */
-    .mg-barra-volver{display:inline-flex;margin-right:2px}
-    .mg-barra-volver svg{width:17px;height:17px}
-    /* se oculta el primer item para dejar solo 2 mensajes (no se borra el HTML:
-       en PC los 3 siguen visibles) */
+    .mg-barra-volver{
+      display:inline-flex;position:absolute;left:6px;top:50%;
+      width:44px;height:44px;transform:translateY(-50%);
+    }
+    .mg-barra-volver svg{width:18px;height:18px}
     .mg-barra .mg-barra-revisado{display:none}
-    /* el prefooter negro es solo para PC: en movil la franja de confianza es la
-       barra sticky de arriba */
     .mg-prefooter{display:none}
   }
-  /* CINTURON DE SEGURIDAD para telefonos ANCHOS (muchos reportan 760-820px de
-     ancho CSS y NO entran al @media max-width:720px): se oculta "Cada producto
-     revisado por el equipo" tambien hasta 860px. SOLO este item; el resto del
-     modo movil de la barra (sticky, flecha, 2 mensajes) y el prefooter de PC
-     siguen calibrados a 720px, intactos. En PC real la .mg-barra es display:none,
-     asi que esta regla no afecta la franja de arriba; y el prefooter conserva sus
-     3 mensajes porque solo se oculta <=720px. */
-  @media(max-width:860px){ .mg-barra .mg-barra-revisado{display:none} }
 
   /* ---------- migas ---------- */
   .mg-migas{max-width:1120px;margin:0 auto;padding:8px 24px 0;font-size:12.5px;color:var(--gris-cl)}
@@ -310,6 +298,34 @@
     width:100%;height:100%;display:flex;align-items:center;justify-content:center;
     touch-action:pan-y;user-select:none;-webkit-user-select:none;
   }
+  /* Controles superpuestos exclusivos de movil. Permanecen fuera del contenido
+     reemplazable de la foto para sobrevivir a swipe, teclado y cambios de indice. */
+  .mg-galeria-overlay{display:none}
+  @media(max-width:860px){
+    .mg-galeria-overlay:not([hidden]){
+      position:absolute;right:12px;bottom:12px;z-index:4;
+      display:flex;align-items:center;min-height:44px;overflow:hidden;
+      color:var(--tinta);background:rgba(255,255,255,.82);
+      border:1px solid rgba(17,17,17,.10);border-radius:999px;
+      box-shadow:0 6px 20px rgba(17,17,17,.14);
+      backdrop-filter:blur(9px);-webkit-backdrop-filter:blur(9px);
+    }
+    .mg-galeria-contador{
+      min-width:54px;padding:0 12px;font-size:12px;font-weight:600;
+      line-height:44px;text-align:center;font-variant-numeric:tabular-nums;
+      border-right:1px solid rgba(17,17,17,.10);
+    }
+    .mg-favorito-local{
+      width:44px;height:44px;flex:none;padding:0;border:0;background:transparent;
+      color:var(--gris);cursor:pointer;display:inline-flex;align-items:center;
+      justify-content:center;transition:color .15s,background .15s;
+    }
+    .mg-favorito-local:hover{background:rgba(166,51,46,.08);color:var(--rojo)}
+    .mg-favorito-local:focus-visible{outline:3px solid var(--acento-cl);outline-offset:-4px}
+    .mg-favorito-local svg{width:21px;height:21px;fill:transparent;transition:fill .15s}
+    .mg-favorito-local[aria-pressed="true"]{color:var(--rojo)}
+    .mg-favorito-local[aria-pressed="true"] svg{fill:currentColor}
+  }
   /* Flechas discretas SOLO en PC, con el mismo lenguaje del hero. La navegacion
      es circular: anterior desde la primera lleva a la ultima y viceversa. */
   .mg-galeria-flecha{
@@ -338,18 +354,21 @@
     display:flex;flex-direction:column;align-items:center;gap:10px;
   }
   .mg-foto__ph svg{width:46px;height:46px;color:var(--acento)}
-  .mg-galeria-dots{display:none;align-items:center;justify-content:center;flex-wrap:wrap;max-width:100%;min-height:44px;margin:4px 0 0}
+  .mg-galeria-dots{
+    display:none;align-items:center;justify-content:center;gap:1px;flex-wrap:wrap;
+    max-width:100%;min-height:36px;margin:3px 0 0;
+  }
   .mg-galeria-dot{
-    width:44px;height:44px;padding:0;border:0;background:transparent;color:var(--acento);opacity:.45;
+    width:32px;height:36px;padding:0;border:0;background:transparent;color:var(--acento);opacity:.45;
     display:inline-flex;align-items:center;justify-content:center;cursor:pointer;
   }
   .mg-galeria-dot::before{
-    content:"";width:7px;height:7px;border-radius:999px;background:currentColor;
+    content:"";width:6px;height:6px;border-radius:999px;background:currentColor;
     transition:width .16s ease,background .16s ease,color .16s ease;
   }
   .mg-galeria-dot[aria-current="true"]{color:var(--rojo);opacity:1}
-  .mg-galeria-dot[aria-current="true"]::before{width:20px;background:var(--rojo)}
-  .mg-galeria-dot:focus-visible{outline:3px solid var(--acento-sombra);outline-offset:-5px;border-radius:999px}
+  .mg-galeria-dot[aria-current="true"]::before{width:16px;background:var(--rojo)}
+  .mg-galeria-dot:focus-visible{outline:3px solid var(--acento-sombra);outline-offset:-4px;border-radius:999px}
   .mg-tiras{display:flex;gap:10px;margin-top:12px;flex-wrap:wrap}
   @media(max-width:860px){
     .mg-galeria-dots:not([hidden]){display:flex}
@@ -382,7 +401,10 @@
   .mg-sello svg{width:14px;height:14px;flex:none}
   /* Cuando PC-con-movimiento toma el relevo, este sello de arriba cede su lugar
      a la estrella de la galeria. */
-  .mg-sello--cede{display:none}
+  /* En escritorio con movimiento normal, el sello del título cede ante la
+     estrella animada de la galería. En móvil vuelve a mostrarse incluso si la
+     ventana se redimensionó después de cargar la ficha. */
+  @media(min-width:861px){.mg-sello--cede{display:none}}
   /* El atributo HTML `hidden` debe ganar sobre el display:inline-flex de autor
      (la regla [hidden] del user-agent no prevalece por si sola). Mismo patron
      robusto que .mg-nodisp: cuando pintarSello() pone el.hidden=true, el sello
@@ -882,6 +904,7 @@
   /* en PC el .mg-prefooter negro ya aporta su propio margen superior justo antes
      del footer, asi que el footer no agrega otro hueco encima (evita doble espacio) */
   .mg-prefooter + footer{margin-top:0}
+  @media(max-width:860px){.mg-prefooter + footer{margin-top:48px}}
   .mg-foot{max-width:1120px;margin:0 auto;padding:34px 24px;display:flex;justify-content:space-between;align-items:center;gap:20px 24px;flex-wrap:wrap}
   .mg-foot-marca{font-size:12.5px;color:var(--gris-cl);margin:0}
   .mg-foot-links{display:flex;align-items:center;gap:20px;flex-wrap:wrap}
@@ -1141,6 +1164,15 @@
     <div class="mg-foto" id="mg-foto" tabindex="0" aria-label="Galería del producto">
       <div class="mg-foto__contenido" id="mg-foto-contenido" aria-live="polite">
         <img class="mg-foto__img" src="https://bxlzipwxyxdtffnuizbz.supabase.co/storage/v1/object/public/campanas/murjesma-x4cyf584.webp" alt="Sérum Facial de Rosa Mosqueta" decoding="async" fetchpriority="high">
+      </div>
+      <!-- Overlay movil persistente dentro del marco: el contenido de la foto se
+           reemplaza al navegar, pero contador y favorito permanecen estables. -->
+      <div class="mg-galeria-overlay" id="mg-galeria-overlay" hidden>
+        <span class="mg-galeria-contador" id="mg-galeria-contador" hidden aria-hidden="true"></span>
+        <button type="button" class="mg-favorito-local" id="mg-favorito-local"
+                aria-pressed="false" aria-label="Marcar como favorito" hidden>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.6l-1-1a5.5 5.5 0 0 0-7.8 7.8l1 1L12 21l7.8-7.6 1-1a5.5 5.5 0 0 0 0-7.8z"/></svg>
+        </button>
       </div>
       <button type="button" class="mg-galeria-flecha mg-galeria-flecha--prev" id="mg-galeria-prev" aria-label="Imagen anterior" hidden>
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 18l-6-6 6-6"/></svg>
@@ -1645,7 +1677,7 @@
      ============================================================ -->
 <script type="module">
   import { supabase, SUPABASE_URL } from '../supabase-config.js';
-  import { agregarAlCarrito, mensajeErrorCarrito } from '../carrito/carrito-core.js?v=3';
+  import { agregarAlCarrito, quitarDelCarrito, mensajeErrorCarrito } from '../carrito/carrito-core.js?v=3';
   import {
     observarEstadoCarrito,
     sincronizarCuentaCarrito,
@@ -1952,6 +1984,20 @@
     });
   }
 
+  function configurarVolverMovil(){
+    const enlace = document.querySelector('.mg-barra-volver');
+    if(!enlace) return;
+    enlace.addEventListener('click', function(evento){
+      if(evento.defaultPrevented || evento.button !== 0 || evento.metaKey ||
+         evento.ctrlKey || evento.shiftKey || evento.altKey) return;
+      if(window.history.length > 1){
+        evento.preventDefault();
+        window.history.back();
+      }
+      // En una entrada directa no se cancela el enlace: su href vuelve al inicio.
+    });
+  }
+
   function set(id, texto){
     const el = document.getElementById(id);
     if(el) el.textContent = texto;
@@ -2116,6 +2162,45 @@
     return sv ? (urlPublica(sv) || urlPublica(pathGrande)) : urlPublica(pathGrande);
   }
 
+  // Favorito deliberadamente efimero: vive solo en esta carga de la pagina.
+  // No escribe storage ni promete sincronizacion con la cuenta.
+  let favoritoLocalActivo = false;
+
+  function pintarFavoritoLocal(){
+    const boton = document.getElementById('mg-favorito-local');
+    if(!boton) return;
+    boton.setAttribute('aria-pressed', favoritoLocalActivo ? 'true' : 'false');
+    boton.setAttribute('aria-label', favoritoLocalActivo
+      ? 'Desmarcar como favorito' : 'Marcar como favorito');
+  }
+
+  function habilitarOverlayGaleria(){
+    const overlay = document.getElementById('mg-galeria-overlay');
+    const boton = document.getElementById('mg-favorito-local');
+    if(overlay) overlay.hidden = false;
+    if(boton) boton.hidden = false;
+    pintarFavoritoLocal();
+  }
+
+  function actualizarContadorGaleria(indice, total){
+    const contador = document.getElementById('mg-galeria-contador');
+    if(!contador) return;
+    const multiple = Number.isSafeInteger(total) && total > 1;
+    contador.hidden = !multiple;
+    contador.textContent = multiple ? (indice + 1) + ' / ' + total : '';
+  }
+
+  function configurarFavoritoLocal(){
+    const boton = document.getElementById('mg-favorito-local');
+    if(!boton) return;
+    pintarFavoritoLocal();
+    boton.addEventListener('click', function(){
+      if(boton.hidden || !filaProducto) return;
+      favoritoLocalActivo = !favoritoLocalActivo;
+      pintarFavoritoLocal();
+    });
+  }
+
   // GALERIA real: arma la lista ordenada de imagenes y mantiene UN solo indice
   // activo. Miniaturas, flechas, teclado y swipe llaman a irA(); el modulo hace
   // circular la navegacion (ultima -> primera y primera -> ultima) sin clones.
@@ -2127,6 +2212,8 @@
     const prev = document.getElementById('mg-galeria-prev');
     const next = document.getElementById('mg-galeria-next');
     if(!foto || !contenido) return;
+    habilitarOverlayGaleria();
+    actualizarContadorGaleria(0, 0);
 
     // El arreglo ordenado manda. Se filtra ANTES del fallback para que [null]
     // no impida usar imagen_banner_path cuando sea la unica imagen valida.
@@ -2146,6 +2233,8 @@
       if(dots){ dots.replaceChildren(); dots.onclick = null; dots.hidden = true; }
       if(prev) prev.hidden = true;
       if(next) next.hidden = true;
+      foto.setAttribute('aria-label', 'Galería de ' + (fila.nombre || 'Producto') + '. Imagen no disponible');
+      actualizarContadorGaleria(0, 0);
       return;
     }
 
@@ -2167,6 +2256,7 @@
 
     function pintarEstado(){
       const actual = fotos[indiceActivo];
+      actualizarContadorGaleria(indiceActivo, total);
       contenido.innerHTML = '<img class="mg-foto__img" src="' + esc(actual.grande) + '" alt="' +
         esc(alt + ' — imagen ' + (indiceActivo + 1) + ' de ' + total) + '" decoding="async" draggable="false">';
       const principal = contenido.querySelector('.mg-foto__img');
@@ -2179,6 +2269,8 @@
             return;
           }
           contenido.innerHTML = '<div class="mg-foto__ph">Imagen no disponible</div>';
+          foto.setAttribute('aria-label', 'Galería de ' + alt + '. Imagen no disponible');
+          actualizarContadorGaleria(0, 0);
         });
       }
       foto.setAttribute('aria-label','Galería de ' + alt + '. Imagen ' + (indiceActivo + 1) + ' de ' + total);
@@ -2264,7 +2356,7 @@
     }
 
     foto.onkeydown = function(e){
-      if(!multiple) return;
+      if(!multiple || e.target !== foto) return;
       if(e.key === 'ArrowLeft'){ e.preventDefault(); irA(indiceActivo - 1); }
       if(e.key === 'ArrowRight'){ e.preventDefault(); irA(indiceActivo + 1); }
     };
@@ -2313,19 +2405,35 @@
   let carritoUid = null;
   let carritoSnapshot = null;
   let carritoGeneracion = 0;
-  let agregandoAlCarrito = false;
+  let mutandoCarrito = false;
+
+  const ICONO_CARRITO_AGREGAR = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="8" cy="21" r="1"/><circle cx="19" cy="21" r="1"/><path d="M2.05 2.05h2l2.66 12.42a2 2 0 0 0 2 1.58h9.78a2 2 0 0 0 1.95-1.57l1.65-7.43H5.12"/><path d="M12 8v6M9 11h6"/></svg>';
+  const ICONO_CARRITO_QUITAR = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 6h18M8 6V4h8v2M19 6l-1 15H6L5 6M10 10v7M14 10v7"/></svg>';
+
+  function lineaProductoEnCarrito(){
+    if(!filaProducto || !carritoSnapshot || !Array.isArray(carritoSnapshot.items)) return null;
+    return carritoSnapshot.items.find(function(item){
+      return item.campana_id === filaProducto.id && item.cantidad > 0;
+    }) || null;
+  }
 
   function cantidadActualEnCarrito(){
-    if(!filaProducto || !carritoSnapshot || !Array.isArray(carritoSnapshot.items)) return 0;
-    const linea = carritoSnapshot.items.find(function(item){
-      return item.campana_id === filaProducto.id;
-    });
+    const linea = lineaProductoEnCarrito();
     return linea ? linea.cantidad : 0;
   }
 
   function maxAgregableAlCarrito(){
     if(!filaProducto) return 0;
     return Math.max(0, filaProducto.max_comprable - cantidadActualEnCarrito());
+  }
+
+  function carritoBloqueadoPorPago(){
+    return !!carritoSnapshot &&
+      (carritoSnapshot.bloqueo_pago === 'pendiente' || carritoSnapshot.bloqueo_pago === 'revision');
+  }
+
+  function operacionCarritoVigente(uid, generacion){
+    return carritoDisponible && !!uid && uid === carritoUid && generacion === carritoGeneracion;
   }
 
   function mostrarEstadoCarrito(mensaje, tono){
@@ -2337,17 +2445,55 @@
     else delete estadoEl.dataset.tone;
   }
 
+  function pintarModoBotonCarrito(boton, linea, cantidad){
+    const quitando = !!linea;
+    boton.dataset.modo = quitando ? 'quitar' : 'agregar';
+    boton.innerHTML = (quitando ? ICONO_CARRITO_QUITAR : ICONO_CARRITO_AGREGAR) +
+      '<span>' + (quitando ? 'Quitar del carrito' : 'Agregar al carrito') + '</span>';
+    if(quitando){
+      const unidades = linea.cantidad;
+      boton.setAttribute('aria-label', 'Quitar ' + unidades +
+        (unidades === 1 ? ' unidad' : ' unidades') + ' de ' +
+        String(filaProducto.nombre || 'este producto') + ' del carrito');
+    }else if(cantidadValida(cantidad)){
+      boton.setAttribute('aria-label', 'Agregar ' + cantidad +
+        (cantidad === 1 ? ' unidad' : ' unidades') + ' de ' +
+        String(filaProducto.nombre || 'este producto') + ' al carrito');
+    }else{
+      boton.setAttribute('aria-label', 'Agregar al carrito');
+    }
+  }
+
   function actualizarBotonCarrito(){
     const boton = document.getElementById('mg-agregar-carrito');
     if(!boton) return;
+    const tieneSnapshot = carritoDisponible && !!carritoSnapshot;
+    const linea = tieneSnapshot ? lineaProductoEnCarrito() : null;
     const cantidad = cantidadSeleccionada();
+    const bloqueado = carritoBloqueadoPorPago();
     const maxAgregable = maxAgregableAlCarrito();
     const productoListo = !!filaProducto && !!filaProducto.id &&
       !productoAgotado(filaProducto) && cantidadValida(cantidad) && cantidad <= maxAgregable;
-    boton.hidden = !carritoDisponible || !filaProducto;
-    boton.disabled = !carritoDisponible || !productoListo || agregandoAlCarrito;
-    boton.title = carritoDisponible && filaProducto && maxAgregable === 0
-      ? 'Ya alcanzaste el máximo de este producto en tu carrito.' : '';
+
+    boton.hidden = !tieneSnapshot || !filaProducto;
+    if(boton.hidden){
+      boton.disabled = true;
+      return;
+    }
+
+    pintarModoBotonCarrito(boton, linea, cantidad);
+    // Quitar una linea no depende del stock actual, del selector ni de cuánto se
+    // pueda agregar. Solo lo bloquean un pago histórico y otra mutación activa.
+    boton.disabled = mutandoCarrito || bloqueado || (!linea && !productoListo);
+    if(bloqueado){
+      boton.title = carritoSnapshot.bloqueo_pago === 'revision'
+        ? 'Este pago está en revisión. Espera su confirmación antes de cambiar el carrito.'
+        : 'Hay un pago pendiente. Espera su confirmación antes de cambiar el carrito.';
+    }else if(!linea && maxAgregable === 0){
+      boton.title = 'Ya alcanzaste el máximo de este producto en tu carrito.';
+    }else{
+      boton.title = '';
+    }
   }
 
   function configurarCarritoProducto(){
@@ -2356,7 +2502,7 @@
 
     observarEstadoCarrito(function(estadoCarrito){
       carritoGeneracion += 1;
-      carritoDisponible = estadoCarrito.visible === true;
+      carritoDisponible = estadoCarrito.visible === true && !!estadoCarrito.snapshot;
       carritoUid = carritoDisponible ? estadoCarrito.uid : null;
       carritoSnapshot = carritoDisponible ? estadoCarrito.snapshot : null;
       if(!carritoDisponible) mostrarEstadoCarrito('');
@@ -2364,34 +2510,53 @@
     });
 
     boton.addEventListener('click', async function(){
-      if(boton.disabled || !carritoDisponible || !filaProducto) return;
+      if(boton.disabled || !carritoDisponible || !carritoSnapshot || !filaProducto) return;
+      const linea = lineaProductoEnCarrito();
+      const quitando = !!linea;
       const cantidad = cantidadSeleccionada();
-      if(!cantidadValida(cantidad)){
+      if(!quitando && !cantidadValida(cantidad)){
         const selector = document.getElementById('mg-cantidad');
         if(selector) selector.focus();
         return;
       }
+      if(carritoBloqueadoPorPago()){
+        actualizarBotonCarrito();
+        return;
+      }
 
-      agregandoAlCarrito = true;
-      const uidAlAgregar = carritoUid;
-      const generacionAlAgregar = carritoGeneracion;
+      const uidOperacion = carritoUid;
+      const generacionOperacion = carritoGeneracion;
+      const campanaOperacion = filaProducto.id;
+      const versionOperacion = carritoSnapshot.version;
+      const unidadesQuitadas = linea ? linea.cantidad : 0;
+      mutandoCarrito = true;
       boton.setAttribute('aria-busy', 'true');
       actualizarBotonCarrito();
-      mostrarEstadoCarrito('Agregando a tu carrito…');
+      mostrarEstadoCarrito(quitando
+        ? (unidadesQuitadas === 1
+          ? 'Quitando este producto de tu carrito…'
+          : 'Quitando ' + unidadesQuitadas + ' unidades de tu carrito…')
+        : 'Agregando a tu carrito…');
+
       try{
-        // La RPC recibe el UUID de campaña y el delta elegido. Precio, usuario y
-        // disponibilidad se resuelven otra vez en el servidor.
-        const snapshot = await agregarAlCarrito(filaProducto.id, cantidad);
-        if(!carritoDisponible || !uidAlAgregar || uidAlAgregar !== carritoUid ||
-           generacionAlAgregar !== carritoGeneracion) return;
+        // Quitar usa la versión autoritativa observada y elimina la línea
+        // completa en una sola RPC. Agregar conserva el delta elegido.
+        const snapshot = quitando
+          ? await quitarDelCarrito(campanaOperacion, versionOperacion)
+          : await agregarAlCarrito(campanaOperacion, cantidad);
+        if(!operacionCarritoVigente(uidOperacion, generacionOperacion)) return;
         if(!sincronizarCuentaCarrito(snapshot) || !carritoDisponible) return;
-        mostrarEstadoCarrito(
-          cantidad === 1 ? 'Agregamos 1 unidad a tu carrito.' : 'Agregamos ' + cantidad + ' unidades a tu carrito.',
+        mostrarEstadoCarrito(quitando
+          ? (unidadesQuitadas === 1
+            ? 'Quitamos este producto de tu carrito.'
+            : 'Quitamos ' + unidadesQuitadas + ' unidades de este producto de tu carrito.')
+          : (cantidad === 1
+            ? 'Agregamos 1 unidad a tu carrito.'
+            : 'Agregamos ' + cantidad + ' unidades a tu carrito.'),
           'success'
         );
       }catch(error){
-        if(!carritoDisponible || !uidAlAgregar || uidAlAgregar !== carritoUid ||
-           generacionAlAgregar !== carritoGeneracion) return;
+        if(!operacionCarritoVigente(uidOperacion, generacionOperacion)) return;
         const codigo = String(error && error.codigo || '');
         if(codigo === 'CO_CARRITO_DESHABILITADO' || codigo === 'CO_CUENTA_NO_DISPONIBLE'){
           ocultarCuentaCarrito(true);
@@ -2400,17 +2565,32 @@
           return;
         }
 
-        const nuevoMax = codigo === 'CO_MAX_COMPRABLE' ? error.maxComprable : null;
+        // Quitar lleva versión esperada. Si otra pestaña cambió el carrito, o
+        // apareció un bloqueo histórico, se relee primero el snapshot y solo
+        // después se informa el resultado autoritativo.
+        if(/VERSION|CONFLICT|DESACTUALIZ/.test(codigo) || codigo === 'CO_CARRITO_BLOQUEADO'){
+          let snapshotActualizado = null;
+          try{ snapshotActualizado = await refrescarCuentaCarrito(); }catch(_){ return; }
+          if(!snapshotActualizado || !carritoDisponible || uidOperacion !== carritoUid ||
+             carritoSnapshot !== snapshotActualizado) return;
+          mostrarEstadoCarrito(mensajeErrorCarrito(error, 'actualizar'), 'error');
+          return;
+        }
+
+        // La reconciliación de máximos pertenece solo al camino de agregar.
+        const nuevoMax = !quitando && codigo === 'CO_MAX_COMPRABLE' ? error.maxComprable : null;
         if(Number.isSafeInteger(nuevoMax) && nuevoMax >= 0 && nuevoMax <= MAX_COMPRABLE_TECHO){
           let snapshotActualizado = null;
-          try{ snapshotActualizado = await refrescarCuentaCarrito(); }catch(_){ /* El mensaje sigue siendo seguro. */ }
+          try{ snapshotActualizado = await refrescarCuentaCarrito(); }catch(_){ return; }
+          if(!snapshotActualizado || !carritoDisponible || uidOperacion !== carritoUid ||
+             carritoSnapshot !== snapshotActualizado) return;
           if(nuevoMax < filaProducto.max_comprable){
             aplicarMaxComprable(nuevoMax, nuevoMax > 0);
           }
-          const lineaActual = snapshotActualizado && Array.isArray(snapshotActualizado.items)
-            ? snapshotActualizado.items.find(function(item){ return item.campana_id === filaProducto.id; })
+          const lineaActual = Array.isArray(snapshotActualizado.items)
+            ? snapshotActualizado.items.find(function(item){ return item.campana_id === campanaOperacion; })
             : null;
-          const yaGuardadas = lineaActual ? lineaActual.cantidad : cantidadActualEnCarrito();
+          const yaGuardadas = lineaActual ? lineaActual.cantidad : 0;
           const restantes = Math.max(0, nuevoMax - yaGuardadas);
           const mensaje = nuevoMax === 0
             ? 'Este producto se agotó antes de agregarlo al carrito.'
@@ -2421,7 +2601,7 @@
           mostrarAvisoCantidad(mensaje);
           mostrarEstadoCarrito(mensaje, 'error');
           actualizarBotonCarrito();
-          if(restantes > 0){
+          if(restantes > 0 && !lineaActual){
             const selector = document.getElementById('mg-cantidad');
             if(selector) selector.focus();
           }
@@ -2429,7 +2609,7 @@
           mostrarEstadoCarrito(mensajeErrorCarrito(error, 'actualizar'), 'error');
         }
       }finally{
-        agregandoAlCarrito = false;
+        mutandoCarrito = false;
         boton.removeAttribute('aria-busy');
         actualizarBotonCarrito();
       }
@@ -3439,9 +3619,10 @@
       return;
     }
     el.classList.remove('mg-estrellas--vacia');
+    const hrefResenas = window.location.pathname + window.location.search + '#resenas';
     el.innerHTML = estrellasFrac(prom) +
       '<b style="color:var(--tinta);font-weight:600;font-variant-numeric:tabular-nums">'+Number(prom).toFixed(1)+'</b> · '+
-      '<a href="#resenas">'+total+(total===1?' opinión':' opiniones')+'</a>';
+      '<a href="'+esc(hrefResenas)+'">'+total+(total===1?' opinión':' opiniones')+'</a>';
   }
 
   function renderResenas(ops){
@@ -3746,7 +3927,9 @@
   //  · y si el producto no llegara a cargar, quien acaba de pagar igual ve que
   //    su pago esta en nuestras manos.
   configurarVueltaDelPago();
+  configurarVolverMovil();
   configurarCantidad();
+  configurarFavoritoLocal();
   configurarCarritoProducto();
   configurarCompra();
   configurarWhatsApp();
