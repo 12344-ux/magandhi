@@ -341,7 +341,7 @@ function sitemap(catalog) {
       .filter((product) => !product.retirado)
       .map((product) => `${SITE_URL}/producto/${product.slug}/`)
     : [];
-  const urls = [SITE_URL + '/', ...productUrls];
+  const urls = [SITE_URL + '/', SITE_URL + '/categorias/', ...productUrls];
   return `<?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
 ${urls.map((url) => `  <url><loc>${xml(url)}</loc></url>`).join('\n')}

@@ -23,6 +23,7 @@
 <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="marca.css?v=3">
 <link rel="stylesheet" href="componentes/cuenta-carrito.css?v=4">
+<link rel="stylesheet" href="componentes/categorias.css?v=1">
 
 <!--
   MAGANDHI · portada / home de la tienda.
@@ -681,6 +682,21 @@
   </div>
 </section>
 
+<!-- Accesos públicos por categoría: siete opciones en PC y carril táctil en móvil. -->
+<section class="mg-category-strip" aria-labelledby="hg-category-title">
+  <div class="mg-category-strip__head">
+    <div>
+      <span class="mg-category-strip__eyebrow">Explora por categoría</span>
+      <h2 class="mg-category-strip__title" id="hg-category-title">Encuentra algo para ti</h2>
+    </div>
+    <a class="mg-category-strip__all" href="categorias/">Ver todas</a>
+  </div>
+  <div class="mg-category-strip__viewport">
+    <nav class="mg-category-strip__track" aria-label="Categorías destacadas" data-categorias-inicio></nav>
+  </div>
+</section>
+<script type="module" src="componentes/categorias-inicio.js?v=1"></script>
+
 <!-- separador de seccion -->
 <div class="hg-sep" id="descubrir">
   <span class="hg-sep__k">Hora de descubrir</span>
@@ -984,6 +1000,7 @@
     </div>
     <nav class="hg-footer__nav" aria-label="Navegación">
       <a href="index.html">Inicio</a>
+      <a href="categorias/">Categorías</a>
       <a href="#descubrir">Productos</a>
       <a href="cuenta/">Mi cuenta</a>
       <a href="mailto:contacto@magandhi.com?subject=PQRS%20MAGANDHI">PQRS</a>
