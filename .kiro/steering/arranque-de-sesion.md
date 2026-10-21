@@ -48,6 +48,13 @@ Antes de tocar la tienda pública:
   `APPROVED`, pedido atribuido ni ingreso.
 - No hay P6 definido. El pendiente monetario común C5/P4/P5 requiere una
   compra real expresamente autorizada.
+- **Punto exacto de continuidad EM7:** la captura detallada de interacción está
+  apagada porque las políticas públicas siguen en borrador. Cuando el dueño
+  confirme que publicó las definitivas, registrar su versión en Email marketing
+  → Resumen y encender la analítica como admin desde Métricas → En vivo o
+  Métricas → Tienda. Después recorrer una sola prueba de rechazo/aceptación y
+  captura. Solo medirá actividad futura de quien acepte; P3/P4 siguen operando
+  sin este gate y P5 no requiere cambios.
 
 ## Comercial · estado vigente
 

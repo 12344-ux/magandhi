@@ -256,6 +256,13 @@ aliases productiva (0 aliases históricos en este corte).
 - Solo actúa si el back-office encendió la analítica **y** la persona aceptó el aviso «Tú decides». Rechazar es igual de fácil y no deja identificador.
 - Sin Meta ni Google. Envía a `tienda-eventos`: página vista, producto visto, clic en «Comprar» (gancho en el botón), inicio del pago (antes de redirigir a Wompi) y llegada desde una campaña. Origen solo como categoría; nunca la URL de procedencia.
 - `window.mgCookies()` reabre el aviso («Preferencias de cookies» en el footer). Copy provisional.
+- **Estado vigente:** la captura nueva está apagada porque las políticas públicas
+  siguen en borrador. Esto no apaga P3, P4 ni P5. Cuando el dueño publique las
+  políticas definitivas, el siguiente chat debe registrar su versión exacta en
+  Email marketing → Resumen, encender la analítica como administrador desde
+  Métricas → En vivo o Métricas → Tienda y hacer una sola prueba integral de
+  rechazo/aceptación/captura. Solo se medirá actividad futura de quien acepte;
+  no se reconstruye el periodo anterior.
 
 ### Opiniones verificadas — `producto/index.html`
 
