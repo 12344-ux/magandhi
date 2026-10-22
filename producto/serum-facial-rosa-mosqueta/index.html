@@ -1830,13 +1830,13 @@
 <script type="module">
   import { supabase, SUPABASE_URL } from '../supabase-config.js';
   import { agregarAlCarrito, quitarDelCarrito, mensajeErrorCarrito } from '../carrito/carrito-core.js?v=3';
-  import '../componentes/motor-tienda.js?v=2';
+  import '../componentes/motor-tienda.js?v=3';
   import {
     observarEstadoCarrito,
     sincronizarCuentaCarrito,
     refrescarCuentaCarrito,
     ocultarCuentaCarrito,
-  } from '../componentes/cuenta-carrito.js?v=10';
+  } from '../componentes/cuenta-carrito.js?v=11';
   import { revalidarSesionCliente } from '../cliente/cliente-sesion.js';
   import { codigoAtribucionParaIntencion } from '../scripts/atribucion-promocional.js?v=1';
   import { iniciarCompraDirecta } from '../compra/compra-core.js?v=1';

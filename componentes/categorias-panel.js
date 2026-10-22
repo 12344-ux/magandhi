@@ -1,4 +1,4 @@
-import { enlaceCategoria, iconoCategoria } from './categorias.js?v=2';
+import { enlaceCategoria, iconoCategoria } from './categorias.js?v=3';
 
 const SELECTOR_ABRIR = '[data-categorias-abrir]';
 const ICONO_CERRAR = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18"/></svg>';
@@ -23,6 +23,7 @@ export function crearPanelCategorias({
   hrefBase = 'categorias/',
   paginaCategoriasHref = 'categorias/',
   codigoActual = '',
+  alCargar = () => {},
 } = {}) {
   if (typeof obtenerCategorias !== 'function') {
     throw new TypeError('El panel de categorías requiere una función de carga.');
@@ -119,6 +120,7 @@ export function crearPanelCategorias({
     cargando = Promise.resolve(obtenerCategorias({ recargar }))
       .then((resultado) => {
         pintarCategorias(resultado.categorias);
+        alCargar(resultado);
         cargaCompleta = true;
       })
       .catch((error) => {
