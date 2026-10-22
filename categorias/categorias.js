@@ -155,6 +155,7 @@ async function consultarCatalogo(categoriaSeleccionada) {
   const filas = [];
   const vistos = new Set();
   let totalEsperado = null;
+  let fuenteEsperada = null;
   let desde = 0;
 
   for (let pagina = 0; pagina < MAX_PAGINAS_CATALOGO; pagina += 1) {
@@ -168,6 +169,11 @@ async function consultarCatalogo(categoriaSeleccionada) {
     if (!Number.isSafeInteger(respuesta.total) || respuesta.total < 0 ||
         respuesta.total > MAX_TOTAL_CATALOGO) {
       throw new Error('SN1 devolvió un total de catálogo fuera de contrato.');
+    }
+    const fuenteActual = `${respuesta.modo}|${respuesta.modelo_version}`;
+    if (fuenteEsperada === null) fuenteEsperada = fuenteActual;
+    else if (fuenteActual !== fuenteEsperada) {
+      throw new Error('La fuente del catálogo cambió durante la paginación; es necesario reintentar.');
     }
     if (totalEsperado === null) totalEsperado = respuesta.total;
     else if (respuesta.total !== totalEsperado) {

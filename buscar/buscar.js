@@ -34,6 +34,7 @@ let cargando = false;
 let controlador = null;
 let generacion = 0;
 let analiticaEmitida = false;
+let fuenteBusqueda = null;
 
 function normalizarConsulta(valor) {
   return typeof valor === 'string'
@@ -76,9 +77,11 @@ function mostrarConsultaSensible() {
   productosVistos.clear();
   total = 0;
   desde = 0;
+  fuenteBusqueda = null;
   totalNodo.textContent = '';
   botonMas.hidden = true;
   limpiarDescubrimiento();
+  document.title = 'Búsqueda protegida · MAGANDHI';
   document.getElementById('bs-title').textContent = 'No pudimos procesar la búsqueda';
   document.getElementById('bs-results-title').textContent = 'Prueba otra búsqueda';
   mostrarEstado(
@@ -228,6 +231,7 @@ async function cargarPagina(agregar) {
   botonMas.disabled = true;
   botonMas.textContent = 'Cargando…';
   if (!agregar) {
+    fuenteBusqueda = null;
     mostrarEstado('Buscando productos disponibles…');
     totalNodo.textContent = '';
     limpiarDescubrimiento();
@@ -243,6 +247,19 @@ async function cargarPagina(agregar) {
       productoActual: null,
     });
     if (token !== generacion) return;
+    const fuenteActual = {
+      modo: String(respuesta.modo || ''),
+      modelo: String(respuesta.modelo_version || ''),
+      total: respuesta.total,
+    };
+    if (agregar && fuenteBusqueda && (
+      fuenteBusqueda.modo !== fuenteActual.modo ||
+      fuenteBusqueda.modelo !== fuenteActual.modelo ||
+      fuenteBusqueda.total !== fuenteActual.total
+    )) {
+      throw new Error('La fuente de búsqueda cambió durante la paginación.');
+    }
+    if (!agregar) fuenteBusqueda = fuenteActual;
     const disponibles = respuesta.productos.filter(productoDisponible);
     const agregados = agregarProductos(disponibles, !agregar);
     total = respuesta.total;
@@ -305,10 +322,22 @@ async function cargarCategorias() {
     });
     categoriaActiva = categoriaPedida ? categoriaPorCodigo(categoriaPedida, categorias) : null;
     categoriaFiltro = categoriaActiva?.codigo || categoriaPedida || null;
-    selectorCategoria.value = categoriaFiltro || '';
+    if (categoriaPedida && !categoriaActiva) {
+      const retirada = document.createElement('option');
+      retirada.value = categoriaPedida;
+      retirada.textContent = 'Categoría no disponible';
+      retirada.disabled = true;
+      selectorCategoria.appendChild(retirada);
+      selectorCategoria.value = categoriaPedida;
+      avisoCategorias.querySelector('span').textContent =
+        'La categoría solicitada ya no está disponible. El filtro se conserva de forma visible; elige otra categoría para cambiarlo.';
+      mostrarAvisoCategorias(true);
+    } else {
+      selectorCategoria.value = categoriaFiltro || '';
+      mostrarAvisoCategorias(false);
+    }
     selectorCategoria.disabled = false;
     selectorCategoria.removeAttribute('title');
-    mostrarAvisoCategorias(false);
     return true;
   } catch {
     categoriaActiva = null;

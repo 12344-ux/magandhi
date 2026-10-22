@@ -107,6 +107,16 @@ function claveBusqueda(valor) {
     .replace(/[^a-z0-9]+/g, ' ').trim();
 }
 
+function consultaSensible(valor) {
+  const crudo = texto(valor, 120).toLowerCase();
+  if (!crudo) return false;
+  const digitos = crudo.replace(/[^0-9]/g, '');
+  return /[a-z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-z0-9.-]+\.[a-z]{2,}/i.test(crudo) ||
+    /(^|[^a-z0-9])@[a-z0-9._-]{2,}/i.test(crudo) ||
+    /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/i.test(crudo) ||
+    digitos.length >= 7;
+}
+
 function entero(valor, minimo, maximo, respaldo) {
   return Number.isSafeInteger(valor) && valor >= minimo && valor <= maximo ? valor : respaldo;
 }
@@ -415,11 +425,31 @@ function esColumnaAusente(error, columna) {
   );
 }
 
-async function consultarCatalogoEtapa(campos) {
-  return supabase.from('catalogo_publico')
+function esVistaSeguraAusente(error) {
+  const detalle = textoError(error);
+  return detalle.includes('sn_catalogo_seguro_v1') && (
+    detalle.includes('does not exist') || detalle.includes('no existe') ||
+    detalle.includes('schema cache') || detalle.includes('42p01') ||
+    detalle.includes('pgrst200') || detalle.includes('pgrst204') ||
+    detalle.includes('pgrst205')
+  );
+}
+
+function construirConsultaCatalogo(tabla, campos) {
+  return supabase.from(tabla)
     .select(campos.join(','))
     .order('orden', { ascending: true })
     .order('slug', { ascending: true });
+}
+
+async function consultarCatalogoEtapa(campos) {
+  const seguro = await construirConsultaCatalogo('sn_catalogo_seguro_v1', campos);
+  if (!seguro.error) return seguro;
+  // Compatibilidad de despliegue: antes de aplicar SN1 la vista aún no existe.
+  // Una vez presente, cualquier otro error falla cerrado y jamás se elude
+  // consultando catalogo_publico sin sus ventanas editoriales.
+  if (!esVistaSeguraAusente(seguro.error)) return seguro;
+  return construirConsultaCatalogo('catalogo_publico', campos);
 }
 
 async function cargarCatalogoPublico() {
@@ -686,6 +716,11 @@ async function busquedaFallback(opciones) {
 
 export async function buscarProductos(entrada = {}, categoriaPosicional) {
   const opciones = opcionesBusqueda(entrada, categoriaPosicional);
+  // La misma frontera prudente del servidor se aplica antes de cualquier RPC o
+  // fallback: una caída nunca convierte PII en búsqueda local ni telemetría.
+  if (consultaSensible(opciones.consulta)) {
+    throw new RespuestaSNError('SN_CONSULTA_SENSIBLE');
+  }
   let resultado;
   try {
     const peticion = supabase.rpc('sn_buscar_v1', {
