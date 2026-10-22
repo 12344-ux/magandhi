@@ -1,5 +1,5 @@
 import '../scripts/atribucion-promocional.js?v=1';
-import { configurarBuscadores } from './motor-tienda.js?v=1';
+import { configurarBuscadores } from './motor-tienda.js?v=2';
 import { observarSesionCliente } from '../cliente/cliente-sesion.js';
 import { listarCarrito } from '../carrito/carrito-core.js?v=3';
 import { crearControlMisCompras } from './mis-compras.js?v=4';
@@ -608,7 +608,7 @@ async function cerrarSesion(evento) {
   try {
     const { error } = await supabase.auth.signOut({ scope: 'local' });
     if (error) throw error;
-    cerrarCentro();
+    window.location.reload();
   } catch {
     boton.disabled = false;
     boton.querySelector('span').textContent = 'Cerrar sesión';

@@ -1,4 +1,4 @@
-import '../analitica/analitica.js?v=2';
+import '../analitica/analitica.js?v=4';
 import { observarSesionCliente } from '../cliente/cliente-sesion.js';
 import {
   leerBorrador,

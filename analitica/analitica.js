@@ -4,22 +4,21 @@
 // Uso (cualquier página): <script type="module" src="/analitica/analitica.js"></script>
 // · Sin Meta, sin Google, sin cookies de terceros. Envía eventos a la Edge
 //   Function tienda-eventos SOLO si (1) el back-office encendió la analítica y
-//   (2) la persona ACEPTÓ el aviso. Rechazar es igual de fácil que aceptar y no
-//   cambia nada de la tienda.
+//   (2) la persona ACEPTÓ la versión vigente de la política. Rechazar es igual
+//   de fácil que aceptar y no cambia nada de la tienda.
 // · Identificador: un número aleatorio guardado en este navegador (mg_vid).
 //   Nunca nombre, correo ni teléfono. La URL de procedencia NO se envía: solo
 //   su categoría (directo, Instagram, correo, buscador…).
 // · API para la página: window.mgEvento(tipo, {slug}) y window.mgCookies()
 //   (reabre el aviso para cambiar la decisión).
-// Copy PROVISIONAL.
 // ============================================================
 import { SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY } from '../supabase-config.js';
 
 const FN = SUPABASE_URL + '/functions/v1/tienda-eventos';
-const K_DECISION = 'mg_analitica';      // {v:'si'|'no', en:ISO}
+const K_DECISION = 'mg_analitica';      // {v:'si'|'no', en:ISO, politica_version}
 const K_VISITANTE = 'mg_vid';
 const K_SESION = 'mg_sid';              // sessionStorage: {id, ultimo}
-const K_CONFIG = 'mg_analitica_cfg';    // sessionStorage: {activa, t}
+const K_CONFIG = 'mg_analitica_cfg';    // sessionStorage: {activa, politica_version, t}
 const K_UTM = 'mg_utm';                 // sessionStorage: campaña de llegada de ESTA visita
 const SESION_MIN = 30;
 const raiz = new URL('../', import.meta.url);
@@ -58,23 +57,57 @@ const azar = (n) => {
   return btoa(String.fromCharCode(...b)).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
 };
 
-async function llamar(cuerpo, keepalive) {
+function politicaVersion(valor) {
+  if (typeof valor !== 'string' || valor.trim() !== valor) return '';
+  const longitud = Array.from(valor).length;
+  if (longitud < 1 || longitud > 40 || valor.toLowerCase() === 'pendiente') return '';
+  return valor;
+}
+
+async function llamar(cuerpo, keepalive, signal) {
   return fetch(FN, {
-    method: 'POST', keepalive: !!keepalive,
+    method: 'POST', keepalive: !!keepalive, signal,
     headers: { 'Content-Type': 'application/json', apikey: SUPABASE_PUBLISHABLE_KEY, Authorization: 'Bearer ' + SUPABASE_PUBLISHABLE_KEY },
     body: JSON.stringify(cuerpo)
   });
 }
 
-async function configActiva() {
-  const c = leer(sessionStorage, K_CONFIG);
-  if (c && Date.now() - c.t < 10 * 60 * 1000) return c.activa;
+let configuracionPromesa = null;
+
+// La configuración persistida nunca autoriza por sí sola: la versión activa se
+// confirma con la Edge en cada carga. La promesa solo une consultas concurrentes.
+async function configuracionActual() {
+  if (configuracionPromesa) return configuracionPromesa;
+  const tarea = (async () => {
+    try {
+      const r = await llamar({ modo: 'config' });
+      if (!r.ok) throw new Error('No se pudo consultar la configuración de analítica.');
+      const j = await r.json();
+      const activa = j?.activa === true;
+      const version = politicaVersion(j?.politica_version);
+      if (activa && !version) throw new Error('La política activa no tiene una versión válida.');
+      const configuracion = {
+        activa,
+        politica_version: activa ? version : '',
+        verificada: true,
+        t: Date.now(),
+      };
+      guardar(sessionStorage, K_CONFIG, {
+        activa: configuracion.activa,
+        politica_version: configuracion.politica_version,
+        t: configuracion.t,
+      });
+      return configuracion;
+    } catch (_) {
+      return { activa: false, politica_version: '', verificada: false, t: Date.now() };
+    }
+  })();
+  configuracionPromesa = tarea;
   try {
-    const r = await llamar({ modo: 'config' });
-    const j = await r.json();
-    guardar(sessionStorage, K_CONFIG, { activa: !!j.activa, t: Date.now() });
-    return !!j.activa;
-  } catch (_) { return false; }
+    return await tarea;
+  } finally {
+    if (configuracionPromesa === tarea) configuracionPromesa = null;
+  }
 }
 
 // ---------------- Clasificación (sin enviar URLs) ----------------
@@ -115,8 +148,52 @@ function slugProducto(params) {
 }
 
 // ---------------- Envío por lotes ----------------
-let cola = [], temporizador = null, visitante = null, sesion = null, apagada = false;
+let cola = [], temporizador = null, visitante = null, sesion = null, apagada = true;
 let pendientesAceptados = [];
+let configuracionVerificada = false;
+let politicaVersionActiva = '';
+let generacionConsentimiento = 0;
+let escuchasSalidaInstaladas = false;
+let envioEnCurso = null;
+let envioAlSalirPendiente = false;
+const enviosActivos = new Set();
+
+function decisionActual() {
+  const decision = leer(localStorage, K_DECISION);
+  if (!decision || (decision.v !== 'si' && decision.v !== 'no')) return null;
+  const version = politicaVersion(decision.politica_version);
+  return version ? { ...decision, politica_version: version } : decision;
+}
+
+function consentimientoVigente(decision = decisionActual()) {
+  return configuracionVerificada && !apagada && !!politicaVersionActiva &&
+    decision?.v === 'si' && decision.politica_version === politicaVersionActiva;
+}
+
+function detenerAnalitica({ eliminarIdentificadores = false } = {}) {
+  clearTimeout(temporizador);
+  temporizador = null;
+  cola = [];
+  pendientesAceptados = [];
+  visitante = null;
+  sesion = null;
+  generacionConsentimiento += 1;
+  envioEnCurso = null;
+  envioAlSalirPendiente = false;
+  enviosActivos.forEach((controlador) => controlador.abort());
+  enviosActivos.clear();
+  if (!eliminarIdentificadores) return;
+  try { localStorage.removeItem(K_VISITANTE); } catch (_) {}
+  try { sessionStorage.removeItem(K_SESION); } catch (_) {}
+}
+
+function aplicarConfiguracion(configuracion) {
+  configuracionVerificada = configuracion?.verificada === true;
+  politicaVersionActiva = configuracionVerificada && configuracion.activa === true
+    ? politicaVersion(configuracion.politica_version)
+    : '';
+  apagada = !configuracionVerificada || configuracion.activa !== true || !politicaVersionActiva;
+}
 
 function sesionActual() {
   const s = leer(sessionStorage, K_SESION);
@@ -197,9 +274,9 @@ function extraSeguro(tipo, extra) {
 }
 
 function encolar(tipo, extra) {
-  if (apagada || !visitante || !TIPOS_EVENTO.has(tipo)) return;
+  if (!consentimientoVigente() || !visitante || !TIPOS_EVENTO.has(tipo)) return false;
   const extraLimpio = extraSeguro(tipo, extra);
-  if (!extraLimpio) return;
+  if (!extraLimpio) return false;
   cola.push({
     tipo,
     ruta: ruta(),
@@ -208,20 +285,88 @@ function encolar(tipo, extra) {
     ...extraLimpio,
   });
   if (cola.length >= 30) enviar(false); else { clearTimeout(temporizador); temporizador = setTimeout(() => enviar(false), 1500); }
+  return true;
+}
+
+async function manejarRechazoRegistro(respuesta, versionEnviada) {
+  let cuerpo = null;
+  try { cuerpo = await respuesta.clone().json(); } catch (_) { /* El cuerpo es opcional. */ }
+
+  const configuracion = await configuracionActual();
+  aplicarConfiguracion(configuracion);
+  const versionNueva = configuracionVerificada && !apagada
+    ? politicaVersionActiva
+    : politicaVersion(cuerpo?.politica_version);
+  const cambioVigente = respuesta.status === 412 && configuracionVerificada && !apagada &&
+    !!versionNueva && versionNueva !== versionEnviada;
+
+  detenerAnalitica({ eliminarIdentificadores: cambioVigente });
+  if (cambioVigente) aviso(versionNueva, { actualizacion: true });
 }
 
 async function enviar(alSalir) {
   clearTimeout(temporizador);
-  if (!cola.length || apagada) return;
-  const lote = cola.splice(0, 30);
+  temporizador = null;
+  if (alSalir) envioAlSalirPendiente = true;
+  if (envioEnCurso) return envioEnCurso;
+  if (!cola.length || !consentimientoVigente() || !visitante || !sesion) {
+    if (!consentimientoVigente()) {
+      detenerAnalitica({ eliminarIdentificadores: configuracionVerificada && !apagada });
+    }
+    envioAlSalirPendiente = false;
+    return;
+  }
+
+  const ciclo = (async () => {
+    while (cola.length && consentimientoVigente() && visitante && sesion) {
+      const versionEnviada = politicaVersionActiva;
+      const visitanteEnviado = visitante;
+      const sesionEnviada = sesion;
+      const generacion = generacionConsentimiento;
+      const lote = cola.splice(0, 30);
+      const mantenerAlSalir = envioAlSalirPendiente;
+      envioAlSalirPendiente = false;
+      const controlador = new AbortController();
+      enviosActivos.add(controlador);
+      try {
+        const r = await llamar({
+          modo: 'registrar',
+          visitante: visitanteEnviado,
+          sesion: sesionEnviada,
+          politica_version: versionEnviada,
+          eventos: lote,
+        }, mantenerAlSalir, controlador.signal);
+        if (generacion !== generacionConsentimiento) return;
+        if (r.status === 409 || r.status === 412) {
+          await manejarRechazoRegistro(r, versionEnviada);
+          return;
+        }
+        if (!r.ok) {
+          cola = [];
+          return;
+        }
+      } catch (_) {
+        // Sin acuse del lote anterior no se adelanta otro que pueda contener
+        // su clic asociado; se conserva el comportamiento sin reintentos.
+        cola = [];
+        return;
+      } finally {
+        enviosActivos.delete(controlador);
+      }
+      if (generacion !== generacionConsentimiento) return;
+    }
+  })();
+  envioEnCurso = ciclo;
   try {
-    const r = await llamar({ modo: 'registrar', visitante, sesion, eventos: lote }, alSalir);
-    if (r.status === 409) { apagada = true; guardar(sessionStorage, K_CONFIG, { activa: false, t: Date.now() }); }
-  } catch (_) { /* sin conexión: se pierde el lote, no se reintenta en bucle */ }
+    await ciclo;
+  } finally {
+    if (envioEnCurso === ciclo) envioEnCurso = null;
+    if (!cola.length) envioAlSalirPendiente = false;
+  }
 }
 
 function iniciar() {
-  if (visitante) return;
+  if (!consentimientoVigente() || visitante) return;
   visitante = localStorage.getItem(K_VISITANTE);
   if (!visitante || !/^[A-Za-z0-9_-]{16,40}$/.test(visitante)) { visitante = azar(16); try { localStorage.setItem(K_VISITANTE, visitante); } catch (_) {} }
   const s = sesionActual(); sesion = s.id;
@@ -241,65 +386,111 @@ function iniciar() {
   if (utmOk && (params.get('utm_source') || '').toLowerCase() === 'email') encolar('llegada_campana', { utm_campaign: utmOk, origen: 'email' });
   const pendientes = pendientesAceptados.splice(0, pendientesAceptados.length);
   pendientes.forEach((evento) => encolar(evento.tipo, evento.extra));
-  document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'hidden') enviar(true); });
-  window.addEventListener('pagehide', () => enviar(true));
+  if (!escuchasSalidaInstaladas) {
+    escuchasSalidaInstaladas = true;
+    document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'hidden') enviar(true); });
+    window.addEventListener('pagehide', () => enviar(true));
+  }
 }
 
 // API para las páginas: solo eventos conocidos y campos públicos acotados.
-// Los eventos SN1 que ocurran mientras arranca la configuración se conservan
-// únicamente si ya existía una decisión afirmativa; nunca crean mg_vid aquí.
+// Los eventos SN1 que ocurran mientras se crea el identificador se conservan
+// únicamente con una aceptación que coincida con la versión verificada.
 window.mgEvento = (tipo, extra) => {
-  if (!TIPOS_EVENTO.has(tipo)) return;
+  if (!TIPOS_EVENTO.has(tipo) || !consentimientoVigente()) return false;
   if (!visitante && TIPOS_SN1.has(tipo)) {
-    const decision = leer(localStorage, K_DECISION);
     const extraLimpio = extraSeguro(tipo, extra);
-    if (decision?.v === 'si' && extraLimpio && pendientesAceptados.length < 60) {
+    if (extraLimpio && pendientesAceptados.length < 60) {
       pendientesAceptados.push({ tipo, extra: extraLimpio });
+      return true;
     }
-    return;
+    return false;
   }
-  encolar(tipo, extra);
-  if (tipo === 'checkout_iniciado') enviar(true);
+  const encolado = encolar(tipo, extra);
+  if (encolado && tipo === 'checkout_iniciado') enviar(true);
+  return encolado;
 };
 
 window.addEventListener('magandhi:analitica-interna', (evento) => {
   const detalle = evento.detail;
   if (!detalle || typeof detalle !== 'object' || !TIPOS_SN1.has(detalle.tipo)) return;
-  window.mgEvento(detalle.tipo, detalle.extra);
+  const aceptado = window.mgEvento(detalle.tipo, detalle.extra) === true;
+  try { detalle.aceptado = aceptado; } catch (_) { /* Un productor externo puede congelar detail. */ }
 });
 
 // ---------------- Aviso ----------------
-function aviso() {
-  if (document.getElementById('mg-aviso-analitica')) return;
+function escaparHtml(valor) {
+  return String(valor).replace(/&/g, '&amp;').replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+}
+
+function aviso(version, { actualizacion = false } = {}) {
+  const versionVigente = politicaVersion(version);
+  if (!versionVigente || !configuracionVerificada || apagada || versionVigente !== politicaVersionActiva) return;
+  const existente = document.getElementById('mg-aviso-analitica');
+  if (existente?.dataset.politicaVersion === versionVigente) return;
+  existente?.remove();
   if (!document.querySelector('link[data-an-css]')) {
     const l = document.createElement('link'); l.rel = 'stylesheet'; l.href = new URL('analitica/analitica.css?v=1', raiz).href; l.dataset.anCss = '1';
     document.head.appendChild(l);
   }
   const d = document.createElement('div');
-  d.id = 'mg-aviso-analitica'; d.className = 'an-aviso'; d.setAttribute('role', 'dialog'); d.setAttribute('aria-label', 'Preferencias de analítica');
+  d.id = 'mg-aviso-analitica'; d.className = 'an-aviso'; d.dataset.politicaVersion = versionVigente;
+  d.setAttribute('role', 'dialog'); d.setAttribute('aria-label', 'Preferencias de analítica');
   d.innerHTML =
-    '<p class="an-tit">Tú decides</p>' +
-    '<p class="an-txt">Usamos una analítica propia, sin Meta ni Google, para saber qué productos interesan y mejorar la tienda. No usamos tu nombre ni tu correo. ' +
-      '<a href="' + new URL('politicas/cookies/', raiz).href + '">Política de cookies</a></p>' +
+    '<p class="an-tit">' + (actualizacion ? 'Actualizamos nuestra política' : 'Tú decides') + '</p>' +
+    '<p class="an-txt">Nuestra analítica propia y opcional mide páginas vistas, productos, resultados de búsqueda y recomendaciones que ves o eliges para mejorar la tienda. No usa Meta ni Google, ni tu nombre, correo o teléfono. Rechazar no afecta tu compra. ' +
+      '<a href="' + new URL('politicas/cookies/', raiz).href + '">Política de cookies</a> · versión ' + escaparHtml(versionVigente) + '</p>' +
     '<div class="an-acc"><button type="button" class="an-btn an-no">Rechazar</button><button type="button" class="an-btn an-si">Aceptar</button></div>';
   document.body.appendChild(d);
   requestAnimationFrame(() => d.classList.add('visible'));
   const decidir = (v) => {
-    guardar(localStorage, K_DECISION, { v, en: new Date().toISOString() });
+    if (versionVigente !== politicaVersionActiva || !configuracionVerificada || apagada) {
+      d.remove();
+      return;
+    }
+    if (v === 'no') detenerAnalitica({ eliminarIdentificadores: true });
+    guardar(localStorage, K_DECISION, {
+      v,
+      en: new Date().toISOString(),
+      politica_version: versionVigente,
+    });
     d.classList.remove('visible'); setTimeout(() => d.remove(), 250);
     if (v === 'si') iniciar();
-    else { visitante = null; cola = []; pendientesAceptados = []; try { localStorage.removeItem(K_VISITANTE); } catch (_) {} }
   };
   d.querySelector('.an-si').addEventListener('click', () => decidir('si'));
   d.querySelector('.an-no').addEventListener('click', () => decidir('no'));
 }
-window.mgCookies = async () => { if (await configActiva()) aviso(); };
+
+window.mgCookies = async () => {
+  const configuracion = await configuracionActual();
+  aplicarConfiguracion(configuracion);
+  if (apagada) {
+    detenerAnalitica();
+    return;
+  }
+  const decision = decisionActual();
+  const actualizacion = !!decision && decision.politica_version !== politicaVersionActiva;
+  if (!decision || actualizacion) detenerAnalitica({ eliminarIdentificadores: true });
+  aviso(politicaVersionActiva, { actualizacion });
+};
 
 (async () => {
-  if (!(await configActiva())) return;          // apagada: ni aviso ni eventos
-  const dec = leer(localStorage, K_DECISION);
-  if (dec && dec.v === 'si') iniciar();
-  else if (!dec) aviso();
+  const configuracion = await configuracionActual();
+  aplicarConfiguracion(configuracion);
+  if (apagada) {
+    detenerAnalitica();
+    return;
+  }
+  const decision = decisionActual();
+  const decisionVersionada = decision && decision.politica_version === politicaVersionActiva;
+  if (decisionVersionada && decision.v === 'si') {
+    iniciar();
+    return;
+  }
+  detenerAnalitica({ eliminarIdentificadores: true });
+  if (decisionVersionada && decision.v === 'no') return;
+  aviso(politicaVersionActiva, { actualizacion: !!decision });
 })();
 
 
@@ -315,7 +506,7 @@ window.mgCookies = async () => { if (await configActiva()) aviso(); };
 //     URL. No identifica a nadie, pero el navegador puede copiarla o alterarla:
 //     P0 la clasifica como legacy_email_utm, no verificada y no exacta.
 //   · mg_vid        = el identificador aleatorio del navegador. SOLO existe si
-//     la persona ACEPTÓ la analítica. Si la rechazó, aquí no hay nada y la
+//     la persona ACEPTÓ la versión activa. Si la rechazó, aquí no hay nada y la
 //     compra no lleva identificador: no se crea uno para la ocasión.
 // ---------------------------------------------------------------------------
 window.mgProcedencia = function () {
@@ -328,8 +519,9 @@ window.mgProcedencia = function () {
       : (/^[a-z0-9-]{1,60}$/.test(guardada) ? guardada : '');
     if (utm) salida.utm_campaign = utm;
   } catch (_) { /* sin sessionStorage: se sigue sin utm */ }
+  if (!consentimientoVigente()) return salida;
   try {
-    // Solo si la persona aceptó: este identificador no se crea aquí nunca.
+    // Solo con aceptación vigente: este identificador no se crea aquí nunca.
     const vid = localStorage.getItem(K_VISITANTE) || '';
     if (/^[A-Za-z0-9_-]{16,40}$/.test(vid)) salida.mg_vid = vid;
   } catch (_) { /* sin localStorage: se sigue sin identificador */ }
