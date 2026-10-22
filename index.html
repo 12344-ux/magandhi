@@ -22,7 +22,7 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="marca.css?v=3">
-<link rel="stylesheet" href="componentes/cuenta-carrito.css?v=9">
+<link rel="stylesheet" href="componentes/cuenta-carrito.css?v=10">
 <link rel="stylesheet" href="componentes/categorias.css?v=2">
 
 <!--
@@ -213,10 +213,32 @@
   }
   .hg-kicker svg{width:14px;height:14px}
   .hg-nom{font-size:clamp(15px,1.4vw,18px);font-weight:600;line-height:1.25;margin:0 0 3px;letter-spacing:-.3px}
-  .hg-meta{font-size:12px;color:var(--gris-cl);margin:0 0 10px}
+  .hg-meta{font-size:12px;line-height:1.5;color:var(--gris-cl);margin:0 0 10px}
   .hg-fila{display:flex;align-items:center;gap:14px;flex-wrap:wrap;margin-top:auto}
+  .hg-precio{white-space:nowrap}
   .hg-precio b{font-size:19px;font-weight:600;color:var(--negro)}
   .hg-precio small{font-size:11.5px;color:var(--gris-cl);margin-left:5px}
+
+  /* Consistencia por familia, sin homogeneizar los layouts de SN1. En la
+     vitrina histórica las tarjetas comparables reservan dos líneas para nombre
+     y presentación; el texto completo permanece en el DOM y solo el excedente
+     visual termina en puntos suspensivos. */
+  .hg-grid>.hg-tarjeta .hg-kicker{
+    display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
+  }
+  @media(min-width:761px){
+    .hg-grid>.hg-tarjeta .hg-nom,
+    .hg-grid>.hg-tarjeta .hg-meta{
+      display:-webkit-box;-webkit-box-orient:vertical;overflow:hidden;
+      overflow-wrap:anywhere;
+    }
+    .hg-grid>.hg-tarjeta .hg-nom{
+      min-block-size:2.5em;-webkit-line-clamp:2;line-clamp:2;
+    }
+    .hg-grid>.hg-tarjeta .hg-meta{
+      min-block-size:3em;-webkit-line-clamp:2;line-clamp:2;
+    }
+  }
   /* boton "Ver producto": ROJO de marca (ya no el color de categoria).
      "Nuestra marca es roja". */
   /* boton "Ver producto": OCULTO en la vitrina (la tarjeta entera ya es un enlace
@@ -366,6 +388,23 @@
     .hg-fila{display:flex;justify-content:flex-start;margin-top:2px}
     .hg-fila .hg-ir{display:none}
     .hg-agotado{display:inline-flex}
+
+    /* Las cuatro tarjetas verticales de las parejas 1/2 y 4/5 comparten una
+       geometría textual; la tercera conserva intacta su composición horizontal.
+       Restaurar margin-top:auto evita que la regla móvil anterior desancle el
+       precio del fondo. */
+    .hg-grid>.hg-tarjeta:not(:nth-child(3)) .hg-nom,
+    .hg-grid>.hg-tarjeta:not(:nth-child(3)) .hg-meta{
+      display:-webkit-box;-webkit-box-orient:vertical;overflow:hidden;
+      overflow-wrap:anywhere;
+    }
+    .hg-grid>.hg-tarjeta:not(:nth-child(3)) .hg-nom{
+      min-block-size:2.5em;-webkit-line-clamp:2;line-clamp:2;
+    }
+    .hg-grid>.hg-tarjeta:not(:nth-child(3)) .hg-meta{
+      min-block-size:3em;-webkit-line-clamp:2;line-clamp:2;
+    }
+    .hg-grid>.hg-tarjeta:not(:nth-child(3)) .hg-fila{margin-top:auto}
   }
 
   /* ============================================================

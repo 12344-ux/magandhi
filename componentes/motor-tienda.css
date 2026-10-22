@@ -26,8 +26,43 @@
 .sn-card__title{margin:0;color:var(--negro,#111);font-size:15.5px;font-weight:650;line-height:1.34;letter-spacing:-.15px}
 .sn-card__detail{margin-top:5px;color:var(--gris,#6b6b6b);font-size:11.5px;line-height:1.5}
 .sn-card__reason{align-self:flex-start;margin-top:11px;padding:5px 8px;border-radius:8px;background:var(--acento-sombra,rgba(194,138,58,.16));color:#76521e;font-size:9.5px;line-height:1.4}
-.sn-card__price{margin-top:auto;padding-top:13px;color:var(--negro,#111);font-size:18px;font-weight:650;line-height:1.2}
+.sn-card__price{margin-top:auto;padding-top:13px;color:var(--negro,#111);font-size:18px;font-weight:650;line-height:1.2;white-space:nowrap}
 .sn-card__price small{color:var(--gris-cl,#9a9a9a);font-size:9.5px;font-weight:500}
+
+/* Capa de consistencia por layout. Los seis diseños conservan su geometría,
+   proporciones y jerarquía; solo se acotan extremos de texto para que ninguna
+   tarjeta agrande una fila o desancle el precio. Las búsquedas ordinarias que
+   crean .sn-card fuera de un .sn-module quedan fuera de estas reglas. */
+.sn-module .sn-card__category{display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.sn-module .sn-card__title,
+.sn-module .sn-card__detail,
+.sn-module .sn-card__reason{
+  display:-webkit-box;-webkit-box-orient:vertical;overflow:hidden;
+  overflow-wrap:anywhere;
+}
+.sn-module .sn-card__title{-webkit-line-clamp:2;line-clamp:2}
+.sn-module .sn-card__detail{-webkit-line-clamp:2;line-clamp:2}
+.sn-module .sn-card__reason{-webkit-line-clamp:2;line-clamp:2}
+
+/* Las tarjetas equivalentes de cuadrículas y dúos reservan las mismas líneas.
+   Los primeros elementos destacados de mosaico/horizontal y los carriles no
+   reciben reservas: así mantienen la riqueza visual aprobada. */
+.sn-module--cuadricula .sn-card__title,
+.sn-module--duo_vertical .sn-card__title,
+.sn-module--mosaico .sn-card:not(:first-child) .sn-card__title,
+.sn-module--destacado_horizontal .sn-card:not(:first-child) .sn-card__title{
+  min-block-size:2.68em;
+}
+.sn-module--cuadricula .sn-card__detail,
+.sn-module--duo_vertical .sn-card__detail,
+.sn-module--mosaico .sn-card:not(:first-child) .sn-card__detail,
+.sn-module--destacado_horizontal .sn-card:not(:first-child) .sn-card__detail{
+  min-block-size:3em;
+}
+.sn-module--mosaico .sn-card:first-child .sn-card__detail,
+.sn-module--destacado_horizontal .sn-card:first-child .sn-card__detail{
+  -webkit-line-clamp:3;line-clamp:3;
+}
 
 .sn-module__controls{display:flex;align-items:center;gap:8px;flex:none}
 .sn-module__arrow{width:42px;height:42px;padding:0;border:1px solid var(--linea,rgba(17,17,17,.1));border-radius:50%;background:#fff;color:var(--rojo,#a6332e);box-shadow:var(--ml-sombra,0 1px 3px rgba(17,17,17,.06));font:600 25px/1 system-ui;display:flex;align-items:center;justify-content:center;cursor:pointer;transition:border-color .15s,background .15s,transform .1s}
