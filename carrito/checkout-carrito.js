@@ -350,7 +350,7 @@ function irAWompi(pago, datos) {
   }
 }
 
-export function configurarCheckoutCarrito({ obtenerEstado, recargarCarrito, revalidarSesion }) {
+export function configurarCheckoutCarrito({ obtenerEstado, recargarCarrito, revalidarSesion, iniciarFlujo }) {
   const boton = porId('co-checkout');
   const ayuda = porId('co-checkout-help');
   const modal = porId('co-modal-checkout');
@@ -696,9 +696,19 @@ export function configurarCheckoutCarrito({ obtenerEstado, recargarCarrito, reva
   }
 
   function abrirModal() {
-    const aptitud = aptitudCheckout(obtenerEstado(), pagoBloqueado(), sesionInvalidada());
+    const estado = obtenerEstado();
+    const aptitud = aptitudCheckout(estado, pagoBloqueado(), sesionInvalidada());
     if (!aptitud.valida) {
       actualizar();
+      return;
+    }
+    if (typeof iniciarFlujo === 'function') {
+      try {
+        if (iniciarFlujo(estado) !== false) return;
+      } catch (error) {
+        console.error('No se pudo abrir la experiencia de compra:', error);
+      }
+      ayuda.textContent = 'No pudimos preparar la compra en este navegador. Recarga la página e inténtalo de nuevo.';
       return;
     }
     mostrarAlerta();

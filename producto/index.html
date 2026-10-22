@@ -1852,6 +1852,7 @@
   } from '../componentes/cuenta-carrito.js?v=8';
   import { revalidarSesionCliente } from '../cliente/cliente-sesion.js';
   import { codigoAtribucionParaIntencion } from '../scripts/atribucion-promocional.js?v=1';
+  import { iniciarCompraDirecta } from '../compra/compra-core.js?v=1';
 
   // Nombre del bucket publico de Campanas donde viven las imagenes de producto.
   const BUCKET_CAMPANAS = 'campanas';
@@ -3237,9 +3238,8 @@
     }
 
     function abrir(){
-      // Doble cinturon: si por cualquier razon el boton esta deshabilitado
-      // (agotado / no disponible), no se abre el formulario. La cantidad se
-      // valida tambien aqui para que el modal nunca nazca con un resumen falso.
+      // Doble cinturón: el resumen de la nueva experiencia solo se inicia si el
+      // producto y la cantidad siguen siendo comprables en esta ficha.
       if(btnComprar.disabled) return;
       const cantidad = cantidadSeleccionada();
       if(!cantidadValida(cantidad)){
@@ -3247,12 +3247,17 @@
         if(selector) selector.focus();
         return;
       }
-      limpiarAviso();
-      actualizarResumenModal();
-      ultimoFoco = document.activeElement;
-      modal.setAttribute('aria-hidden', 'false');
-      const primero = document.getElementById('mg-c-nombre');
-      if(primero) primero.focus();
+      const producto = identificadorProducto();
+      const preparada = iniciarCompraDirecta({
+        producto: producto,
+        cantidad: cantidad,
+        retorno: window.location.href,
+      });
+      if(!preparada){
+        mostrarAvisoCantidad('No pudimos preparar la compra en este navegador. Recarga la página e inténtalo de nuevo.');
+        return;
+      }
+      window.location.assign('/compra/');
     }
     function ocultar(){
       modal.setAttribute('aria-hidden', 'true');
