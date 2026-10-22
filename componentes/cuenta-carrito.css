@@ -1,4 +1,4 @@
-@import url('./motor-tienda.css?v=1');
+@import url('./motor-tienda.css?v=2');
 
 [data-cuenta-carrito][hidden],.cc-carrito__badge[hidden],.cc-center[hidden]{display:none!important}
 [data-cuenta-carrito]{display:inline-flex;align-items:center;justify-content:flex-end;gap:9px;min-width:0;flex:none}
