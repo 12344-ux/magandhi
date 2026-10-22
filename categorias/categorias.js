@@ -3,7 +3,7 @@ import {
   buscarProductos,
   extraerProductos,
   montarSlots,
-} from '../componentes/motor-tienda.js?v=2';
+} from '../componentes/motor-tienda.js?v=3';
 import {
   cargarCategoriasPublicas,
   categoriaPorCodigo,
@@ -11,8 +11,8 @@ import {
   enlaceCategoria,
   filaPerteneceACategoria,
   iconoCategoria,
-} from '../componentes/categorias.js?v=2';
-import { crearPanelCategorias } from '../componentes/categorias-panel.js?v=2';
+} from '../componentes/categorias.js?v=3';
+import { crearPanelCategorias } from '../componentes/categorias-panel.js?v=3';
 
 const BUCKET_CAMPANAS = 'campanas';
 const TAMANO_PAGINA_CATALOGO = 60;

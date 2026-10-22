@@ -1,14 +1,14 @@
-import '../componentes/cuenta-carrito.js?v=10';
+import '../componentes/cuenta-carrito.js?v=11';
 import {
   buscarProductos,
   crearTarjetaProducto,
   montarSlots,
-} from '../componentes/motor-tienda.js?v=2';
+} from '../componentes/motor-tienda.js?v=3';
 import { supabase } from '../supabase-config.js';
 import {
   cargarCategoriasPublicas,
   categoriaPorCodigo,
-} from '../componentes/categorias.js?v=2';
+} from '../componentes/categorias.js?v=3';
 
 const TAMANO_PAGINA = 12;
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;

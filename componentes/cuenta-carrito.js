@@ -1,5 +1,5 @@
 import '../scripts/atribucion-promocional.js?v=1';
-import { configurarBuscadores } from './motor-tienda.js?v=2';
+import { configurarBuscadores } from './motor-tienda.js?v=3';
 import { observarSesionCliente } from '../cliente/cliente-sesion.js';
 import { listarCarrito } from '../carrito/carrito-core.js?v=3';
 import { crearControlMisCompras } from './mis-compras.js?v=4';

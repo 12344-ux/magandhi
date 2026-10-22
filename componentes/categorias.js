@@ -87,8 +87,8 @@ export function normalizarCodigo(valor) {
 // Preserva la identidad exacta que catalogo_publico usa en text[]. La clave
 // normalizada se reserva para aliases e iconos, nunca para consultas remotas.
 export function codigoCanonicoCategoria(valor) {
-  const codigo = textoBreve(valor, 100);
-  return /^[a-z0-9]+(?:[_-][a-z0-9]+)*$/.test(codigo) ? codigo : '';
+  const codigo = textoBreve(valor, 64);
+  return /^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(codigo) ? codigo : '';
 }
 
 export function claveIconoCategoria(valor) {

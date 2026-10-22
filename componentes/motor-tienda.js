@@ -1,5 +1,5 @@
 import { supabase, SUPABASE_URL } from '../supabase-config.js';
-import { filaPerteneceACategoria } from './categorias.js?v=2';
+import { filaPerteneceACategoria } from './categorias.js?v=3';
 
 // MAGANDHI · Sistema nervioso SN1
 // Cliente público compartido para composición, búsqueda y slots editoriales.
