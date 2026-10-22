@@ -107,28 +107,8 @@
   a{color:inherit}
   [hidden]{display:none!important}
 
-  /* ---------- barra de confianza ---------- */
-  /* .mg-barra: franja negra de confianza. SOLO visible en MOVIL (fija arriba, con
-     la flecha de retroceso). En PC esta oculta (display:none) y su contenido se
-     muestra en el .mg-prefooter de abajo (ver mas adelante). El @media movil la
-     reactiva con display:flex. */
-  .mg-barra{
-    position:relative;display:none;
-    background:var(--negro);color:#fff;font-size:12.5px;letter-spacing:.3px;
-    justify-content:center;gap:30px;padding:9px 16px;flex-wrap:wrap;
-  }
-  .mg-barra span{display:inline-flex;align-items:center;gap:7px;opacity:.92}
-  /* flecha de retroceso DENTRO de la barra negra: unico control de "volver" en
-     movil. Oculta en PC (alli manda el boton "Volver a la tienda" del header
-     sticky); el @media movil la muestra a la izquierda de la barra. Mismo destino
-     que .mg-volver (../index.html, la raiz de la tienda). */
-  .mg-barra-volver{
-    display:none;align-items:center;justify-content:center;flex:none;
-    color:var(--rojo);text-decoration:none;opacity:.92;
-  }
-  .mg-barra-volver svg{width:20px;height:20px}
-  .mg-barra svg{width:15px;height:15px;flex:none}
-  /* el 3er item es un boton (abre el modal de Wompi): se ve igual que los span */
+  /* ---------- confianza y pagos (SOLO PC) ---------- */
+  /* Este boton abre la explicación de Wompi desde el prefooter de escritorio. */
   .mg-barra-btn{
     display:inline-flex;align-items:center;gap:7px;opacity:.92;
     font-family:inherit;font-size:inherit;letter-spacing:inherit;color:#fff;
@@ -137,12 +117,7 @@
   }
   .mg-barra-btn:hover{opacity:1;border-bottom-color:#fff}
 
-  /* ---------- prefooter de confianza (SOLO PC) ---------- */
-  /* En PC la franja negra de confianza NO va arriba (ahi manda el header blanco
-     sticky): va al final, justo antes del footer, como "prefooter". Mismo lenguaje
-     visual que .mg-barra (fondo negro, texto blanco, iconos). Se oculta en movil
-     (@media max-width:860px -> display:none), donde la franja vive arriba (.mg-barra).
-     Reusa .mg-barra-btn para el boton de Wompi. */
+  /* En escritorio la franja de confianza cierra la ficha antes del footer. */
   .mg-prefooter{
     background:var(--negro);color:#fff;font-size:12.5px;letter-spacing:.3px;
     display:flex;justify-content:center;align-items:center;gap:30px;
@@ -206,30 +181,53 @@
     .mg-store-header .mg-search-visual span{font-size:10.5px}
     .mg-store-header .cc-auth-action{padding-inline:6px;font-size:10px}
   }
-  /* BARRA DE CONFIANZA EN MOVIL: la flecha queda fuera del flujo y los dos
-     mensajes comparten un centro geometrico estable en todo el rango movil. El
-     padding lateral simetrico reserva el mismo espacio a ambos lados, permite
-     dos lineas cuando hace falta y evita overflow entre 360 y 860 px. */
+  /* Navegación contextual: aparece abajo cuando la cabecera sale de la vista. */
+  .mg-mobile-nav{display:none}
   @media(max-width:860px){
-    .mg-barra{
-      display:grid;position:sticky;top:0;z-index:50;
-      grid-template-columns:repeat(2,minmax(0,180px));align-items:center;
-      justify-content:center;gap:clamp(6px,2vw,16px);
-      min-height:52px;padding:6px 56px;
-      font-size:clamp(9.5px,2.3vw,11.5px);letter-spacing:.1px;
-    }
-    .mg-barra > span,.mg-barra-btn{
-      width:100%;min-width:0;min-height:40px;justify-content:center;
-      text-align:center;line-height:1.25;white-space:normal;
-    }
-    .mg-barra svg{width:12px;height:12px}
-    .mg-barra-volver{
-      display:inline-flex;position:absolute;left:6px;top:50%;
-      width:44px;height:44px;transform:translateY(-50%);
-    }
-    .mg-barra-volver svg{width:18px;height:18px}
-    .mg-barra .mg-barra-revisado{display:none}
     .mg-prefooter{display:none}
+    .mg-mobile-nav{
+      display:grid;grid-template-columns:repeat(5,minmax(0,1fr));
+      position:fixed;left:0;right:0;bottom:0;z-index:70;
+      min-height:68px;
+      padding:6px max(8px,env(safe-area-inset-right)) max(6px,env(safe-area-inset-bottom)) max(8px,env(safe-area-inset-left));
+      background:rgba(255,255,255,.98);border-top:1px solid var(--linea);
+      border-radius:18px 18px 0 0;
+      box-shadow:0 -8px 28px rgba(17,17,17,.12);
+      backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);
+      opacity:0;visibility:hidden;pointer-events:none;
+      transform:translateY(calc(100% + 12px));
+      transition:opacity .2s ease,transform .24s ease,visibility 0s linear .24s;
+    }
+    .mg-mobile-nav[data-visible="true"]{
+      opacity:1;visibility:visible;pointer-events:auto;transform:none;
+      transition-delay:0s;
+    }
+    body.mg-mobile-nav-visible{
+      padding-bottom:calc(76px + env(safe-area-inset-bottom));
+    }
+    .mg-mobile-nav__item{
+      position:relative;min-width:0;min-height:54px;padding:5px 2px;
+      display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;
+      border:0;background:transparent;color:var(--gris);text-decoration:none;
+      font-family:inherit;font-size:9px;font-weight:500;line-height:1.15;
+      cursor:pointer;-webkit-tap-highlight-color:transparent;
+      transition:color .15s,transform .12s;
+    }
+    .mg-mobile-nav__item:hover,.mg-mobile-nav__item:focus-visible{color:var(--rojo)}
+    .mg-mobile-nav__item:active{transform:scale(.95)}
+    .mg-mobile-nav__item:focus-visible{outline:2px solid var(--acento-cl);outline-offset:-2px;border-radius:10px}
+    .mg-mobile-nav__item svg{width:21px;height:21px;flex:none}
+    .mg-mobile-nav__badge{
+      position:absolute;top:2px;left:calc(50% + 3px);
+      min-width:16px;height:16px;padding:0 4px;border-radius:999px;
+      display:inline-flex;align-items:center;justify-content:center;
+      background:var(--rojo);color:#fff;border:2px solid #fff;
+      font-size:8px;font-weight:700;line-height:1;font-variant-numeric:tabular-nums;
+    }
+  }
+
+  @media(prefers-reduced-motion:reduce){
+    .mg-mobile-nav{transition:none}
   }
 
   /* ---------- migas ---------- */
@@ -1009,7 +1007,7 @@
        cierre de opiniones antes de que empiece el footer blanco. */
     .mg-prefooter + footer{margin-top:48px}
     .mg-foot{flex-direction:column;align-items:center;text-align:center}
-    .mg-foot-links{justify-content:center}
+    .mg-foot-links{display:none}
   }
 
   /* ---------- modal Wompi ---------- */
@@ -1169,20 +1167,7 @@
 </head>
 <body data-producto-id="" data-producto-slug="">
 
-<!-- barra de confianza -->
-<div class="mg-barra">
-  <!-- flecha de retroceso: UNICO control de "volver" en movil (sobre el fondo
-       negro, a la izquierda). Oculta en PC via CSS (alli manda "Volver a la tienda"
-       del header sticky). Mismo destino que .mg-volver (../index.html). -->
-  <a class="mg-barra-volver" href="../index.html" aria-label="Volver a la tienda">
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
-  </a>
-  <span class="mg-barra-revisado"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z"/></svg>Cada producto revisado por el equipo</span>
-  <span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="1" y="3" width="15" height="13" rx="1"/><path d="M16 8h4l3 3v5h-7z"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></svg>Envíos nacionales</span>
-  <button type="button" class="mg-barra-btn mg-abrir-wompi" id="mg-abrir-wompi" aria-haspopup="dialog" aria-controls="mg-modal-wompi"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="5" width="20" height="14" rx="2"/><path d="M2 10h20"/></svg>Pagos seguros con Wompi</button>
-</div>
-
-<!-- Cabecera compartida de la tienda. La flecha móvil permanece en la barra negra. -->
+<!-- Cabecera compartida de la tienda. En móvil se desplaza con la página. -->
 <header class="mg-store-header cc-store-header">
   <a class="cc-store-brand" href="../index.html" aria-label="MAGANDHI, inicio">
     <img src="../logo-mark-terracota.png" alt="">
@@ -1214,6 +1199,87 @@
           hidden></span>
   </div>
 </header>
+
+<!-- Accesos persistentes de producto: solo aparecen en móvil cuando la cabecera sale de la vista. -->
+<nav class="mg-mobile-nav" id="mg-mobile-nav" aria-label="Accesos rápidos" aria-hidden="true" data-visible="false">
+  <a class="mg-mobile-nav__item" href="/" data-mg-mobile-back aria-label="Volver">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m15 18-6-6 6-6"/></svg>
+    <span>Volver</span>
+  </a>
+  <a class="mg-mobile-nav__item" href="/" aria-label="Ir al inicio">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m3 11 9-8 9 8"/><path d="M5 10v10h14V10M9 20v-6h6v6"/></svg>
+    <span>Inicio</span>
+  </a>
+  <a class="mg-mobile-nav__item" href="/categorias/" aria-label="Ver categorías">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="3" width="7" height="7" rx="2"/><rect x="14" y="3" width="7" height="7" rx="2"/><rect x="3" y="14" width="7" height="7" rx="2"/><rect x="14" y="14" width="7" height="7" rx="2"/></svg>
+    <span>Categorías</span>
+  </a>
+  <a class="mg-mobile-nav__item" href="/carrito/" data-mg-mobile-cart aria-label="Carrito, sin productos">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="8" cy="21" r="1"/><circle cx="19" cy="21" r="1"/><path d="M2.05 2.05h2l2.66 12.42a2 2 0 0 0 2 1.58h9.78a2 2 0 0 0 1.95-1.57l1.65-7.43H5.12"/></svg>
+    <span>Carrito</span>
+    <span class="mg-mobile-nav__badge" data-mg-mobile-cart-badge aria-hidden="true" hidden>0</span>
+  </a>
+  <a class="mg-mobile-nav__item" href="/cuenta/" aria-label="Ir a mi cuenta">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M4.5 21a7.5 7.5 0 0 1 15 0"/></svg>
+    <span>Cuenta</span>
+  </a>
+</nav>
+<script>
+  // La navegación básica no depende de sesión ni de red: acompaña el scroll
+  // aunque el catálogo o la cuenta todavía estén cargando.
+  (function(){
+    var nav = document.getElementById('mg-mobile-nav');
+    var cabecera = document.querySelector('header.mg-store-header');
+    if(!nav || !cabecera) return;
+
+    var mediaMovil = window.matchMedia('(max-width:860px)');
+    var framePendiente = 0;
+
+    function mostrarNavegacion(mostrar){
+      var visible = mediaMovil.matches && mostrar;
+      nav.dataset.visible = visible ? 'true' : 'false';
+      nav.setAttribute('aria-hidden', visible ? 'false' : 'true');
+      document.body.classList.toggle('mg-mobile-nav-visible', visible);
+    }
+
+    function evaluarCabecera(){
+      framePendiente = 0;
+      mostrarNavegacion(cabecera.getBoundingClientRect().bottom <= 0);
+    }
+
+    function solicitarEvaluacion(){
+      if(framePendiente) return;
+      framePendiente = requestAnimationFrame(evaluarCabecera);
+    }
+
+    var volver = nav.querySelector('[data-mg-mobile-back]');
+    if(volver){
+      volver.addEventListener('click', function(evento){
+        if(evento.defaultPrevented || evento.button !== 0 || evento.metaKey ||
+           evento.ctrlKey || evento.shiftKey || evento.altKey) return;
+        var regresoInterno = false;
+        try{
+          regresoInterno = window.history.length > 1 && !!document.referrer &&
+            new URL(document.referrer).origin === window.location.origin;
+        }catch(_){ /* Si no se puede validar, el href lleva al inicio. */ }
+        if(regresoInterno){
+          evento.preventDefault();
+          window.history.back();
+        }
+      });
+    }
+
+    window.addEventListener('scroll', solicitarEvaluacion, { passive:true });
+    window.addEventListener('resize', solicitarEvaluacion, { passive:true });
+    window.addEventListener('pageshow', solicitarEvaluacion);
+    if(typeof mediaMovil.addEventListener === 'function'){
+      mediaMovil.addEventListener('change', solicitarEvaluacion);
+    }else{
+      mediaMovil.addListener(solicitarEvaluacion);
+    }
+    evaluarCabecera();
+  })();
+</script>
 
 <!-- migas -->
 <div class="mg-migas"><a href="../index.html">Inicio</a> › <span id="mg-miga-cat">Productos</span> › <span id="mg-miga-nom">Producto</span></div>
@@ -2084,17 +2150,20 @@
     });
   }
 
-  function configurarVolverMovil(){
-    const enlace = document.querySelector('.mg-barra-volver');
-    if(!enlace) return;
-    enlace.addEventListener('click', function(evento){
-      if(evento.defaultPrevented || evento.button !== 0 || evento.metaKey ||
-         evento.ctrlKey || evento.shiftKey || evento.altKey) return;
-      if(window.history.length > 1){
-        evento.preventDefault();
-        window.history.back();
-      }
-      // En una entrada directa no se cancela el enlace: su href vuelve al inicio.
+  function configurarContadorNavegacionMovil(){
+    const enlaceCarrito = document.querySelector('[data-mg-mobile-cart]');
+    const badgeCarrito = document.querySelector('[data-mg-mobile-cart-badge]');
+    if(!enlaceCarrito || !badgeCarrito) return;
+
+    observarEstadoCarrito(function(estadoCarrito){
+      const unidades = estadoCarrito.visible && estadoCarrito.snapshot
+        ? Math.max(0, Number(estadoCarrito.snapshot.cantidad_unidades) || 0)
+        : 0;
+      badgeCarrito.textContent = String(unidades);
+      badgeCarrito.hidden = unidades === 0;
+      enlaceCarrito.setAttribute('aria-label', unidades === 0
+        ? 'Carrito, sin productos'
+        : 'Carrito, ' + unidades + (unidades === 1 ? ' unidad' : ' unidades'));
     });
   }
 
@@ -4030,7 +4099,7 @@
   //  · y si el producto no llegara a cargar, quien acaba de pagar igual ve que
   //    su pago esta en nuestras manos.
   configurarVueltaDelPago();
-  configurarVolverMovil();
+  configurarContadorNavegacionMovil();
   configurarCantidad();
   configurarFavoritoLocal();
   configurarCarritoProducto();
@@ -4042,13 +4111,11 @@
 </script>
 
 <script>
-  // Modal "Pagos seguros con Wompi": abrir desde la barra, cerrar con X, clic
-  // afuera o Escape. Sin dependencias; accesible (aria-hidden + foco).
+  // Modal "Pagos seguros con Wompi": abrir desde el prefooter de escritorio,
+  // cerrar con X, clic afuera o Escape. Sin dependencias; accesible.
   (function(){
-    // puede haber DOS disparadores: el de la barra negra (movil, arriba) y el del
-    // prefooter (PC, abajo). Ambos llevan la clase .mg-abrir-wompi, asi que se
-    // escucha por clase (querySelectorAll), no por id. Se recuerda cual abrio el
-    // modal para devolverle el foco al cerrar.
+    // El disparador conserva la clase compartida para que el modal recuerde qué
+    // control lo abrió y pueda devolverle el foco al cerrar.
     var abridores = document.querySelectorAll('.mg-abrir-wompi');
     var modal  = document.getElementById('mg-modal-wompi');
     var cerrar = document.getElementById('mg-cerrar-wompi');
