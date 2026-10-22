@@ -5,7 +5,7 @@ import {
   enlaceCategoria,
   iconoCategoria,
 } from './categorias.js?v=3';
-import { crearPanelCategorias } from './categorias-panel.js?v=2';
+import { aplicarFotoCategoria } from './categorias-fotos.js?v=1';
 
 const contenedor = document.querySelector('[data-categorias-inicio]');
 const MAX_DESTACADAS = CODIGOS_CATEGORIAS_DESTACADAS.length;
@@ -15,63 +15,15 @@ const MAX_DESTACADAS = CODIGOS_CATEGORIAS_DESTACADAS.length;
 // qué categorías se eligen, en qué orden ni hacia dónde enlazan.
 const ESPERA_RESPALDO_MS = 3000;
 
-// Fotografías del carril móvil, mapeadas por código estable (nunca por
-// posición). Un código sin foto, o una foto que no carga, conserva el ícono
-// SVG. Un archivo publicado no se sobrescribe: una foto nueva sube a v2, v3…
-// En PC la foto permanece oculta y, al ser diferida, no se descarga.
-const BASE_FOTOS = new URL('../recursos/home/categorias/', import.meta.url);
-const FOTOS_CATEGORIAS = Object.freeze({
-  navidad: 'categoria-navidad-v1.webp',
-  tecnologia: 'categoria-tecnologia-v1.webp',
-  moda: 'categoria-moda-v1.webp',
-  hogar: 'categoria-hogar-v1.webp',
-  deportes: 'categoria-deportes-v1.webp',
-  belleza: 'categoria-belleza-v1.webp',
-  accesorios: 'categoria-accesorios-v1.webp',
-  mascotas: 'categoria-mascotas-v1.webp',
-  jugueteria: 'categoria-jugueteria-v1.webp',
-});
-
-function aplicarFoto(enlace, codigo) {
-  const archivo = Object.prototype.hasOwnProperty.call(FOTOS_CATEGORIAS, codigo)
-    ? FOTOS_CATEGORIAS[codigo]
-    : '';
-  const actual = enlace.querySelector('.mg-category-card__foto');
-  if (!archivo) {
-    actual?.remove();
-    enlace.classList.remove('mg-category-card--foto');
-    return;
-  }
-  const src = new URL(archivo, BASE_FOTOS).href;
-  if (actual?.dataset.foto === src) return;
-  actual?.remove();
-
-  const foto = document.createElement('img');
-  foto.className = 'mg-category-card__foto';
-  foto.alt = '';
-  foto.width = 800;
-  foto.height = 800;
-  foto.loading = 'lazy';
-  foto.decoding = 'async';
-  foto.dataset.foto = src;
-  foto.addEventListener('load', () => { foto.dataset.cargada = ''; }, { once: true });
-  foto.addEventListener('error', () => {
-    foto.remove();
-    enlace.classList.remove('mg-category-card--foto');
-  }, { once: true });
-  foto.src = src;
-  enlace.classList.add('mg-category-card--foto');
-  enlace.prepend(foto);
-}
-
+// «Más categorías» es un enlace normal a la página de categorías (sin ventana).
 function asegurarMas() {
-  let mas = contenedor.querySelector('[data-categorias-abrir]');
+  let mas = contenedor.querySelector('[data-categorias-mas]');
   if (!mas) {
     mas = document.createElement('a');
     mas.className = 'mg-category-card mg-category-card--more';
     mas.href = 'categorias/';
-    mas.dataset.categoriasAbrir = '';
-    mas.setAttribute('aria-label', 'Abrir todas las categorías');
+    mas.dataset.categoriasMas = '';
+    mas.setAttribute('aria-label', 'Ver todas las categorías');
     mas.innerHTML = `<span class="mg-category-card__icon">${iconoCategoria('mas')}</span>
       <span class="mg-category-card__name">Más categorías</span>`;
     contenedor.appendChild(mas);
@@ -144,7 +96,7 @@ function pintarCategoriasInicio(categorias) {
     enlace.setAttribute('aria-label', `Ver categoría ${categoria.nombre}`);
     enlace.querySelector('.mg-category-card__icon').innerHTML = iconoCategoria(categoria.icono);
     enlace.querySelector('.mg-category-card__name').textContent = categoria.nombre;
-    aplicarFoto(enlace, categoria.codigo);
+    aplicarFotoCategoria(enlace, categoria.codigo);
     contenedor.insertBefore(enlace, mas);
   });
   existentes.forEach((enlace, codigo) => {
@@ -158,14 +110,9 @@ function pintarCategoriasInicio(categorias) {
 // respaldo si la consulta falla o tarda más de ESPERA_RESPALDO_MS.
 pintarEspera();
 
-let solicitudCategorias = null;
-async function consultarCategoriasPublicas() {
+async function obtenerCategorias() {
   const { supabase } = await import('../supabase-config.js');
   return cargarCategoriasPublicas(supabase);
-}
-function obtenerCategorias({ recargar = false } = {}) {
-  if (!solicitudCategorias || recargar) solicitudCategorias = consultarCategoriasPublicas();
-  return solicitudCategorias;
 }
 
 if (contenedor) {
@@ -181,12 +128,4 @@ if (contenedor) {
       console.error('No se pudieron priorizar las categorías de temporada:', error);
     })
     .finally(() => clearTimeout(respaldoPorDemora));
-}
-
-if (document.querySelector('[data-categorias-abrir]')) {
-  crearPanelCategorias({
-    obtenerCategorias,
-    hrefBase: 'categorias/',
-    paginaCategoriasHref: 'categorias/',
-  });
 }

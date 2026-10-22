@@ -7,12 +7,11 @@ import {
 import {
   cargarCategoriasPublicas,
   categoriaPorCodigo,
-  codigoPrincipal,
   enlaceCategoria,
   filaPerteneceACategoria,
   iconoCategoria,
 } from '../componentes/categorias.js?v=2';
-import { crearPanelCategorias } from '../componentes/categorias-panel.js?v=2';
+import { aplicarFotoCategoria } from '../componentes/categorias-fotos.js?v=1';
 
 const BUCKET_CAMPANAS = 'campanas';
 const TAMANO_PAGINA_CATALOGO = 60;
@@ -246,12 +245,16 @@ function pintarNavegacion(categorias, categoriaSeleccionada) {
   }
   grid.innerHTML = categorias.map((categoria) => {
     const actual = categoriaSeleccionada?.codigo === categoria.codigo;
-    return `<a class="mg-category-card" href="${esc(enlaceCategoria(categoria.codigo, './'))}" ${actual ? 'aria-current="page"' : ''} aria-label="Ver productos de ${esc(categoria.nombre)}">
+    return `<a class="mg-category-card" href="${esc(enlaceCategoria(categoria.codigo, './'))}" data-categoria-pagina="${esc(categoria.codigo)}" ${actual ? 'aria-current="page"' : ''} aria-label="Ver productos de ${esc(categoria.nombre)}">
       <span class="mg-category-card__icon">${iconoCategoria(categoria.icono)}</span>
       <span class="mg-category-card__name">${esc(categoria.nombre)}</span>
       <span class="mg-category-card__copy">${esc(categoria.descripcion)}</span>
     </a>`;
   }).join('');
+  // Solo presentación: la misma fotografía de la portada, por código.
+  grid.querySelectorAll('[data-categoria-pagina]').forEach((enlace) => {
+    aplicarFotoCategoria(enlace, enlace.dataset.categoriaPagina);
+  });
 }
 
 function pintarCargaCategorias() {
@@ -274,15 +277,13 @@ function pintarErrorCategorias() {
 }
 
 function actualizarContenido(categoriaSeleccionada, totalCategorias = 0) {
-  const titulo = categoriaSeleccionada?.nombre || 'Explora a tu manera';
+  const titulo = categoriaSeleccionada?.nombre || 'En MAGANDHI siempre hay algo nuevo por descubrir';
   const descripcion = categoriaSeleccionada?.descripcion || (totalCategorias
-    ? `${totalCategorias} categorías para descubrir productos útiles, especiales y escogidos con intención.`
-    : 'Descubre productos útiles, especiales y escogidos con intención.');
-  const icono = categoriaSeleccionada?.icono || 'coleccion';
+    ? `${totalCategorias} categorías con productos útiles, especiales y escogidos con intención.`
+    : 'Productos útiles, especiales y escogidos con intención.');
   document.getElementById('cp-page-title').textContent = titulo;
   document.getElementById('cp-page-copy').textContent = descripcion;
-  document.querySelector('[data-banner-main-icon]').innerHTML = iconoCategoria(icono);
-  document.getElementById('cp-category-title').textContent = categoriaSeleccionada ? 'Elige otra categoría' : 'Todas las categorías';
+  document.getElementById('cp-category-title').textContent = categoriaSeleccionada ? 'Elige otra categoría' : 'Nuestras categorías';
   document.getElementById('cp-products-title').textContent = categoriaSeleccionada ? `${titulo} para descubrir` : 'Productos para descubrir';
   document.getElementById('cp-products-copy').textContent = categoriaSeleccionada
     ? `Productos disponibles de ${titulo}, escogidos por el equipo MAGANDHI.`
@@ -317,7 +318,6 @@ function actualizarContenidoNoDisponible() {
   document.title = `${titulo} · MAGANDHI`;
   document.getElementById('cp-page-title').textContent = titulo;
   document.getElementById('cp-page-copy').textContent = descripcion;
-  document.querySelector('[data-banner-main-icon]').innerHTML = iconoCategoria('coleccion');
   document.getElementById('cp-category-title').textContent = 'Elige otra categoría';
   document.getElementById('cp-products-title').textContent = titulo;
   document.getElementById('cp-products-copy').textContent = 'La lista pública cargó correctamente, pero este código no está disponible.';
@@ -340,7 +340,7 @@ function markupEstadoVacio(categoriaSeleccionada) {
     <span>${esc(detalle)}</span>
     <div class="cp-state__actions">
       <a class="cp-state__primary" href="../#descubrir">Ver todos los productos</a>
-      <a class="cp-state__secondary" href="#cp-category-title" data-categorias-abrir aria-haspopup="dialog" aria-controls="mg-category-panel" aria-expanded="false">Elegir otra categoría</a>
+      <a class="cp-state__secondary" href="#cp-category-title">Elegir otra categoría</a>
     </div>
   </div>`;
 }
@@ -352,7 +352,7 @@ function markupCategoriaNoDisponible() {
     <span>No mostramos el catálogo completo como si fuera el resultado de este enlace. Elige una categoría vigente o explora todos los productos.</span>
     <div class="cp-state__actions">
       <a class="cp-state__primary" href="../#descubrir">Ver todos los productos</a>
-      <a class="cp-state__secondary" href="#cp-category-title" data-categorias-abrir aria-haspopup="dialog" aria-controls="mg-category-panel" aria-expanded="false">Elegir otra categoría</a>
+      <a class="cp-state__secondary" href="#cp-category-title">Elegir otra categoría</a>
     </div>
   </div>`;
 }
@@ -522,13 +522,6 @@ function pintarProductosBloqueadosPorCategorias() {
 }
 
 botonMasProductos?.addEventListener('click', cargarMasProductos);
-
-crearPanelCategorias({
-  obtenerCategorias,
-  hrefBase: './',
-  paginaCategoriasHref: './',
-  codigoActual: codigoPrincipal(codigoSolicitado),
-});
 
 async function iniciar(recargar = false) {
   const ciclo = ++cicloInicio;
