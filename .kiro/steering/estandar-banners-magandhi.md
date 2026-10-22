@@ -38,7 +38,7 @@ El carrusel principal vive autocontenido en `index.html`:
 - HTML: cada diapositiva es un `.hg-slide` con dos rutas de imagen.
 - JavaScript: cambia el recorte a `760px`, crea puntos, permite flechas, teclado, swipe y autoavance cada `6000ms`.
 - Paleta: los tokens oficiales están en `marca.css`.
-- Assets: las parejas de imágenes viven en `banners/`.
+- Assets públicos: las parejas activas viven en `recursos/home/` y usan nombres neutrales (`hero-*`, `historia-*`). `banners/` conserva únicamente compatibilidad histórica; no debe volver a enlazarse desde producción porque algunos bloqueadores filtran rutas y archivos llamados `banner`.
 
 Las imágenes actuales son fondos de presentación, no campañas fotográficas definitivas. Lo que sí está aprobado y debe conservarse es el **sistema**: proporciones, riel, jerarquía, zona de texto, contraste, sobriedad y adaptación independiente a móvil.
 
@@ -67,13 +67,13 @@ Cada campaña requiere una pareja diseñada expresamente para el espacio solicit
 
 ### Si reemplaza un slide del carrusel hero
 
-1. `banner-{id}-pc.jpg` o `.webp`: **1600 × 600 px**.
-2. `banner-{id}-movil.jpg` o `.webp`: **1080 × 1080 px**.
+1. `hero-{id}-pc.jpg` o `.webp`: **1600 × 600 px**.
+2. `hero-{id}-movil.jpg` o `.webp`: **1080 × 1080 px**.
 
 ### Si reemplaza el banner Historia
 
-1. `banner-historia-{id}-pc.jpg` o `.webp`: **1600 × 478 px**.
-2. `banner-historia-{id}-movil.jpg` o `.webp`: **1080 × 1854 px**.
+1. `historia-{id}-pc.jpg` o `.webp`: **1600 × 478 px**.
+2. `historia-{id}-movil.jpg` o `.webp`: **1080 × 1854 px**.
 
 Reglas duras:
 
@@ -83,7 +83,8 @@ Reglas duras:
 - Nunca superar **2000 px en ninguna dimensión**.
 - Objetivo de peso: **menos de 300 KB por archivo** sin degradación visible.
 - Usar `sRGB`; evitar perfiles de color exóticos.
-- Usar nombres semánticos y versionados, por ejemplo `banner-color-compras-v1-pc.webp` y `banner-color-compras-v1-movil.webp`.
+- Usar nombres semánticos y versionados que no incluyan la palabra `banner`, por ejemplo `hero-color-compras-v1-pc.webp` y `hero-color-compras-v1-movil.webp`.
+- Publicar bajo `recursos/home/`; no reintroducir rutas `/banners/` ni nombres `banner-*`, porque pueden ser bloqueados por extensiones de privacidad.
 - No sobrescribir un nombre publicado si puede quedar en caché. Subir versión (`v2`) y cambiar las rutas en HTML/CSS.
 - No reutilizar un asset entre espacios. Aunque dos piezas compartan lenguaje visual, cada una conserva su propia pareja de archivos.
 
@@ -286,9 +287,9 @@ Mientras el carrusel actual siga vigente, una diapositiva nueva conserva este co
 ```html
 <div class="hg-slide" role="group"
      aria-roledescription="diapositiva" aria-label="1 de N"
-     style="background-image:url('banners/banner-{id}-pc.webp')"
-     data-pc="banners/banner-{id}-pc.webp"
-     data-movil="banners/banner-{id}-movil.webp">
+     style="background-image:url('recursos/home/hero-{id}-pc.webp')"
+     data-pc="recursos/home/hero-{id}-pc.webp"
+     data-movil="recursos/home/hero-{id}-movil.webp">
   <div class="hg-slide__cont">
     <span class="hg-pill">
       <!-- SVG inline simple, con currentColor -->
@@ -319,13 +320,13 @@ Historia no es una diapositiva del carrusel. Su fondo responsive pertenece a `.h
 
 ```css
 .hg-historia__caja{
-  background-image:url('banners/banner-historia-{id}-pc.webp');
+  background-image:url('recursos/home/historia-{id}-pc.webp');
   background-size:cover;
   background-position:center;
 }
 @media(max-width:760px){
   .hg-historia__caja{
-    background-image:url('banners/banner-historia-{id}-movil.webp');
+    background-image:url('recursos/home/historia-{id}-movil.webp');
   }
 }
 ```

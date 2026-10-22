@@ -89,15 +89,15 @@
 > proveedor con stock vivo y verificación antes de Wompi. El despacho posterior
 > continúa manual en el back-office.
 >
-> **Categorías oficiales · IMPLEMENTACIÓN EN RAMA / NO DESPLEGADA.** La rama
-> `feat/categorias-oficiales` completa el frente iniciado en el PR #126. El
-> fallback público contiene exactamente ocho raíces, en este orden:
+> **Categorías oficiales · DESPLEGADAS EN PRODUCCIÓN (22-oct-2026).** El frente
+> del PR #126 está fusionado y publicado; el backend coordinado del PR #311 y
+> su migración SQL están desplegados según confirmó el dueño. La lista viva de
+> `categorias_publicas` entrega ocho raíces oficiales, en este orden:
 > **Tecnología, Moda, Hogar, Deportes, Belleza, Accesorios, Mascotas y
 > Juguetería**. No expone Alimentos y bebidas ni subcategorías de Belleza; sus
-> códigos históricos solo se aceptan como aliases hacia `belleza`. La lista
-> viva procede de `categorias_publicas` y solo usa esas ocho filas cuando la
-> vista nueva todavía no existe. Este estado no acredita migración, Pages ni
-> prueba visual en producción.
+> códigos históricos solo se aceptan como aliases hacia `belleza`. La portada,
+> `/categorias/` y `catalogo_publico.categoria_codigos` fueron comprobados en
+> producción desde viewport PC y móvil.
 
 **Producción:** `https://magandhi.com`
 **Repositorio:** `12344-ux/magandhi`
@@ -497,11 +497,11 @@ Estado al 21-oct-2026:
 ## Fuentes de verdad
 
 - Marca pública: `marca/logo/logo-magandhi.svg`, `marca/generar_assets.py`, `marca.css`.
-- Banners: `.kiro/steering/estandar-banners-magandhi.md` y `banners/LEEME.md`.
+- Banners: assets públicos en `recursos/home/`; contrato en `.kiro/steering/estandar-banners-magandhi.md`; fuentes históricas en `banners/LEEME.md`.
 - Presentación pública: `index.html`, `producto/index.html` y `categorias/index.html`.
 - Registro fallback, normalización, iconos y pertenencia de categorías:
   `componentes/categorias.js`; panel compartido:
-  `componentes/categorias-panel.js`. Ambos están EN RAMA / NO DESPLEGADOS.
+  `componentes/categorias-panel.js`. Ambos están desplegados en producción.
 - Cuenta C2 y gates de apertura: `cuenta/CONFIGURACION.md`.
 - Esquema/RLS/RPC/Edge Functions: repositorio del back-office, carpeta `supabase/`.
 - Relevo general vigente de Promocionar:
