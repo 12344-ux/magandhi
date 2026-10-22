@@ -1,5 +1,5 @@
 import { supabase } from '../supabase-config.js';
-import { abrirCentroCuenta, invalidarComprasCuenta } from '../componentes/cuenta-carrito.js?v=6';
+import { abrirCentroCuenta, invalidarComprasCuenta } from '../componentes/cuenta-carrito.js?v=7';
 import { codigoAtribucionParaIntencion } from '../scripts/atribucion-promocional.js?v=1';
 
 const WOMPI_CHECKOUT_URL = 'https://checkout.wompi.co/p/';
@@ -220,7 +220,7 @@ function referenciaDeLaUrl() {
   parametros.delete('env');
   const consulta = parametros.toString();
   try {
-    history.replaceState(null, '', window.location.pathname + (consulta ? `?${consulta}` : '') + window.location.hash);
+    history.replaceState(history.state, '', window.location.pathname + (consulta ? `?${consulta}` : '') + window.location.hash);
   } catch { /* La referencia se procesa aunque el navegador no permita reemplazar la URL. */ }
   return { presente, referencia, valida: presente && FORMATO_REFERENCIA.test(referencia) };
 }
