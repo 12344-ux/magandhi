@@ -277,14 +277,12 @@ function pintarErrorCategorias() {
 }
 
 function actualizarContenido(categoriaSeleccionada, totalCategorias = 0) {
-  const titulo = categoriaSeleccionada?.nombre || 'Explora a tu manera';
+  const titulo = categoriaSeleccionada?.nombre || 'En MAGANDHI siempre hay algo nuevo por descubrir';
   const descripcion = categoriaSeleccionada?.descripcion || (totalCategorias
-    ? `${totalCategorias} categorías para descubrir productos útiles, especiales y escogidos con intención.`
-    : 'Descubre productos útiles, especiales y escogidos con intención.');
-  const icono = categoriaSeleccionada?.icono || 'coleccion';
+    ? `${totalCategorias} categorías con productos útiles, especiales y escogidos con intención.`
+    : 'Productos útiles, especiales y escogidos con intención.');
   document.getElementById('cp-page-title').textContent = titulo;
   document.getElementById('cp-page-copy').textContent = descripcion;
-  document.querySelector('[data-banner-main-icon]').innerHTML = iconoCategoria(icono);
   document.getElementById('cp-category-title').textContent = categoriaSeleccionada ? 'Elige otra categoría' : 'Nuestras categorías';
   document.getElementById('cp-products-title').textContent = categoriaSeleccionada ? `${titulo} para descubrir` : 'Productos para descubrir';
   document.getElementById('cp-products-copy').textContent = categoriaSeleccionada
@@ -320,7 +318,6 @@ function actualizarContenidoNoDisponible() {
   document.title = `${titulo} · MAGANDHI`;
   document.getElementById('cp-page-title').textContent = titulo;
   document.getElementById('cp-page-copy').textContent = descripcion;
-  document.querySelector('[data-banner-main-icon]').innerHTML = iconoCategoria('coleccion');
   document.getElementById('cp-category-title').textContent = 'Elige otra categoría';
   document.getElementById('cp-products-title').textContent = titulo;
   document.getElementById('cp-products-copy').textContent = 'La lista pública cargó correctamente, pero este código no está disponible.';

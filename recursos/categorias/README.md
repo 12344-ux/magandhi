@@ -38,3 +38,11 @@ Son 2 imágenes del mismo concepto, compuestas por separado (la de celular no es
 - El texto va siempre en HTML: sello «Selección MAGANDHI», título «Explora a tu manera» (o el nombre de la categoría elegida) y una frase de apoyo. El mismo banner sirve para la vista general y para cada categoría.
 - Los originales pueden subirse con cualquier nombre; se recortan y exportan a WebP sRGB de 300 KB o menos.
 - Un archivo publicado nunca se sobrescribe: la siguiente versión sube a `v2`.
+
+## Archivos publicados (v1 · 22-oct-2026)
+
+Originales PNG del commit `5680f60` (PC 1983 × 793, móvil 1536 × 1024), exportados a WebP sRGB:
+
+- `cabecera-categorias-v1-pc.webp` (1600 × 400, ≈ 32 KB): el original era 2.5:1; se llegó a 4:1 extendiendo hacia la izquierda solo la pared lisa, sin tocar el bodegón, que empieza en el 66 % del ancho.
+- `cabecera-categorias-v1-movil.webp` (1080 × 720, ≈ 35 KB): el bodegón se redujo al 84 % y se corrió a la derecha (empieza en el 53 %) para que el texto tenga libre la mitad izquierda.
+- Título del banner (HTML): «En MAGANDHI siempre hay algo nuevo por descubrir»; al elegir una categoría muestra su nombre y descripción.
