@@ -23,7 +23,7 @@
 <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="marca.css?v=3">
 <link rel="stylesheet" href="componentes/cuenta-carrito.css?v=10">
-<link rel="stylesheet" href="componentes/categorias.css?v=2">
+<link rel="stylesheet" href="componentes/categorias.css?v=3">
 
 <!--
   MAGANDHI · portada / home de la tienda.
@@ -512,6 +512,10 @@
   }
   .hg-sep__k::before,.hg-sep__k::after{content:"";width:46px;height:1px;background:var(--acento-cl)}
   .hg-sep__d{font-size:13.5px;color:var(--gris-cl);margin:8px 0 0}
+  /* movil: menos vacio entre el carril de categorias y la vitrina. */
+  @media(max-width:760px){
+    .hg-sep{margin-top:34px}
+  }
 
   /* ---------- bloque HISTORIA ("mas que productos...") ---------- */
   .hg-historia{
@@ -723,7 +727,7 @@
     <nav class="mg-category-strip__track" aria-label="Categorías destacadas" data-categorias-inicio></nav>
   </div>
 </section>
-<script type="module" src="componentes/categorias-inicio.js?v=3"></script>
+<script type="module" src="componentes/categorias-inicio.js?v=4"></script>
 
 <!-- separador de seccion -->
 <div class="hg-sep" id="descubrir">

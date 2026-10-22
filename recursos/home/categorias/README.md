@@ -30,6 +30,14 @@ Usar el código estable de la categoría en minúsculas:
 
 Para una categoría nueva: `categoria-{codigo}-v1.webp`. Nunca se sobrescribe un recurso publicado: la siguiente versión será `v2`, `v3`, etc.
 
+## Archivos publicados (v1 · 22-oct-2026)
+
+Exportados desde los originales PNG de 1254 × 1254 subidos por el dueño (commit `456ab64`): 800 × 800, WebP opaco sRGB, ≤ 100 KB cada uno (≈ 711 KB los nueve).
+
+- Los originales «Accesorios con magandhi» y «belleza con magandhi» venían cruzados: el primero es `categoria-belleza-v1.webp` y el segundo `categoria-accesorios-v1.webp`.
+- El mapa código → archivo vive en `componentes/categorias-inicio.js` (`FOTOS_CATEGORIAS`). Publicar una versión nueva exige subir el archivo `v2` y cambiar allí su nombre.
+- Pendiente de dirección de arte para una `v2`: Deportes muestra el logotipo de Nike en las zapatillas, Tecnología el de Apple en el celular y Juguetería títulos legibles en los libros.
+
 ## Tratamiento previsto en móvil
 
 - Fotografía a sangre dentro de la tarjeta, sin caja blanca interior.
