@@ -31,6 +31,7 @@ const productosVistos = new Set();
 let cantidadProductosVistos = 0;
 let categoriaActiva = null;
 let categoriaFiltro = categoriaPedida || null;
+let categoriaNoDisponible = false;
 let desde = 0;
 let total = 0;
 let cargando = false;
@@ -342,7 +343,11 @@ async function cargarCategorias() {
       selectorCategoria.appendChild(opcion);
     });
     categoriaActiva = categoriaPedida ? categoriaPorCodigo(categoriaPedida, categorias) : null;
-    categoriaFiltro = categoriaActiva?.codigo || categoriaPedida || null;
+    categoriaNoDisponible = !!categoriaPedida && !categoriaActiva;
+    // Si la lista vigente confirma que la temporada ya no está visible, el
+    // código se muestra como retirado pero no se envía al motor. Sus productos
+    // siguen encontrándose por nombre y por sus categorías permanentes.
+    categoriaFiltro = categoriaActiva?.codigo || null;
     actualizarCategoriaFormulario();
     if (categoriaPedida && !categoriaActiva) {
       const retirada = document.createElement('option');
@@ -352,7 +357,7 @@ async function cargarCategorias() {
       selectorCategoria.appendChild(retirada);
       selectorCategoria.value = categoriaPedida;
       avisoCategorias.querySelector('span').textContent =
-        'La categoría solicitada ya no está disponible. El filtro se conserva de forma visible; elige otra categoría para cambiarlo.';
+        'La categoría solicitada ya no está disponible. No aplicamos ese filtro; puedes buscar por nombre o elegir otra categoría.';
       mostrarAvisoCategorias(true);
     } else {
       selectorCategoria.value = categoriaFiltro || '';
@@ -363,6 +368,7 @@ async function cargarCategorias() {
     return true;
   } catch {
     categoriaActiva = null;
+    categoriaNoDisponible = false;
     // El código ya pasó la validación sintáctica local: conservarlo evita que
     // una búsqueda filtrada se amplíe silenciosamente a todo el catálogo.
     categoriaFiltro = categoriaPedida || null;
@@ -388,6 +394,12 @@ botonMas.addEventListener('click', () => cargarPagina(true));
 async function iniciar() {
   actualizarCabecera();
   await cargarCategorias();
+  if (categoriaNoDisponible && !consulta) {
+    total = 0;
+    totalNodo.textContent = '';
+    mostrarEstado('Esta categoría ya no está disponible. Busca un producto por nombre o elige otra categoría.');
+    return;
+  }
   if (!consulta && !categoriaFiltro) {
     total = 0;
     totalNodo.textContent = '';
