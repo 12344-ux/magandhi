@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Buscar productos · MAGANDHI</title>
+<meta name="description" content="Busca productos disponibles en la selección pública de MAGANDHI.">
+<meta name="robots" content="noindex,follow">
+<link rel="canonical" href="https://magandhi.com/buscar/">
+<meta name="theme-color" content="#A6332E">
+<link rel="icon" type="image/png" href="../favicon.png?v=4">
+<link rel="apple-touch-icon" href="../icono-app-180.png?v=4">
+<link rel="manifest" href="../site.webmanifest">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../marca.css?v=3">
+<link rel="stylesheet" href="../componentes/cuenta-carrito.css?v=9">
+<link rel="stylesheet" href="./buscar.css?v=2">
+<style>
+.bs-category-notice{margin:12px 0 0;padding:11px 14px;border:1px solid rgba(166,51,46,.2);border-radius:12px;background:#fff5f4;color:#6f2723;font-size:12px;display:flex;align-items:center;justify-content:space-between;gap:12px}
+.bs-category-notice[hidden]{display:none!important}.bs-category-notice button{min-height:38px;padding:8px 12px;border:1px solid #a6332e;border-radius:9px;background:#fff;color:#a6332e;font:inherit;font-weight:600;cursor:pointer;white-space:nowrap}.bs-category-notice button:disabled{opacity:.58;cursor:wait}
+@media(max-width:520px){.bs-category-notice{align-items:flex-start;flex-direction:column}}
+</style>
+</head>
+<body>
+<header class="bs-header cc-store-header">
+  <a class="cc-store-brand" href="../" aria-label="MAGANDHI, inicio">
+    <img src="../logo-mark-terracota.png" alt="">
+    <span class="cc-store-brand__text"><strong>MAGANDHI</strong><small>Hoy mereces lo mejor</small></span>
+  </a>
+  <form class="cc-search" role="search" aria-label="Buscar productos desde la cabecera" data-buscador-catalogo>
+    <label for="bs-header-search">Buscar productos</label>
+    <input id="bs-header-search" type="search" inputmode="search" autocomplete="off" placeholder="¿Qué estás buscando?">
+    <button type="submit" aria-label="Buscar">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-4-4"/></svg>
+    </button>
+    <span class="cc-search__status" data-buscador-estado role="status" aria-live="polite"></span>
+  </form>
+  <div class="cc-store-actions">
+    <span data-cuenta-carrito
+          data-inicio-href="../"
+          data-cuenta-href="../cuenta/"
+          data-carrito-href="../carrito/"
+          data-politicas-href="../politicas/"
+          data-cookies-href="../politicas/cookies/"
+          data-pqrs-href="mailto:contacto@magandhi.com?subject=PQRS%20MAGANDHI"
+          hidden></span>
+  </div>
+</header>
+
+<main class="bs-main" id="sn-search">
+  <nav class="bs-breadcrumb" aria-label="Migas de pan"><a href="../">Inicio</a><span aria-hidden="true">›</span><span>Buscar</span></nav>
+  <section class="bs-intro" aria-labelledby="bs-title">
+    <span class="bs-kicker">Selección pública</span>
+    <h1 id="bs-title">Encuentra lo que buscas</h1>
+    <p>Explora por nombre, presentación o categoría. Solo mostramos productos disponibles.</p>
+  </section>
+
+  <section class="bs-tools" aria-label="Buscar y filtrar productos">
+    <form class="bs-form cc-search" role="search" aria-label="Buscar productos y filtrar resultados" data-buscador-catalogo>
+      <label for="bs-query">Buscar en MAGANDHI</label>
+      <input id="bs-query" type="search" inputmode="search" autocomplete="off" placeholder="Escribe un producto o una categoría">
+      <button type="submit" aria-label="Buscar productos">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-4-4"/></svg>
+      </button>
+      <span class="cc-search__status" data-buscador-estado role="status" aria-live="polite"></span>
+    </form>
+    <label class="bs-filter" for="bs-category">
+      <span>Categoría</span>
+      <select id="bs-category" disabled>
+        <option value="">Todas las categorías</option>
+      </select>
+    </label>
+  </section>
+  <div class="bs-category-notice" id="bs-category-notice" role="status" aria-live="polite" hidden>
+    <span>No pudimos actualizar las categorías. Conservamos el filtro solicitado, pero el selector no está disponible.</span>
+    <button type="button" id="bs-category-retry">Reintentar categorías</button>
+  </div>
+
+  <section class="bs-results" aria-labelledby="bs-results-title">
+    <div class="bs-results__head">
+      <div><span class="bs-kicker">Resultados</span><h2 id="bs-results-title">Productos</h2></div>
+      <p id="bs-total" aria-live="polite"></p>
+    </div>
+    <div class="bs-state" id="bs-state" role="status" aria-live="polite">Escribe una búsqueda para comenzar.</div>
+    <div class="bs-grid" id="bs-grid" aria-live="polite" aria-busy="false"></div>
+    <div class="bs-more"><button type="button" id="bs-more" hidden>Ver más</button></div>
+  </section>
+  <div id="bs-discovery"></div>
+</main>
+
+<footer class="bs-footer">
+  <span>© 2026 MAGANDHI</span>
+  <nav aria-label="Enlaces legales"><a href="../politicas/">Políticas</a><a href="mailto:contacto@magandhi.com">Contacto</a><a href="#" onclick="window.mgCookies && window.mgCookies(); return false;">Preferencias de cookies</a></nav>
+</footer>
+<script type="module" src="./buscar.js?v=2"></script>
+<script type="module" src="../analitica/analitica.js?v=3"></script>
+</body>
+</html>

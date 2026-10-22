@@ -23,10 +23,40 @@ const K_CONFIG = 'mg_analitica_cfg';    // sessionStorage: {activa, t}
 const K_UTM = 'mg_utm';                 // sessionStorage: campaña de llegada de ESTA visita
 const SESION_MIN = 30;
 const raiz = new URL('../', import.meta.url);
+const TIPOS_EVENTO = new Set([
+  'pagina_vista', 'producto_visto', 'llegada_campana',
+  'clic_comprar', 'checkout_iniciado',
+  'recomendacion_impresion', 'recomendacion_click', 'busqueda_resultados',
+]);
+const TIPOS_SN1 = new Set(['recomendacion_impresion', 'recomendacion_click', 'busqueda_resultados']);
+const SUPERFICIES_SN1 = new Set([
+  'home_principal', 'home_descubrimiento', 'categoria',
+  'producto_final', 'carrito', 'busqueda',
+]);
+const RAZONES_SN1 = new Set([
+  'coincidencia_nombre', 'coincidencia_categoria', 'coincidencia_contenido',
+  'coincidencia_busqueda', 'afinidad_cuenta', 'misma_categoria', 'complemento',
+  'alternativa', 'continuacion', 'rutina', 'popular', 'novedad',
+  'descubrimiento', 'exploracion',
+]);
+const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+const SLOT_RE = /^[a-z0-9][a-z0-9_-]{0,79}$/;
+const LAYOUT_RE = /^[a-z0-9][a-z0-9_-]{2,79}$/;
+const MODELO_RE = /^[a-z0-9][a-z0-9._-]{0,59}$/;
+const HASH_RE = /^[a-f0-9]{64}$/;
 
 const leer = (st, k) => { try { return JSON.parse(st.getItem(k) || 'null'); } catch (_) { return null; } };
 const guardar = (st, k, v) => { try { st.setItem(k, JSON.stringify(v)); } catch (_) {} };
-const azar = (n) => { const b = crypto.getRandomValues(new Uint8Array(n)); return btoa(String.fromCharCode(...b)).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, ''); };
+const azar = (n) => {
+  const b = new Uint8Array(n);
+  try {
+    if (typeof globalThis.crypto?.getRandomValues === 'function') globalThis.crypto.getRandomValues(b);
+    else b.forEach((_, indice) => { b[indice] = Math.floor(Math.random() * 256); });
+  } catch (_) {
+    b.forEach((_, indice) => { b[indice] = Math.floor(Math.random() * 256); });
+  }
+  return btoa(String.fromCharCode(...b)).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+};
 
 async function llamar(cuerpo, keepalive) {
   return fetch(FN, {
@@ -86,6 +116,7 @@ function slugProducto(params) {
 
 // ---------------- Envío por lotes ----------------
 let cola = [], temporizador = null, visitante = null, sesion = null, apagada = false;
+let pendientesAceptados = [];
 
 function sesionActual() {
   const s = leer(sessionStorage, K_SESION);
@@ -96,10 +127,86 @@ function sesionActual() {
   return { id: n.id, nueva: true };
 }
 
+function cadenaEvento(valor, maximo, formato) {
+  if (typeof valor !== 'string') return undefined;
+  const limpia = valor.normalize('NFKC').replace(/\s+/g, ' ').trim().slice(0, maximo);
+  return limpia && (!formato || formato.test(limpia)) ? limpia : undefined;
+}
+
+function cadenaEstricta(valor, maximo, formato) {
+  if (typeof valor !== 'string') return undefined;
+  const limpia = valor.normalize('NFKC').replace(/\s+/g, ' ').trim();
+  return limpia && limpia.length <= maximo && (!formato || formato.test(limpia))
+    ? limpia
+    : undefined;
+}
+
+function extraSeguro(tipo, extra) {
+  const origenExtra = extra && typeof extra === 'object' && !Array.isArray(extra) ? extra : {};
+
+  if (TIPOS_SN1.has(tipo)) {
+    const requestId = cadenaEstricta(origenExtra.request_id, 36, UUID_RE)?.toLowerCase();
+    const superficie = cadenaEstricta(origenExtra.superficie, 64);
+    const modelo = cadenaEstricta(origenExtra.modelo_version, 60, MODELO_RE);
+    if (!requestId || !SUPERFICIES_SN1.has(superficie) || !modelo) return null;
+
+    const salida = {
+      request_id: requestId,
+      superficie,
+      modelo_version: modelo,
+    };
+    if (tipo === 'busqueda_resultados') {
+      const cantidad = origenExtra.cantidad_resultados;
+      if (superficie !== 'busqueda' || !Number.isSafeInteger(cantidad) ||
+          cantidad < 0 || cantidad > 10000) return null;
+      salida.cantidad_resultados = cantidad;
+      if (Object.prototype.hasOwnProperty.call(origenExtra, 'consulta_hash')) {
+        const hash = cadenaEstricta(origenExtra.consulta_hash, 64, HASH_RE);
+        if (!hash) return null;
+        salida.consulta_hash = hash;
+      }
+      return salida;
+    }
+
+    const slug = cadenaEstricta(origenExtra.slug, 180, /^[a-z0-9]+(?:-[a-z0-9]+)*$/);
+    const slot = cadenaEstricta(origenExtra.slot, 80, SLOT_RE);
+    const posicion = origenExtra.posicion;
+    const layout = cadenaEstricta(origenExtra.layout_codigo, 80, LAYOUT_RE);
+    const razon = cadenaEstricta(origenExtra.razon, 40);
+    if (!slug || !slot || !Number.isSafeInteger(posicion) || posicion < 1 || posicion > 100 ||
+        !layout || !razon || !RAZONES_SN1.has(razon)) return null;
+    salida.slug = slug;
+    salida.slot = slot;
+    salida.posicion = posicion;
+    salida.layout_codigo = layout;
+    salida.razon = razon;
+    return salida;
+  }
+
+  const salida = {};
+  const slug = cadenaEvento(origenExtra.slug, 120, /^[a-z0-9]+(?:-[a-z0-9]+)*$/);
+  if (slug) salida.slug = slug;
+  if (tipo === 'pagina_vista' || tipo === 'llegada_campana') {
+    const org = cadenaEvento(origenExtra.origen, 24, /^(?:directo|instagram|facebook|whatsapp|buscador|email|otro_sitio)$/);
+    const utm = cadenaEvento(origenExtra.utm_campaign, 60, /^[a-z0-9-]+$/);
+    if (org) salida.origen = org;
+    if (utm) salida.utm_campaign = utm;
+    if (tipo === 'pagina_vista') salida.entrada = origenExtra.entrada === true;
+  }
+  return salida;
+}
+
 function encolar(tipo, extra) {
-  if (apagada || !visitante) return;
-  const slug = extra && extra.slug && /^[a-z0-9-]{1,120}$/.test(extra.slug) ? extra.slug : undefined;
-  cola.push(Object.assign({ tipo, ruta: ruta(), dispositivo: dispositivo(), cuando: new Date().toISOString() }, extra || {}, { slug }));
+  if (apagada || !visitante || !TIPOS_EVENTO.has(tipo)) return;
+  const extraLimpio = extraSeguro(tipo, extra);
+  if (!extraLimpio) return;
+  cola.push({
+    tipo,
+    ruta: ruta(),
+    dispositivo: dispositivo(),
+    cuando: new Date().toISOString(),
+    ...extraLimpio,
+  });
   if (cola.length >= 30) enviar(false); else { clearTimeout(temporizador); temporizador = setTimeout(() => enviar(false), 1500); }
 }
 
@@ -132,12 +239,34 @@ function iniciar() {
     encolar('producto_visto', { slug: productoSlug });
   }
   if (utmOk && (params.get('utm_source') || '').toLowerCase() === 'email') encolar('llegada_campana', { utm_campaign: utmOk, origen: 'email' });
+  const pendientes = pendientesAceptados.splice(0, pendientesAceptados.length);
+  pendientes.forEach((evento) => encolar(evento.tipo, evento.extra));
   document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'hidden') enviar(true); });
   window.addEventListener('pagehide', () => enviar(true));
 }
 
-// API para las páginas: eventos de negocio (clic en Comprar, inicio del pago).
-window.mgEvento = (tipo, extra) => { encolar(tipo, extra); if (tipo === 'checkout_iniciado') enviar(true); };
+// API para las páginas: solo eventos conocidos y campos públicos acotados.
+// Los eventos SN1 que ocurran mientras arranca la configuración se conservan
+// únicamente si ya existía una decisión afirmativa; nunca crean mg_vid aquí.
+window.mgEvento = (tipo, extra) => {
+  if (!TIPOS_EVENTO.has(tipo)) return;
+  if (!visitante && TIPOS_SN1.has(tipo)) {
+    const decision = leer(localStorage, K_DECISION);
+    const extraLimpio = extraSeguro(tipo, extra);
+    if (decision?.v === 'si' && extraLimpio && pendientesAceptados.length < 60) {
+      pendientesAceptados.push({ tipo, extra: extraLimpio });
+    }
+    return;
+  }
+  encolar(tipo, extra);
+  if (tipo === 'checkout_iniciado') enviar(true);
+};
+
+window.addEventListener('magandhi:analitica-interna', (evento) => {
+  const detalle = evento.detail;
+  if (!detalle || typeof detalle !== 'object' || !TIPOS_SN1.has(detalle.tipo)) return;
+  window.mgEvento(detalle.tipo, detalle.extra);
+});
 
 // ---------------- Aviso ----------------
 function aviso() {
@@ -159,7 +288,7 @@ function aviso() {
     guardar(localStorage, K_DECISION, { v, en: new Date().toISOString() });
     d.classList.remove('visible'); setTimeout(() => d.remove(), 250);
     if (v === 'si') iniciar();
-    else { visitante = null; cola = []; try { localStorage.removeItem(K_VISITANTE); } catch (_) {} }
+    else { visitante = null; cola = []; pendientesAceptados = []; try { localStorage.removeItem(K_VISITANTE); } catch (_) {} }
   };
   d.querySelector('.an-si').addEventListener('click', () => decidir('si'));
   d.querySelector('.an-no').addEventListener('click', () => decidir('no'));

@@ -22,7 +22,7 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="marca.css?v=3">
-<link rel="stylesheet" href="componentes/cuenta-carrito.css?v=7">
+<link rel="stylesheet" href="componentes/cuenta-carrito.css?v=9">
 <link rel="stylesheet" href="componentes/categorias.css?v=2">
 
 <!--
@@ -70,28 +70,16 @@
   /* ---------- nueva cabecera de tienda ----------
      La retícula compartida vive en componentes/cuenta-carrito.css. En la
      portada usa exactamente el mismo riel horizontal de 1200 px del hero. */
-  /* En movil se replica localmente el buscador visual de la ficha. No es un
-     control ni promete una función: el formulario real de escritorio permanece
-     intacto y esta pieza, aria-hidden, conserva logo → búsqueda → cuenta. */
-  .hg-head .hg-search-visual{
-    display:none;min-width:0;height:44px;padding:0 12px 0 14px;
-    align-items:center;gap:9px;border:1px solid var(--linea);border-radius:999px;
-    background:var(--ml-panel);color:var(--gris);box-shadow:var(--ml-sombra);
-    cursor:default;pointer-events:none;user-select:none;
-  }
-  .hg-head .hg-search-visual svg{width:18px;height:18px;flex:none;color:var(--rojo)}
-  .hg-head .hg-search-visual span{min-width:0;font-size:12.5px;font-weight:500}
   @media(max-width:860px){
     .hg-head.cc-store-header{
       width:100%;padding:14px 16px 10px;
       grid-template-columns:auto minmax(76px,1fr) auto;gap:12px;
     }
-    .hg-head .cc-search{display:none}
+    .hg-head .cc-search{display:flex;min-width:0}
     .hg-head .cc-store-brand{gap:9px}
     .hg-head .cc-store-brand img{width:42px;height:42px}
     .hg-head .cc-store-brand__text small{display:none}
     .hg-head .cc-store-brand__text strong{font-size:18px}
-    .hg-head .hg-search-visual{display:flex;width:100%;height:44px;padding-inline:12px 9px}
     .hg-head .cc-store-actions{min-width:0}
     .hg-head [data-cuenta-carrito]{gap:6px}
     .hg-head .cc-auth-action,.hg-head .cc-action{min-height:44px}
@@ -100,8 +88,6 @@
     .hg-head.cc-store-header{padding-inline:12px;gap:8px}
     .hg-head .cc-store-brand__text{display:none}
     .hg-head .cc-store-brand img{width:38px;height:38px}
-    .hg-head .hg-search-visual{padding-inline:10px 7px;gap:6px}
-    .hg-head .hg-search-visual span{font-size:11.5px}
     .hg-head .cc-auth-action{padding-inline:8px;font-size:10.5px}
     .hg-head .cc-action{width:44px;padding:8px}
     .hg-head .cc-action--account{width:52px}
@@ -109,9 +95,6 @@
   @media(max-width:370px){
     .hg-head.cc-store-header{gap:6px;padding-inline:10px}
     .hg-head .cc-store-brand img{width:36px;height:36px}
-    .hg-head .hg-search-visual{gap:5px;padding-inline:8px 6px}
-    .hg-head .hg-search-visual svg{width:16px;height:16px}
-    .hg-head .hg-search-visual span{font-size:10.5px}
     .hg-head .cc-auth-action{padding-inline:6px;font-size:10px}
   }
 
@@ -618,10 +601,6 @@
     </button>
     <span class="cc-search__status" data-buscador-estado role="status" aria-live="polite"></span>
   </form>
-  <div class="hg-search-visual" aria-hidden="true">
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-4-4"/></svg>
-    <span>Buscar productos</span>
-  </div>
   <div class="hg-head-actions cc-store-actions">
     <span data-cuenta-carrito
           data-inicio-href="./"
@@ -719,7 +698,7 @@
        catalogo_publico. El render (marcado, clases y variables de color) vive en
        el <script type=module> del final de la pagina. Si no hay datos o falla la
        consulta, el grid queda vacio sin romper la pagina. -->
-  <div class="hg-grid" id="hg-grid" aria-live="polite"></div>
+  <div class="hg-grid" id="hg-grid" aria-live="polite" aria-busy="true"></div>
 </section>
 
 <!-- ============================================================
@@ -734,7 +713,8 @@
      · Si la consulta falla o no hay datos, degrada sobrio sin romper la pagina.
      ============================================================ -->
 <script type="module">
-  import { supabase } from './supabase-config.js';
+  import { supabase, SUPABASE_URL } from './supabase-config.js';
+  import { solicitarComposicion, extraerProductos, instrumentarRecomendaciones } from './componentes/motor-tienda.js?v=1';
 
   // Nombre del bucket publico de Campanas donde viven las imagenes de producto.
   const BUCKET_CAMPANAS = 'campanas';
@@ -748,56 +728,74 @@
       .replace(/"/g,'&quot;').replace(/'/g,'&#39;');
   }
 
-  // Resuelve la URL publica de un path del bucket 'campanas'. Si el path ya es
-  // una URL absoluta (http...), se devuelve tal cual (compatibilidad con datos
-  // viejos que hubieran guardado una URL en vez de un key).
+  // Resuelve una key o una URL HTTPS del bucket público 'campanas'. Cualquier
+  // origen distinto se rechaza y cae al placeholder estable de la tarjeta.
   function urlPublica(path){
-    if(!path) return '';
-    if(/^https?:\/\//i.test(path)) return path;
+    if(!path || typeof path !== 'string') return '';
+    if(/^https:\/\//i.test(path)){
+      try{
+        const candidata = new URL(path);
+        const storage = new URL(SUPABASE_URL);
+        const prefijo = '/storage/v1/object/public/' + BUCKET_CAMPANAS + '/';
+        if(candidata.origin === storage.origin && !candidata.username && !candidata.password &&
+           !candidata.port && candidata.pathname.startsWith(prefijo)) return candidata.href;
+      }catch(_){}
+      return '';
+    }
+    if(/^[a-z][a-z0-9+.-]*:/i.test(path)) return '';
+    const segmentos = path.split('/');
+    for(const segmento of segmentos){
+      let decodificado = '';
+      try{ decodificado = decodeURIComponent(segmento); }catch(_){ return ''; }
+      if(!segmento || decodificado === '.' || decodificado === '..' || /[\\/]/.test(decodificado)) return '';
+    }
     const { data } = supabase.storage.from(BUCKET_CAMPANAS).getPublicUrl(path);
     return (data && data.publicUrl) || '';
   }
 
-  // Deriva el path de la version LIVIANA ('-sm') a partir del path GRANDE, segun
-  // la convencion de subida del panel de Campanas: la galeria sube dos objetos
-  // por imagen con la MISMA base, la grande como '<base>.<ext>' y la liviana
-  // como '<base>-sm.<ext>'. Asi el grid del home puede pedir la liviana SIN
-  // cambiar el esquema ni la vista (que solo trae el path grande en 'imagenes').
-  // Si el path ya es una URL absoluta o no tiene extension reconocible, no se
-  // toca (no hay liviana derivable). El fallback a la grande se hace en el
-  // <img onerror> por si la liviana no existiese en Storage.
+  // La variante puede venir como key relativa o como URL HTTPS validable del
+  // bucket. En ambos casos solo cambia el pathname y conserva query/fragmento.
   function pathLiviana(pathGrande){
-    if(!pathGrande || /^https?:\/\//i.test(pathGrande)) return '';
-    const punto = pathGrande.lastIndexOf('.');
-    if(punto <= 0) return '';
-    const base = pathGrande.slice(0, punto);
-    const ext  = pathGrande.slice(punto + 1);
-    if(base.endsWith('-sm')) return pathGrande; // ya es liviana
-    return base + '-sm.' + ext;
+    if(!pathGrande || typeof pathGrande !== 'string') return '';
+    function conSufijo(path){
+      const punto = path.lastIndexOf('.');
+      const barra = path.lastIndexOf('/');
+      if(punto <= barra + 1 || punto === path.length - 1) return '';
+      const base = path.slice(0, punto);
+      return base.endsWith('-sm') ? path : base + '-sm.' + path.slice(punto + 1);
+    }
+    if(/^https:\/\//i.test(pathGrande)){
+      try{
+        const url = new URL(pathGrande);
+        const pathname = conSufijo(url.pathname);
+        if(!pathname) return '';
+        url.pathname = pathname;
+        return url.href;
+      }catch(_){ return ''; }
+    }
+    if(/^[a-z][a-z0-9+.-]*:/i.test(pathGrande)) return '';
+    return conSufijo(pathGrande);
   }
 
-  // Devuelve { liviana, grande } de URLs publicas para la FOTO del grid. Prefiere
-  // la primera imagen de la galeria (arreglo 'imagenes', que tiene version -sm);
-  // si no hay galeria, cae al banner (imagen_banner_path, que NO tiene -sm, asi
-  // que su liviana = grande). El grid pide la liviana y cae a la grande via
-  // onerror. Objetivo: calidad en la pagina de producto (usa la grande) SIN
-  // penalizar la carga del grid/miniaturas (usan la liviana).
+  // Devuelve { liviana, grande } de URLs públicas para la foto del grid. Los
+  // assets SN y la galería intentan su pareja -sm; el banner histórico conserva
+  // su única key. Cualquier -sm fallida cae a la variante grande en el <img>.
   function fotosGrid(fila){
     let grandePath = '';
-    let esGaleria = false; // true = primer elemento de 'imagenes' (tiene -sm); false = banner (sin -sm)
-    if(Array.isArray(fila.imagenes) && fila.imagenes.length && fila.imagenes[0]){
+    let tieneVarianteLiviana = false;
+    if(fila.asset && fila.asset.path){
+      grandePath = fila.asset.path;
+      tieneVarianteLiviana = true;
+    } else if(Array.isArray(fila.imagenes) && fila.imagenes.length && fila.imagenes[0]){
       grandePath = fila.imagenes[0];
-      esGaleria = true;
+      tieneVarianteLiviana = true;
     } else if(fila.imagen_banner_path){
       grandePath = fila.imagen_banner_path;
     }
     if(!grandePath) return { liviana: '', grande: '' };
     const grande = urlPublica(grandePath);
-    // Solo la galeria sube una version '-sm'; el banner se sube con una sola key
-    // sin sufijo. Por eso solo derivamos la liviana '-sm' cuando el origen es la
-    // galeria; para el banner liviana = grande (no pedir una liviana inexistente).
     let liviana = grande;
-    if(esGaleria){
+    if(tieneVarianteLiviana){
       const svPath = pathLiviana(grandePath);
       if(svPath) liviana = urlPublica(svPath) || grande;
     }
@@ -849,21 +847,8 @@
     return '';
   }
 
-  // Icono sobrio para el chip de agotado (circulo con barra), coherente con el
-  // .mg-agotado de la pagina de producto (nada alarmista).
-  const ICONO_AGOTADO = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M4.9 4.9 19.1 19.1"/></svg>';
-
-
-  // Chip de AGOTADO: viene del booleano catalogo_publico.agotado, que Inventario
-  // deriva del stock REAL (existencias<=0) del producto ligado. El numero exacto
-  // NUNCA se expone; solo llega este true/false. Chip sobrio en gris (no
-  // alarmista), coherente con el .mg-agotado de la pagina de producto.
-  function selloAgotado(fila){
-    if(fila.agotado !== true) return '';
-    return '<span class="hg-agotado">' + ICONO_AGOTADO + 'Agotado</span>';
-  }
-
   function tarjeta(fila){
+    if(!fila || fila.agotado === true || !Number.isSafeInteger(fila.max_comprable) || fila.max_comprable <= 0) return '';
     const href = hrefProducto(fila);
     // PALETA REDUCIDA: la tienda IGNORA a proposito color_fuerte/claro/sombra
     // que aun manda catalogo_publico (Opcion A, cambio solo de frontend). Toda
@@ -882,14 +867,14 @@
       const fbGrande = (foto.grande && foto.grande !== foto.liviana)
         ? "this.onerror=null;this.src='" + foto.grande.replace(/'/g, "\\'") + "'"
         : "this.onerror=null;this.remove()";
-      img = '<img src="' + esc(foto.liviana) + '" alt="' + esc(fila.nombre) + '" ' +
+      img = '<img src="' + esc(foto.liviana) + '" alt="' + esc((fila.asset && fila.asset.alt) || fila.nombre) + '" ' +
         'loading="lazy" onerror="' + esc(fbGrande) + '">';
     } else {
       img = phMarkup;
     }
 
     return '' +
-    '<a class="hg-tarjeta" href="' + esc(href) + '">' +
+    '<a class="hg-tarjeta" href="' + esc(href) + '" data-sn-producto-id="' + esc(fila.id) + '" data-sn-producto-slug="' + esc(fila.slug || '') + '">' +
       '<div class="hg-foto">' +
         // DISTINTIVO UNIFICADO (PC + movil): slot sobre el borde inferior
         // izquierdo de la foto. Estrella si es Elegido, "ULTIMAS X" si hay
@@ -901,10 +886,6 @@
         '<span class="hg-kicker">' + esc(fila.categoria_nombre || '') + '</span>' +
         '<h2 class="hg-nom">' + esc(fila.nombre) + '</h2>' +
         '<p class="hg-meta">' + esc(fila.detalle_presentacion || '') + '</p>' +
-        // Chip "Agotado" en el cuerpo (gris sobrio): se conserva como estado de
-        // compra. El aviso de urgencia del cuerpo ya no se pinta aqui (su lugar
-        // es el slot sobre la foto), asi que solo emitimos el chip de agotado.
-        (fila.agotado === true ? selloAgotado(fila) : '') +
         '<div class="hg-fila">' +
           '<span class="hg-precio"><b>' + esc(formatearPrecio(fila.precio_venta)) + '</b><small>COP</small></span>' +
           '<span class="hg-ir">Ver producto' + ICONO_FLECHA + '</span>' +
@@ -916,33 +897,45 @@
   async function pintarVitrina(){
     const grid = document.getElementById('hg-grid');
     if(!grid) return;
-    const campos = [
-      'id','nombre','slug','categoria_nombre','detalle_presentacion',
-      'imagen_banner_path','precio_venta','imagenes','sello_elegido',
-      'agotado','aviso_urgencia_activo','aviso_urgencia_cantidad','orden'
-    ].join(',');
+    grid.setAttribute('aria-busy', 'true');
     try{
-      const { data, error } = await supabase
-        .from('catalogo_publico')
-        .select(campos)
-        .order('orden', { ascending: true });
-      if(error) throw error;
-      const filas = (data || []).filter(function(f){
-        return f && f.nombre && (f.slug || f.id);
+      const composicion = await solicitarComposicion({
+        superficie: 'home_principal',
+        limite: 5,
+        layoutFallback: 'mosaico',
+        tituloFallback: 'Hora de descubrir'
       });
+      // Defensa duplicada en el consumidor: ni una respuesta futura del motor
+      // ni el fallback pueden reintroducir una fila agotada o sin compra posible.
+      const filas = extraerProductos(composicion).filter(function(f){
+        return f.agotado !== true && Number.isSafeInteger(f.max_comprable) && f.max_comprable > 0;
+      }).slice(0, 5);
       if(filas.length === 0){
         grid.innerHTML = '<p class="hg-vacio" role="status">No hay productos disponibles en este momento.</p>';
         return;
       }
       grid.innerHTML = filas.map(tarjeta).join('');
+      instrumentarRecomendaciones(grid, composicion);
     }catch(e){
       console.error('No se pudo cargar la vitrina desde Campañas:', e);
       grid.innerHTML = '<p class="hg-vacio" role="status">No pudimos cargar la selección. Inténtalo de nuevo más tarde.</p>';
+    }finally{
+      grid.setAttribute('aria-busy', 'false');
     }
   }
 
   pintarVitrina();
 </script>
+
+<section data-sn-slot="home-descubrimiento"
+         data-sn-superficie="home_descubrimiento"
+         data-sn-limite="8"
+         data-sn-layout="carril_derecha"
+         data-sn-titulo="Sigue descubriendo"
+         data-sn-subtitulo="Más productos disponibles, escogidos para explorar con calma."
+         data-sn-espera-selector="#hg-grid"
+         data-sn-excluir-selector="#hg-grid [data-sn-producto-id]"
+         hidden></section>
 
 <!-- ============================================================
      BLOQUE HISTORIA ("mas que productos...")
@@ -993,9 +986,9 @@
      ============================================================ -->
 <section id="mg-suscripcion" hidden></section>
 <script type="module" src="suscripcion/suscripcion.js?v=1"></script>
-<script type="module" src="componentes/cuenta-carrito.js?v=8"></script>
+<script type="module" src="componentes/cuenta-carrito.js?v=9"></script>
 <!-- Analitica propia (EM7): solo con el interruptor del back-office encendido y si la persona acepta. -->
-<script type="module" src="analitica/analitica.js?v=2"></script>
+<script type="module" src="analitica/analitica.js?v=3"></script>
 
 <!-- ============================================================
      FOOTER completo
