@@ -6,6 +6,7 @@ import { fileURLToPath } from 'node:url';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const TEMPLATE_PATH = path.join(ROOT, 'producto', 'index.html');
+const CATEGORY_PAGE_PATH = path.join(ROOT, 'categorias', 'index.html');
 const CATALOGO_PATH = path.join(ROOT, 'producto', 'catalogo-seo.json');
 const CONFIG_PATH = path.join(ROOT, 'supabase-config.js');
 const SITE_URL = 'https://magandhi.com';
@@ -341,7 +342,10 @@ function sitemap(catalog) {
       .filter((product) => !product.retirado)
       .map((product) => `${SITE_URL}/producto/${product.slug}/`)
     : [];
-  const urls = [SITE_URL + '/', ...productUrls];
+  const categoryUrls = catalog.politicas === 'publicada'
+    ? [`${SITE_URL}/categorias/`]
+    : [];
+  const urls = [SITE_URL + '/', ...categoryUrls, ...productUrls];
   return `<?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
 ${urls.map((url) => `  <url><loc>${xml(url)}</loc></url>`).join('\n')}
@@ -355,6 +359,18 @@ Allow: /
 
 Sitemap: ${SITE_URL}/sitemap.xml
 `;
+}
+
+async function categoryPage(catalog) {
+  const current = await readFile(CATEGORY_PAGE_PATH, 'utf8');
+  const marker = /<meta name="robots" content="(?:noindex|index),follow" data-politicas-categorias>/;
+  if (!marker.test(current)) {
+    fail('categorias/index.html no contiene el marcador data-politicas-categorias.');
+  }
+  const robotsMeta = catalog.politicas === 'publicada'
+    ? '<meta name="robots" content="index,follow" data-politicas-categorias>'
+    : '<meta name="robots" content="noindex,follow" data-politicas-categorias>';
+  return current.replace(marker, robotsMeta);
 }
 
 async function expectedOutputs(catalog, config) {
@@ -373,6 +389,7 @@ async function expectedOutputs(catalog, config) {
       outputs.set(`producto/${alias}/index.html`, aliasShell(alias, product.slug));
     }
   }
+  outputs.set('categorias/index.html', await categoryPage(catalog));
   outputs.set('sitemap.xml', sitemap(catalog));
   outputs.set('robots.txt', robots());
   return outputs;
@@ -387,7 +404,8 @@ async function safeWrite(relative, content) {
     const generated = current.includes(GENERATED_MARKER);
     const historicalGrisi = relative === 'producto/grisi-manzanilla-gold/index.html' &&
       current.includes('MAGANDHI · Redirect de compatibilidad.');
-    const rootArtifact = relative === 'sitemap.xml' || relative === 'robots.txt';
+    const rootArtifact = relative === 'sitemap.xml' || relative === 'robots.txt' ||
+      relative === 'categorias/index.html';
     if (!generated && !historicalGrisi && !rootArtifact && current !== content) {
       fail(`Se rechazó sobrescribir ${relative}: no tiene marcador generado.`);
     }
@@ -450,7 +468,7 @@ async function main() {
   config = await readPublicConfig();
   if (args[0] === '--check') {
     const total = await check(catalog, config);
-    console.log(`P1 correcto: catálogo, ${total - 2} shells, sitemap.xml y robots.txt coinciden.`);
+    console.log(`P1 correcto: catálogo, ${total - 3} shells, categorías, sitemap.xml y robots.txt coinciden.`);
     return;
   }
   const result = await generate(catalog, config);
