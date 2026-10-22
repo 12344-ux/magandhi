@@ -3,7 +3,7 @@ import {
   buscarProductos,
   extraerProductos,
   montarSlots,
-} from '../componentes/motor-tienda.js?v=1';
+} from '../componentes/motor-tienda.js?v=2';
 import {
   cargarCategoriasPublicas,
   categoriaPorCodigo,
@@ -17,14 +17,19 @@ import { crearPanelCategorias } from '../componentes/categorias-panel.js?v=2';
 const BUCKET_CAMPANAS = 'campanas';
 const TAMANO_PAGINA_CATALOGO = 60;
 const MAX_TOTAL_CATALOGO = 10000;
-// El contrato limita total/desplazamiento a 10.000: como máximo 167 páginas.
-const MAX_PAGINAS_CATALOGO = Math.ceil(MAX_TOTAL_CATALOGO / TAMANO_PAGINA_CATALOGO);
 const parametros = new URLSearchParams(window.location.search);
 const codigoSolicitado = parametros.get('categoria') || '';
 const hayFiltroSolicitado = Boolean(codigoSolicitado.trim());
+const gridProductos = document.getElementById('cp-product-grid');
+const botonMasProductos = document.getElementById('cp-products-more');
+const estadoMasProductos = document.getElementById('cp-products-more-status');
 let categoriasDisponibles = [];
 let solicitudCategorias = null;
 let cicloInicio = 0;
+let generacionCatalogo = 0;
+let controladorCatalogo = null;
+let catalogoCargando = false;
+let paginacionCatalogo = null;
 
 function esc(valor) {
   return String(valor ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;')
@@ -136,8 +141,9 @@ function tarjetaProducto(fila, categoriaSeleccionada) {
   </a>`;
 }
 
-function activarFallbacksImagen() {
-  document.querySelectorAll('[data-fallback-grande]').forEach((imagen) => {
+function activarFallbacksImagen(raiz = document) {
+  raiz.querySelectorAll('[data-fallback-grande]:not([data-fallback-listo])').forEach((imagen) => {
+    imagen.dataset.fallbackListo = 'true';
     imagen.addEventListener('error', () => {
       const grande = imagen.dataset.fallbackGrande || '';
       if (!imagen.dataset.intentoGrande && grande && imagen.src !== grande) {
@@ -151,63 +157,79 @@ function activarFallbacksImagen() {
   });
 }
 
-async function consultarCatalogo(categoriaSeleccionada) {
-  const filas = [];
-  const vistos = new Set();
-  let totalEsperado = null;
-  let fuenteEsperada = null;
-  let desde = 0;
+function clavesCatalogo(fila) {
+  const claves = [`id:${fila.id.toLowerCase()}`];
+  if (fila.slug) claves.push(`slug:${fila.slug.toLowerCase()}`);
+  return claves;
+}
 
-  for (let pagina = 0; pagina < MAX_PAGINAS_CATALOGO; pagina += 1) {
-    const respuesta = await buscarProductos({
-      consulta: '',
-      categoria: categoriaSeleccionada?.codigo || null,
-      limite: TAMANO_PAGINA_CATALOGO,
-      desde,
-      productoActual: null,
-    });
-    if (!Number.isSafeInteger(respuesta.total) || respuesta.total < 0 ||
-        respuesta.total > MAX_TOTAL_CATALOGO) {
-      throw new Error('SN1 devolvió un total de catálogo fuera de contrato.');
-    }
-    const fuenteActual = `${respuesta.modo}|${respuesta.modelo_version}`;
-    if (fuenteEsperada === null) fuenteEsperada = fuenteActual;
-    else if (fuenteActual !== fuenteEsperada) {
-      throw new Error('La fuente del catálogo cambió durante la paginación; es necesario reintentar.');
-    }
-    if (totalEsperado === null) totalEsperado = respuesta.total;
-    else if (respuesta.total !== totalEsperado) {
-      throw new Error('El catálogo cambió durante la paginación; es necesario reintentar.');
-    }
-    if (totalEsperado === 0) return [];
-
-    const lote = extraerProductos(respuesta, { productoActual: null }).filter((fila) =>
-      fila.agotado !== true && Number.isSafeInteger(fila.max_comprable) && fila.max_comprable > 0
-    );
-    let agregados = 0;
-    for (const fila of lote) {
-      const claves = [`id:${fila.id.toLowerCase()}`];
-      if (fila.slug) claves.push(`slug:${fila.slug.toLowerCase()}`);
-      if (claves.some((clave) => vistos.has(clave))) continue;
-      claves.forEach((clave) => vistos.add(clave));
-      filas.push(fila);
-      agregados += 1;
-    }
-
-    const siguienteDesde = desde + TAMANO_PAGINA_CATALOGO;
-    if (siguienteDesde >= totalEsperado) {
-      if (filas.length !== totalEsperado) {
-        throw new Error('SN1 devolvió páginas incompletas o productos duplicados.');
-      }
-      return filas;
-    }
-    if (!lote.length || agregados === 0 || siguienteDesde <= desde) {
-      throw new Error('SN1 no avanzó durante la paginación del catálogo.');
-    }
-    desde = siguienteDesde;
+function validarPaginaCatalogo(respuesta, desde, estadoAnterior = null, categoriaSeleccionada = null) {
+  if (!Number.isSafeInteger(respuesta?.total) || respuesta.total < 0 ||
+      respuesta.total > MAX_TOTAL_CATALOGO || !Array.isArray(respuesta.productos)) {
+    throw new Error('SN1 devolvió una página de catálogo fuera de contrato.');
+  }
+  const modo = String(respuesta.modo || '');
+  const modelo = String(respuesta.modelo_version || '');
+  if (!modo || !modelo) throw new Error('SN1 no identificó la fuente del catálogo.');
+  if (estadoAnterior && (
+    estadoAnterior.total !== respuesta.total ||
+    estadoAnterior.modo !== modo ||
+    estadoAnterior.modelo !== modelo ||
+    estadoAnterior.desde !== desde
+  )) {
+    throw new Error('El total o la fuente del catálogo cambió durante la paginación.');
+  }
+  const filasEsperadas = Math.min(
+    TAMANO_PAGINA_CATALOGO,
+    Math.max(0, respuesta.total - desde),
+  );
+  if (respuesta.productos.length !== filasEsperadas) {
+    throw new Error('SN1 devolvió una página incoherente con el total del catálogo.');
+  }
+  const filas = extraerProductos(respuesta, { productoActual: null });
+  if (filas.length !== filasEsperadas || filas.some((fila) =>
+    !fila?.nombre || (!fila.slug && !fila.id) || fila.agotado === true ||
+    !Number.isSafeInteger(fila.max_comprable) || fila.max_comprable <= 0 ||
+    (categoriaSeleccionada && !filaPerteneceACategoria(fila, categoriaSeleccionada.codigo))
+  )) {
+    throw new Error('SN1 devolvió filas no comprables o incompletas en el catálogo.');
   }
 
-  throw new Error('SN1 superó el techo documentado de paginación del catálogo.');
+  const claves = new Set(estadoAnterior?.claves || []);
+  for (const fila of filas) {
+    const candidatas = clavesCatalogo(fila);
+    if (candidatas.some((clave) => claves.has(clave))) {
+      throw new Error('SN1 devolvió productos duplicados entre páginas del catálogo.');
+    }
+    candidatas.forEach((clave) => claves.add(clave));
+  }
+  const cantidad = (estadoAnterior?.cantidad || 0) + filas.length;
+  const siguienteDesde = desde + TAMANO_PAGINA_CATALOGO;
+  if (siguienteDesde >= respuesta.total && cantidad !== respuesta.total) {
+    throw new Error('SN1 devolvió páginas incompletas para el total anunciado.');
+  }
+  return {
+    filas,
+    estado: {
+      total: respuesta.total,
+      modo,
+      modelo,
+      desde: siguienteDesde,
+      cantidad,
+      claves,
+    },
+  };
+}
+
+async function consultarPaginaCatalogo(categoriaSeleccionada, desde, signal) {
+  return buscarProductos({
+    consulta: '',
+    categoria: categoriaSeleccionada?.codigo || null,
+    limite: TAMANO_PAGINA_CATALOGO,
+    desde,
+    signal,
+    productoActual: null,
+  });
 }
 
 function pintarNavegacion(categorias, categoriaSeleccionada) {
@@ -350,54 +372,156 @@ function markupEstadoError(titulo = 'No pudimos cargar la selección', detalle =
 function configurarSlotDescubrimiento(categoriaSeleccionada, habilitado = true) {
   const slot = document.querySelector('[data-sn-slot="categoria-descubrimiento"]');
   if (!slot) return;
-  const reactivado = habilitado && slot.dataset.snDisabled === 'true';
   slot.dataset.snCategoria = categoriaSeleccionada?.codigo || '';
   slot.dataset.snDisabled = habilitado ? 'false' : 'true';
   if (!habilitado) slot.hidden = true;
-  if (reactivado) montarSlots(slot, { forzar: true });
+  montarSlots(slot, { forzar: true }).catch(() => { /* El slot falla cerrado. */ });
+}
+
+function actualizarBotonMas() {
+  if (!botonMasProductos) return;
+  const hayMas = !!paginacionCatalogo && paginacionCatalogo.desde < paginacionCatalogo.total;
+  botonMasProductos.hidden = !hayMas;
+  botonMasProductos.disabled = catalogoCargando;
+  botonMasProductos.textContent = catalogoCargando ? 'Cargando…' : 'Ver más';
+}
+
+function detenerCargaCatalogo() {
+  controladorCatalogo?.abort();
+  controladorCatalogo = null;
+  generacionCatalogo += 1;
+  catalogoCargando = false;
+  paginacionCatalogo = null;
+  if (gridProductos) gridProductos.setAttribute('aria-busy', 'false');
+  if (estadoMasProductos) {
+    estadoMasProductos.textContent = '';
+    estadoMasProductos.setAttribute('role', 'status');
+  }
+  actualizarBotonMas();
+}
+
+function markupProductos(filas, categoriaSeleccionada) {
+  const tarjetas = filas.map((fila) => tarjetaProducto(fila, categoriaSeleccionada));
+  if (tarjetas.some((tarjeta) => !tarjeta)) {
+    throw new Error('No se pudo pintar una fila válida del catálogo.');
+  }
+  return tarjetas.join('');
 }
 
 async function pintarProductos(categoriaSeleccionada) {
-  const grid = document.getElementById('cp-product-grid');
-  grid.setAttribute('aria-busy', 'true');
-  configurarSlotDescubrimiento(categoriaSeleccionada, true);
-  grid.innerHTML = '<p class="cp-state cp-state--loading" role="status">Cargando la selección…</p>';
+  controladorCatalogo?.abort();
+  const controlador = new AbortController();
+  controladorCatalogo = controlador;
+  const token = ++generacionCatalogo;
+  catalogoCargando = true;
+  paginacionCatalogo = null;
+  gridProductos.setAttribute('aria-busy', 'true');
+  configurarSlotDescubrimiento(categoriaSeleccionada, false);
+  gridProductos.innerHTML = '<p class="cp-state cp-state--loading" role="status">Cargando la selección…</p>';
+  if (estadoMasProductos) {
+    estadoMasProductos.textContent = '';
+    estadoMasProductos.setAttribute('role', 'status');
+  }
+  actualizarBotonMas();
+  let renderExitoso = false;
   try {
-    const filas = (await consultarCatalogo(categoriaSeleccionada))
-      .filter((fila) => fila?.nombre && (fila.slug || fila.id) && fila.agotado !== true &&
-        Number.isSafeInteger(fila.max_comprable) && fila.max_comprable > 0);
-    if (!filas.length) {
-      grid.innerHTML = markupEstadoVacio(categoriaSeleccionada);
-      return;
+    const respuesta = await consultarPaginaCatalogo(categoriaSeleccionada, 0, controlador.signal);
+    if (token !== generacionCatalogo) return;
+    const pagina = validarPaginaCatalogo(respuesta, 0, null, categoriaSeleccionada);
+    if (!pagina.filas.length) {
+      gridProductos.innerHTML = markupEstadoVacio(categoriaSeleccionada);
+    } else {
+      gridProductos.innerHTML = markupProductos(pagina.filas, categoriaSeleccionada);
+      activarFallbacksImagen(gridProductos);
     }
-    grid.innerHTML = filas.map((fila) => tarjetaProducto(fila, categoriaSeleccionada)).join('');
-    activarFallbacksImagen();
+    paginacionCatalogo = { ...pagina.estado, categoriaSeleccionada };
+    renderExitoso = true;
   } catch (error) {
-    console.error('No se pudo cargar el catálogo público por categorías:', error);
-    grid.innerHTML = markupEstadoError();
-    grid.querySelector('[data-catalogo-reintentar]')?.addEventListener('click', () => pintarProductos(categoriaSeleccionada));
+    if (error?.name !== 'AbortError' && token === generacionCatalogo) {
+      console.error('No se pudo cargar el catálogo público por categorías:', error);
+      gridProductos.innerHTML = markupEstadoError();
+      gridProductos.querySelector('[data-catalogo-reintentar]')?.addEventListener('click', () => pintarProductos(categoriaSeleccionada));
+    }
   } finally {
-    grid.setAttribute('aria-busy', 'false');
+    if (token === generacionCatalogo) {
+      catalogoCargando = false;
+      if (controladorCatalogo === controlador) controladorCatalogo = null;
+      gridProductos.setAttribute('aria-busy', 'false');
+      actualizarBotonMas();
+      if (renderExitoso) configurarSlotDescubrimiento(categoriaSeleccionada, true);
+    }
+  }
+}
+
+async function cargarMasProductos() {
+  if (catalogoCargando || !paginacionCatalogo ||
+      paginacionCatalogo.desde >= paginacionCatalogo.total) return;
+  const estadoAnterior = paginacionCatalogo;
+  const categoriaSeleccionada = estadoAnterior.categoriaSeleccionada;
+  const desde = estadoAnterior.desde;
+  const controlador = new AbortController();
+  controladorCatalogo?.abort();
+  controladorCatalogo = controlador;
+  const token = ++generacionCatalogo;
+  catalogoCargando = true;
+  gridProductos.setAttribute('aria-busy', 'true');
+  configurarSlotDescubrimiento(categoriaSeleccionada, false);
+  if (estadoMasProductos) {
+    estadoMasProductos.textContent = 'Cargando más productos…';
+    estadoMasProductos.setAttribute('role', 'status');
+  }
+  actualizarBotonMas();
+  let renderExitoso = false;
+  try {
+    const respuesta = await consultarPaginaCatalogo(categoriaSeleccionada, desde, controlador.signal);
+    if (token !== generacionCatalogo || paginacionCatalogo !== estadoAnterior) return;
+    const pagina = validarPaginaCatalogo(respuesta, desde, estadoAnterior, categoriaSeleccionada);
+    const markup = markupProductos(pagina.filas, categoriaSeleccionada);
+    if (markup) gridProductos.insertAdjacentHTML('beforeend', markup);
+    activarFallbacksImagen(gridProductos);
+    paginacionCatalogo = { ...pagina.estado, categoriaSeleccionada };
+    if (estadoMasProductos) estadoMasProductos.textContent = '';
+    renderExitoso = true;
+  } catch (error) {
+    if (error?.name !== 'AbortError' && token === generacionCatalogo) {
+      console.error('No se pudo cargar otra página del catálogo:', error);
+      if (estadoMasProductos) {
+        estadoMasProductos.textContent = 'No pudimos cargar más productos. Puedes intentarlo de nuevo.';
+        estadoMasProductos.setAttribute('role', 'alert');
+      }
+    }
+  } finally {
+    if (token === generacionCatalogo) {
+      catalogoCargando = false;
+      if (controladorCatalogo === controlador) controladorCatalogo = null;
+      gridProductos.setAttribute('aria-busy', 'false');
+      actualizarBotonMas();
+      // También se restaura tras un error para que el slot no permanezca oculto;
+      // cada render exitoso fuerza una composición con todas las exclusiones.
+      if (renderExitoso || gridProductos.querySelector('[data-sn-producto-id]')) {
+        configurarSlotDescubrimiento(categoriaSeleccionada, true);
+      }
+    }
   }
 }
 
 function pintarCategoriaNoDisponible() {
+  detenerCargaCatalogo();
   configurarSlotDescubrimiento(null, false);
-  const grid = document.getElementById('cp-product-grid');
-  grid.setAttribute('aria-busy', 'false');
-  grid.innerHTML = markupCategoriaNoDisponible();
+  gridProductos.innerHTML = markupCategoriaNoDisponible();
 }
 
 function pintarProductosBloqueadosPorCategorias() {
+  detenerCargaCatalogo();
   configurarSlotDescubrimiento(null, false);
-  const grid = document.getElementById('cp-product-grid');
-  grid.setAttribute('aria-busy', 'false');
-  grid.innerHTML = markupEstadoError(
+  gridProductos.innerHTML = markupEstadoError(
     'No pudimos abrir esta categoría',
     'Necesitamos consultar la lista vigente antes de aplicar el filtro. Revisa tu conexión e inténtalo de nuevo.',
   );
-  grid.querySelector('[data-catalogo-reintentar]')?.addEventListener('click', () => iniciar(true));
+  gridProductos.querySelector('[data-catalogo-reintentar]')?.addEventListener('click', () => iniciar(true));
 }
+
+botonMasProductos?.addEventListener('click', cargarMasProductos);
 
 crearPanelCategorias({
   obtenerCategorias,
@@ -408,6 +532,8 @@ crearPanelCategorias({
 
 async function iniciar(recargar = false) {
   const ciclo = ++cicloInicio;
+  detenerCargaCatalogo();
+  configurarSlotDescubrimiento(null, false);
   pintarCargaCategorias();
   try {
     const resultado = await obtenerCategorias({ recargar });

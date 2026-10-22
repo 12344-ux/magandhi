@@ -5,8 +5,8 @@ import {
   quitarDelCarrito,
   mensajeErrorCarrito,
 } from './carrito-core.js?v=3';
-import { configurarCheckoutCarrito } from './checkout-carrito.js?v=10';
-import { sincronizarCuentaCarrito } from '../componentes/cuenta-carrito.js?v=9';
+import { configurarCheckoutCarrito } from './checkout-carrito.js?v=11';
+import { sincronizarCuentaCarrito } from '../componentes/cuenta-carrito.js?v=10';
 import { iniciarCompraCarrito } from '../compra/compra-core.js?v=1';
 
 const vistas = ['loading', 'session', 'disabled', 'error', 'empty', 'content'];

@@ -10,6 +10,7 @@ const MAX_COMPRABLE = 20;
 const MAX_LIMITE_COMPOSICION = 36;
 const MAX_LIMITE_BUSQUEDA = 60;
 const MAX_TOTAL_BUSQUEDA = 10000;
+const TAMANO_PAGINA_FALLBACK = 500;
 const MAX_EXCLUSIONES_CONTEXTO = 100;
 const TIPOS_MODULO = new Set([
   'mosaico',
@@ -45,16 +46,21 @@ const ETIQUETAS_RAZON = Object.freeze({
 });
 const RAZONES = new Set(Object.keys(ETIQUETAS_RAZON));
 const SLUG_RE = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
+const CATEGORIA_RE = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
 const MODULO_RE = /^[a-z0-9][a-z0-9_-]{0,79}$/;
+const VERSION_RE = /^[a-z0-9][a-z0-9._-]{0,59}$/;
+const MODOS_COMPOSICION = new Set(['contextual', 'personalizado']);
+const MODOS_BUSQUEDA = new Set(['busqueda', 'categoria', 'exploracion']);
+const TRANSLITERACION_BUSQUEDA = Object.freeze({
+  'ł': 'l', 'đ': 'd', 'ð': 'd', 'þ': 't', 'ø': 'o', 'ı': 'i',
+});
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
-const CAMPOS_BASE = [
+const CAMPOS_CATALOGO_SEGURO = [
   'id', 'nombre', 'slug', 'categoria_codigo', 'categoria_nombre',
   'detalle_presentacion', 'precio_venta', 'imagen_banner_path', 'imagenes',
   'sello_elegido', 'agotado', 'aviso_urgencia_activo',
-  'aviso_urgencia_cantidad', 'orden',
+  'aviso_urgencia_cantidad', 'orden', 'max_comprable', 'categoria_codigos',
 ];
-const CAMPOS_MAX = [...CAMPOS_BASE, 'max_comprable'];
-const CAMPOS_COMPLETOS = [...CAMPOS_MAX, 'categoria_codigos'];
 const raizTienda = new URL('../', import.meta.url);
 const urlBuscar = new URL('buscar/', raizTienda);
 const urlStorage = new URL(SUPABASE_URL);
@@ -97,14 +103,30 @@ function texto(valor, maximo = 240) {
     : '';
 }
 
+function textoEstricto(valor, maximo, formato, { permitirVacio = false } = {}) {
+  if (typeof valor !== 'string') return null;
+  const limpio = valor.normalize('NFKC').replace(/\s+/g, ' ').trim();
+  if (limpio.length > maximo || (!permitirVacio && !limpio) || (formato && !formato.test(limpio))) {
+    return null;
+  }
+  return limpio;
+}
+
 function consultaNormalizada(valor) {
   return texto(valor, 120).toLocaleLowerCase('es');
 }
 
 function claveBusqueda(valor) {
   return consultaNormalizada(valor)
-    .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
-    .replace(/[^a-z0-9]+/g, ' ').trim();
+    .normalize('NFKD')
+    .replace(/[\u0300-\u036f\u1ab0-\u1aff\u1dc0-\u1dff\u20d0-\u20ff\ufe20-\ufe2f]/gu, '')
+    .replace(/æ/g, 'ae')
+    .replace(/œ/g, 'oe')
+    .replace(/ß/g, 'ss')
+    .replace(/[łđðþøı]/g, (caracter) => TRANSLITERACION_BUSQUEDA[caracter])
+    .replace(/[^a-z0-9]+/g, ' ')
+    .trim()
+    .replace(/\s+/g, ' ');
 }
 
 function consultaSensible(valor) {
@@ -175,7 +197,7 @@ function semillaDePestana() {
   if (semillaMemoria) return semillaMemoria;
   try {
     const guardada = sessionStorage.getItem(CLAVE_SEMILLA) || '';
-    if (/^[a-zA-Z0-9_-]{16,96}$/.test(guardada)) {
+    if (/^[a-zA-Z0-9_-]{16,80}$/.test(guardada)) {
       semillaMemoria = guardada;
       return semillaMemoria;
     }
@@ -198,7 +220,7 @@ function categoriaValida(valor) {
   const categoria = typeof valor === 'string'
     ? valor.normalize('NFKC').trim().toLowerCase()
     : '';
-  return categoria.length <= 64 && SLUG_RE.test(categoria) ? categoria : null;
+  return categoria.length <= 64 && CATEGORIA_RE.test(categoria) ? categoria : null;
 }
 
 function slugValido(valor) {
@@ -258,11 +280,11 @@ function listaTextos(valor, maximo = 12) {
   return valor.map((item) => texto(item, 1000)).filter(Boolean).slice(0, maximo);
 }
 
-function porcentajeFoco(valor) {
+function focoNormalizado(valor) {
   const numero = typeof valor === 'number'
     ? valor
     : (typeof valor === 'string' && valor.trim() ? Number(valor) : NaN);
-  return Number.isFinite(numero) && numero >= 0 && numero <= 1 ? numero * 100 : 50;
+  return Number.isFinite(numero) && numero >= 0 && numero <= 1 ? numero : 0.5;
 }
 
 function razonCodigo(valor) {
@@ -285,13 +307,13 @@ function normalizarAsset(valor) {
     path,
     ancho,
     alto,
-    foco_x: porcentajeFoco(valor.foco_x),
-    foco_y: porcentajeFoco(valor.foco_y),
+    foco_x: focoNormalizado(valor.foco_x),
+    foco_y: focoNormalizado(valor.foco_y),
     alt: texto(valor.alt, 240),
   });
 }
 
-function normalizarProducto(valor, { compatibilidadMax = false } = {}) {
+function normalizarProducto(valor) {
   if (!valor || typeof valor !== 'object' || Array.isArray(valor)) return null;
   const id = texto(valor.id, 120);
   const nombre = texto(valor.nombre, 180);
@@ -301,14 +323,8 @@ function normalizarProducto(valor, { compatibilidadMax = false } = {}) {
   const slug = slugValido(slugEntrada) || '';
   if (!id || !nombre || (slugEntrada && !slug)) return null;
 
-  let maxComprable;
-  if (Object.prototype.hasOwnProperty.call(valor, 'max_comprable')) {
-    maxComprable = entero(valor.max_comprable, 0, MAX_COMPRABLE, -1);
-  } else if (compatibilidadMax) {
-    maxComprable = valor.agotado === true ? 0 : 1;
-  } else {
-    return null;
-  }
+  if (!Object.prototype.hasOwnProperty.call(valor, 'max_comprable')) return null;
+  const maxComprable = entero(valor.max_comprable, 0, MAX_COMPRABLE, -1);
   if (maxComprable < 0) return null;
 
   const precio = Number(valor.precio_venta);
@@ -412,70 +428,68 @@ export function extraerProductos(valor, opciones = {}) {
   return salida;
 }
 
-function textoError(error) {
-  return `${error?.code || ''} ${error?.message || ''} ${error?.details || ''} ${error?.hint || ''}`.toLowerCase();
-}
-
-function esColumnaAusente(error, columna) {
-  const detalle = textoError(error);
-  return detalle.includes(columna.toLowerCase()) && (
-    detalle.includes('does not exist') || detalle.includes('no existe') ||
-    detalle.includes('schema cache') || detalle.includes('42703') ||
-    detalle.includes('pgrst200') || detalle.includes('pgrst204')
-  );
-}
-
-function esVistaSeguraAusente(error) {
-  const detalle = textoError(error);
-  return detalle.includes('sn_catalogo_seguro_v1') && (
-    detalle.includes('does not exist') || detalle.includes('no existe') ||
-    detalle.includes('schema cache') || detalle.includes('42p01') ||
-    detalle.includes('pgrst200') || detalle.includes('pgrst204') ||
-    detalle.includes('pgrst205')
-  );
-}
-
-function construirConsultaCatalogo(tabla, campos) {
-  return supabase.from(tabla)
-    .select(campos.join(','))
+function construirConsultaCatalogoSeguro(desde, hasta) {
+  return supabase.from('sn_catalogo_seguro_v1')
+    .select(CAMPOS_CATALOGO_SEGURO.join(','), { count: 'exact' })
     .order('orden', { ascending: true })
-    .order('slug', { ascending: true });
+    .order('slug', { ascending: true })
+    .range(desde, hasta);
 }
 
-async function consultarCatalogoEtapa(campos) {
-  const seguro = await construirConsultaCatalogo('sn_catalogo_seguro_v1', campos);
-  if (!seguro.error) return seguro;
-  // Compatibilidad de despliegue: antes de aplicar SN1 la vista aún no existe.
-  // Una vez presente, cualquier otro error falla cerrado y jamás se elude
-  // consultando catalogo_publico sin sus ventanas editoriales.
-  if (!esVistaSeguraAusente(seguro.error)) return seguro;
-  return construirConsultaCatalogo('catalogo_publico', campos);
-}
-
-async function cargarCatalogoPublico() {
+async function cargarCatalogoSeguro() {
   if (catalogoPromesa) return catalogoPromesa;
-  catalogoPromesa = (async () => {
-    let resultado = await consultarCatalogoEtapa(CAMPOS_COMPLETOS);
-    let compatibilidadMax = false;
-    if (resultado.error && esColumnaAusente(resultado.error, 'categoria_codigos')) {
-      resultado = await consultarCatalogoEtapa(CAMPOS_MAX);
-    }
-    if (resultado.error && esColumnaAusente(resultado.error, 'max_comprable')) {
-      resultado = await consultarCatalogoEtapa(CAMPOS_BASE);
-      compatibilidadMax = true;
-    }
-    if (resultado.error) throw resultado.error;
+  const tarea = (async () => {
     const vistos = new Set();
-    return (resultado.data || []).map((fila) => normalizarProducto(fila, { compatibilidadMax }))
-      .filter((producto) => {
-        if (!productoDisponible(producto)) return false;
-        return registrarProductoVisto(vistos, producto);
-      });
-  })().catch((error) => {
-    catalogoPromesa = null;
-    throw error;
-  });
-  return catalogoPromesa;
+    const productos = [];
+    let totalEsperado = null;
+
+    // PostgREST puede truncar silenciosamente una lectura sin rango. Se usan
+    // páginas explícitas y count exacto para probar completitud hasta el techo.
+    for (let desde = 0; desde <= MAX_TOTAL_BUSQUEDA; desde += TAMANO_PAGINA_FALLBACK) {
+      const resultado = await construirConsultaCatalogoSeguro(
+        desde,
+        desde + TAMANO_PAGINA_FALLBACK - 1,
+      );
+      if (resultado.error) throw resultado.error;
+      if (!Array.isArray(resultado.data) || !Number.isSafeInteger(resultado.count) ||
+          resultado.count < 0 || resultado.count > MAX_TOTAL_BUSQUEDA) {
+        throw new ContratoSNError('El catálogo seguro SN1 no devolvió una página contable válida.');
+      }
+      if (totalEsperado === null) totalEsperado = resultado.count;
+      else if (resultado.count !== totalEsperado) {
+        throw new ContratoSNError('El catálogo seguro SN1 cambió durante la paginación.');
+      }
+      const filasEsperadas = Math.min(
+        TAMANO_PAGINA_FALLBACK,
+        Math.max(0, totalEsperado - desde),
+      );
+      if (resultado.data.length !== filasEsperadas) {
+        throw new ContratoSNError('El catálogo seguro SN1 devolvió una página truncada.');
+      }
+
+      for (const fila of resultado.data) {
+        const producto = normalizarProducto(fila);
+        if (!producto || !productoDisponible(producto)) {
+          throw new ContratoSNError('El catálogo seguro SN1 devolvió una fila no comprable.');
+        }
+        if (!registrarProductoVisto(vistos, producto)) {
+          throw new ContratoSNError('El catálogo seguro SN1 devolvió productos duplicados.');
+        }
+        productos.push(producto);
+      }
+      if (productos.length === totalEsperado) return Object.freeze(productos);
+    }
+
+    throw new ContratoSNError('El catálogo seguro SN1 no terminó dentro del máximo público.');
+  })();
+  catalogoPromesa = tarea;
+  try {
+    return await tarea;
+  } finally {
+    // Solo deduplica lectores simultáneos; una solicitud posterior vuelve a
+    // consultar la vista segura y nunca reutiliza indefinidamente datos viejos.
+    if (catalogoPromesa === tarea) catalogoPromesa = null;
+  }
 }
 
 function validarRaizRespuesta(valor, campos) {
@@ -503,21 +517,28 @@ function validarRaizRespuesta(valor, campos) {
 
 function normalizarComposicion(valor, superficie, opciones) {
   validarRaizRespuesta(valor, ['request_id', 'modelo_version', 'modo', 'superficie', 'modulos']);
-  const requestId = texto(valor.request_id, 120).toLowerCase();
-  const modeloVersion = texto(valor.modelo_version, 80);
-  const modo = texto(valor.modo, 60);
-  if (!UUID_RE.test(requestId) || !modeloVersion || !modo ||
-      texto(valor.superficie, 64).toLowerCase() !== superficie || !Array.isArray(valor.modulos)) {
+  const requestId = textoEstricto(valor.request_id, 36, UUID_RE)?.toLowerCase() || '';
+  const modeloVersion = textoEstricto(valor.modelo_version, 60, VERSION_RE) || '';
+  const modo = textoEstricto(valor.modo, 60, VERSION_RE) || '';
+  const superficieRespuesta = textoEstricto(valor.superficie, 64)?.toLowerCase() || '';
+  if (!requestId || !modeloVersion || !MODOS_COMPOSICION.has(modo) ||
+      superficieRespuesta !== superficie || !Array.isArray(valor.modulos) ||
+      valor.modulos.length > 3) {
     throw new ContratoSNError('La composición SN1 no corresponde a la superficie solicitada.');
   }
   const exclusiones = conjuntoExclusiones(opciones.exclusiones, opciones.productoActual);
   const vistos = new Set();
   const idsModulo = new Set();
   const modulos = [];
+  let filasRecibidas = 0;
   for (const modulo of valor.modulos) {
     if (!modulo || typeof modulo !== 'object' || Array.isArray(modulo) ||
         !TIPOS_MODULO.has(modulo.tipo) || !Array.isArray(modulo.productos)) {
       throw new ContratoSNError('SN1 devolvió un módulo inválido.');
+    }
+    filasRecibidas += modulo.productos.length;
+    if (filasRecibidas > opciones.limite) {
+      throw new ContratoSNError('SN1 devolvió más módulos o filas que las solicitadas.');
     }
     const id = codigoModulo(modulo.id);
     const titulo = texto(modulo.titulo, 180);
@@ -526,8 +547,11 @@ function normalizarComposicion(valor, superficie, opciones) {
     const productos = [];
     for (const crudo of modulo.productos) {
       const producto = normalizarProducto(crudo);
+      if (!producto) throw new ContratoSNError('SN1 devolvió una fila de composición inválida.');
+      if (!registrarProductoVisto(vistos, producto)) {
+        throw new ContratoSNError('SN1 devolvió productos duplicados en la composición.');
+      }
       if (!productoDisponible(producto) || productoExcluido(producto, exclusiones)) continue;
-      if (!registrarProductoVisto(vistos, producto)) continue;
       productos.push(producto);
     }
     if (!productos.length) continue;
@@ -559,7 +583,7 @@ function tituloFallback(superficie) {
 
 async function composicionFallback(superficie, opciones) {
   lanzarSiAbortado(opciones.signal);
-  const catalogo = await cargarCatalogoPublico();
+  const catalogo = await cargarCatalogoSeguro();
   lanzarSiAbortado(opciones.signal);
   const exclusiones = conjuntoExclusiones(opciones.exclusiones, opciones.productoActual);
   const productos = catalogo
@@ -569,8 +593,8 @@ async function composicionFallback(superficie, opciones) {
   return Object.freeze({
     ok: true,
     request_id: requestIdLocal(),
-    modelo_version: 'catalogo_publico',
-    modo: 'fallback_catalogo_publico',
+    modelo_version: 'sn_catalogo_seguro_v1',
+    modo: 'fallback_catalogo_seguro',
     superficie,
     modulos: Object.freeze(productos.length ? [Object.freeze({
       id: `fallback-${superficie}`,
@@ -642,23 +666,50 @@ export async function solicitarComposicion(entrada, contextoPosicional) {
 
 function normalizarBusqueda(valor, opciones) {
   validarRaizRespuesta(valor, ['modelo_version', 'modo', 'consulta', 'total', 'productos']);
-  const modeloVersion = texto(valor.modelo_version, 80);
-  const modo = texto(valor.modo, 60);
+  const modeloVersion = textoEstricto(valor.modelo_version, 60, VERSION_RE) || '';
+  const modo = textoEstricto(valor.modo, 60, VERSION_RE) || '';
   const consultaNulaPermitida = valor.consulta === null && opciones.consulta === '';
-  if (!modeloVersion || !modo || (typeof valor.consulta !== 'string' && !consultaNulaPermitida) ||
+  const consultaRespuesta = consultaNulaPermitida
+    ? ''
+    : textoEstricto(valor.consulta, 120, null, { permitirVacio: true });
+  const consultaIndexable = claveBusqueda(consultaRespuesta);
+  const modoEsperado = consultaIndexable
+    ? 'busqueda'
+    : (opciones.categoria ? 'categoria' : 'exploracion');
+  if (!modeloVersion || !MODOS_BUSQUEDA.has(modo) || modo !== modoEsperado ||
+      consultaRespuesta === null ||
+      claveBusqueda(consultaRespuesta) !== claveBusqueda(opciones.consulta) ||
       !Array.isArray(valor.productos) || valor.productos.length > opciones.limite ||
       !Number.isSafeInteger(valor.total) || valor.total < 0 || valor.total > MAX_TOTAL_BUSQUEDA) {
     throw new ContratoSNError('SN1 devolvió resultados de búsqueda inválidos.');
   }
-  const productos = extraerProductos({ productos: valor.productos }, {
-    exclusiones: opciones.exclusiones,
-    productoActual: opciones.productoActual,
-  });
+  const filasEsperadas = Math.min(opciones.limite, Math.max(0, valor.total - opciones.desde));
+  if (valor.productos.length !== filasEsperadas) {
+    throw new ContratoSNError('SN1 devolvió filas incoherentes con el total y el desplazamiento.');
+  }
+  const exclusiones = conjuntoExclusiones(opciones.exclusiones, opciones.productoActual);
+  const vistos = new Set();
+  const productos = [];
+  for (const crudo of valor.productos) {
+    const producto = normalizarProducto(crudo);
+    if (!producto) throw new ContratoSNError('SN1 devolvió una fila de búsqueda inválida.');
+    if (!registrarProductoVisto(vistos, producto)) {
+      throw new ContratoSNError('SN1 devolvió productos duplicados en la búsqueda.');
+    }
+    if (!productoDisponible(producto)) {
+      throw new ContratoSNError('SN1 devolvió una fila no comprable en la búsqueda.');
+    }
+    if (opciones.categoria && !filaPerteneceACategoria(producto, opciones.categoria)) {
+      throw new ContratoSNError('SN1 devolvió una fila ajena a la categoría solicitada.');
+    }
+    if (productoExcluido(producto, exclusiones)) continue;
+    productos.push(producto);
+  }
   return Object.freeze({
     ok: true,
     modelo_version: modeloVersion,
     modo,
-    consulta: consultaNulaPermitida ? '' : texto(valor.consulta, 120),
+    consulta: consultaRespuesta,
     total: valor.total,
     productos: Object.freeze(productos),
   });
@@ -683,7 +734,7 @@ function opcionesBusqueda(entrada, categoriaPosicional) {
 
 async function busquedaFallback(opciones) {
   lanzarSiAbortado(opciones.signal);
-  const catalogo = await cargarCatalogoPublico();
+  const catalogo = await cargarCatalogoSeguro();
   lanzarSiAbortado(opciones.signal);
   const termino = claveBusqueda(opciones.consulta);
   const exclusiones = conjuntoExclusiones(opciones.exclusiones, opciones.productoActual);
@@ -703,8 +754,8 @@ async function busquedaFallback(opciones) {
   const total = Math.min(filtrados.length, MAX_TOTAL_BUSQUEDA);
   return Object.freeze({
     ok: true,
-    modelo_version: 'catalogo_publico',
-    modo: 'fallback_catalogo_publico',
+    modelo_version: 'sn_catalogo_seguro_v1',
+    modo: 'fallback_catalogo_seguro',
     consulta: opciones.consulta,
     total,
     productos: Object.freeze(filtrados.slice(
@@ -796,13 +847,16 @@ function pathLiviana(pathGrande) {
 }
 
 function candidatosImagen(producto) {
-  const asset = producto.asset?.path;
-  const entradas = [
-    pathLiviana(asset),
-    asset,
+  const mastersConLiviana = [
+    producto.asset?.path,
     ...(Array.isArray(producto.imagenes) ? producto.imagenes : []),
-    producto.imagen_banner_path,
   ];
+  const entradas = [];
+  for (const master of mastersConLiviana) entradas.push(pathLiviana(master), master);
+  // El banner histórico no promete una pareja -sm; probarla primero causaría
+  // un 404 sistemático antes de cada imagen válida.
+  entradas.push(producto.imagen_banner_path);
+
   const vistos = new Set();
   const salida = [];
   for (const entrada of entradas) {
@@ -871,7 +925,7 @@ export function crearTarjetaProducto(productoEntrada, opciones = {}) {
     imagen.decoding = 'async';
     imagen.width = tamano.ancho;
     imagen.height = tamano.alto;
-    imagen.style.objectPosition = `${producto.asset?.foco_x ?? 50}% ${producto.asset?.foco_y ?? 50}%`;
+    imagen.style.objectPosition = `${(producto.asset?.foco_x ?? 0.5) * 100}% ${(producto.asset?.foco_y ?? 0.5) * 100}%`;
     let indice = 0;
     imagen.addEventListener('error', () => {
       indice += 1;
@@ -913,12 +967,11 @@ export function crearTarjetaProducto(productoEntrada, opciones = {}) {
 
 function emitirEvento(tipo, extra) {
   if (typeof window.mgEvento === 'function') {
-    window.mgEvento(tipo, extra);
-    return;
+    return window.mgEvento(tipo, extra) === true;
   }
-  window.dispatchEvent(new CustomEvent('magandhi:analitica-interna', {
-    detail: { tipo, extra },
-  }));
+  const detalle = { tipo, extra, aceptado: false };
+  window.dispatchEvent(new CustomEvent('magandhi:analitica-interna', { detail: detalle }));
+  return detalle.aceptado === true;
 }
 
 function metadatosEvento(respuesta, modulo, posicion, producto) {
@@ -940,21 +993,38 @@ function metadatosEvento(respuesta, modulo, posicion, producto) {
   };
 }
 
+function emitirImpresionPendiente(estado, tarjeta) {
+  const metadatos = estado.impresionesPendientes.get(tarjeta);
+  if (!metadatos || !emitirEvento('recomendacion_impresion', metadatos)) return false;
+  estado.impresionesPendientes.delete(tarjeta);
+  estado.observadorImpresiones?.unobserve(tarjeta);
+  return true;
+}
+
+function emitirClicRecomendacion(estado, tarjeta, metadatos) {
+  // Se reemite de forma idempotente antes de cada clic. Esto también rearma la
+  // correlación si la persona cambió su decisión o aceptó una nueva política
+  // después de que la tarjeta ya había registrado una impresión anterior.
+  if (!emitirEvento('recomendacion_impresion', metadatos)) return;
+  estado.impresionesPendientes.delete(tarjeta);
+  estado.observadorImpresiones?.unobserve(tarjeta);
+  emitirEvento('recomendacion_click', metadatos);
+}
+
 function registrarImpresion(estado, tarjeta, metadatos) {
-  if (!metadatos || typeof IntersectionObserver !== 'function') return;
+  if (!metadatos) return;
+  // Se registra aunque IntersectionObserver no exista: un clic puede consumir
+  // esta impresión pendiente de forma idempotente antes de emitir el clic.
+  estado.impresionesPendientes.set(tarjeta, metadatos);
+  if (typeof IntersectionObserver !== 'function') return;
   if (!estado.observadorImpresiones) {
-    estado.observadorImpresiones = new IntersectionObserver((entradas, observador) => {
+    estado.observadorImpresiones = new IntersectionObserver((entradas) => {
       for (const entrada of entradas) {
         if (!entrada.isIntersecting || entrada.intersectionRatio < 0.5) continue;
-        const meta = estado.impresionesPendientes.get(entrada.target);
-        if (!meta) continue;
-        estado.impresionesPendientes.delete(entrada.target);
-        observador.unobserve(entrada.target);
-        emitirEvento('recomendacion_impresion', meta);
+        emitirImpresionPendiente(estado, entrada.target);
       }
     }, { threshold: [0.5] });
   }
-  estado.impresionesPendientes.set(tarjeta, metadatos);
   estado.observadorImpresiones.observe(tarjeta);
 }
 
@@ -1009,7 +1079,9 @@ export function instrumentarRecomendaciones(contenedor, respuesta) {
       referencia.producto,
     );
     if (!metadatos) return;
-    tarjeta.addEventListener('click', () => emitirEvento('recomendacion_click', metadatos), {
+    tarjeta.addEventListener('click', () => {
+      emitirClicRecomendacion(estado, tarjeta, metadatos);
+    }, {
       signal: controlador.signal,
     });
     registrarImpresion(estado, tarjeta, metadatos);
@@ -1059,7 +1131,9 @@ function renderizarModulo(modulo, respuesta, estado) {
     if (!tarjeta) continue;
     const metadatos = metadatosEvento(respuesta, modulo, posicion, producto);
     if (metadatos) {
-      tarjeta.addEventListener('click', () => emitirEvento('recomendacion_click', metadatos));
+      tarjeta.addEventListener('click', () => {
+        emitirClicRecomendacion(estado, tarjeta, metadatos);
+      });
       registrarImpresion(estado, tarjeta, metadatos);
     }
     pista.appendChild(tarjeta);
@@ -1173,7 +1247,6 @@ function objetivoEspera(slot) {
 }
 
 function debeEsperar(slot, estado) {
-  if (slot.dataset.snDisabled === 'true') return true;
   if (slot.hasAttribute('data-sn-espera-producto') &&
       (!productoRecibido || !productoActual?.disponible)) return true;
   if (slot.hasAttribute('data-sn-espera-carrito') && !carritoConContenido()) return true;
@@ -1198,10 +1271,25 @@ function debeEsperar(slot, estado) {
 async function montarSlot(slot, { forzar = false } = {}) {
   if (!(slot instanceof Element) || !slot.matches('[data-sn-slot]')) return null;
   const estado = estadoDelSlot(slot);
+  if (slot.dataset.snDisabled === 'true') {
+    estado.controlador?.abort();
+    estado.generacion += 1;
+    estado.promesa = null;
+    estado.intentado = false;
+    estado.ultimaRespuesta = null;
+    estado.observadorEspera?.disconnect();
+    estado.observadorEspera = null;
+    limpiarEstadoVisual(slot, estado);
+    slot.removeAttribute('aria-busy');
+    slot.hidden = true;
+    return null;
+  }
   if (debeEsperar(slot, estado)) {
+    const deshabilitado = slot.dataset.snDisabled === 'true';
     const productoSinDisponibilidad = slot.hasAttribute('data-sn-espera-producto') &&
       productoRecibido && !productoActual?.disponible;
-    if ((slot.hasAttribute('data-sn-espera-carrito') && !carritoConContenido()) ||
+    if (deshabilitado ||
+        (slot.hasAttribute('data-sn-espera-carrito') && !carritoConContenido()) ||
         productoSinDisponibilidad) {
       estado.controlador?.abort();
       estado.generacion += 1;
@@ -1420,9 +1508,11 @@ function pintarSugerencias(estado, productos) {
     : 'No encontramos sugerencias.';
 }
 
-function navegarBusqueda(consulta) {
+function navegarBusqueda(consulta, categoria) {
   const destino = new URL(urlBuscar.href);
   destino.searchParams.set('q', texto(consulta, 120));
+  const categoriaSegura = categoriaValida(categoria);
+  if (categoriaSegura) destino.searchParams.set('categoria', categoriaSegura);
   window.location.assign(destino.href);
 }
 
@@ -1468,7 +1558,7 @@ function prepararBuscador(formulario) {
       return;
     }
     cancelarSugerencias(estado);
-    navegarBusqueda(consulta);
+    navegarBusqueda(consulta, formulario.dataset.buscadorCategoria);
   });
 
   entrada.addEventListener('input', () => {
@@ -1478,6 +1568,7 @@ function prepararBuscador(formulario) {
     estado.indice = -1;
     entrada.removeAttribute('aria-activedescendant');
     const consulta = texto(entrada.value, 120);
+    const categoria = categoriaValida(formulario.dataset.buscadorCategoria);
     if (consulta.length < 2) {
       cerrarSugerencias(estado);
       return;
@@ -1490,12 +1581,14 @@ function prepararBuscador(formulario) {
       try {
         const respuesta = await buscarProductos({
           consulta,
+          categoria,
           limite: 5,
           desde: 0,
           signal: controlador.signal,
           productoActual: null,
         });
-        if (generacion !== estado.generacion || texto(entrada.value, 120) !== consulta) return;
+        if (generacion !== estado.generacion || texto(entrada.value, 120) !== consulta ||
+            categoriaValida(formulario.dataset.buscadorCategoria) !== categoria) return;
         pintarSugerencias(estado, respuesta.productos);
       } catch (error) {
         if (error?.name !== 'AbortError' && generacion === estado.generacion) cerrarSugerencias(estado);

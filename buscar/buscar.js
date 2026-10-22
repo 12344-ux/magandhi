@@ -1,9 +1,9 @@
-import '../componentes/cuenta-carrito.js?v=9';
+import '../componentes/cuenta-carrito.js?v=10';
 import {
   buscarProductos,
   crearTarjetaProducto,
   montarSlots,
-} from '../componentes/motor-tienda.js?v=1';
+} from '../componentes/motor-tienda.js?v=2';
 import { supabase } from '../supabase-config.js';
 import {
   cargarCategoriasPublicas,
@@ -24,8 +24,11 @@ const botonMas = document.getElementById('bs-more');
 const selectorCategoria = document.getElementById('bs-category');
 const avisoCategorias = document.getElementById('bs-category-notice');
 const botonReintentarCategorias = document.getElementById('bs-category-retry');
+const formularioPrincipal = document.querySelector('.bs-form[data-buscador-catalogo]');
+const entradaPrincipal = document.getElementById('bs-query');
 const descubrimiento = document.getElementById('bs-discovery');
 const productosVistos = new Set();
+let cantidadProductosVistos = 0;
 let categoriaActiva = null;
 let categoriaFiltro = categoriaPedida || null;
 let desde = 0;
@@ -48,6 +51,10 @@ function normalizarCategoria(valor) {
     ? valor.normalize('NFKC').trim().toLowerCase()
     : '';
   return limpia.length <= 64 && /^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(limpia) ? limpia : '';
+}
+
+function actualizarCategoriaFormulario() {
+  if (formularioPrincipal) formularioPrincipal.dataset.buscadorCategoria = categoriaFiltro || '';
 }
 
 function mostrarEstado(mensaje, tono = '') {
@@ -75,6 +82,7 @@ function mostrarError() {
 function mostrarConsultaSensible() {
   grid.replaceChildren();
   productosVistos.clear();
+  cantidadProductosVistos = 0;
   total = 0;
   desde = 0;
   fuenteBusqueda = null;
@@ -90,8 +98,10 @@ function mostrarConsultaSensible() {
   );
 }
 
-function claveProducto(producto) {
-  return producto.id ? `id:${producto.id.toLowerCase()}` : `slug:${producto.slug}`;
+function clavesProducto(producto) {
+  const claves = [`id:${producto.id.toLowerCase()}`];
+  if (producto.slug) claves.push(`slug:${producto.slug.toLowerCase()}`);
+  return claves;
 }
 
 function productoDisponible(producto) {
@@ -100,25 +110,35 @@ function productoDisponible(producto) {
 }
 
 function agregarProductos(productos, reemplazar) {
+  const clavesPreparadas = reemplazar ? new Set() : new Set(productosVistos);
+  const preparados = [];
+  for (const producto of productos) {
+    if (!productoDisponible(producto)) {
+      throw new Error('SN1 devolvió un producto no comprable en la búsqueda.');
+    }
+    const claves = clavesProducto(producto);
+    if (claves.some((clave) => clavesPreparadas.has(clave))) {
+      throw new Error('SN1 devolvió productos duplicados durante la paginación.');
+    }
+    const tarjeta = crearTarjetaProducto(producto, { mostrarRazon: true });
+    if (!tarjeta) throw new Error('No se pudo pintar un resultado válido.');
+    claves.forEach((clave) => clavesPreparadas.add(clave));
+    preparados.push({ tarjeta, claves });
+  }
+
   if (reemplazar) {
     grid.replaceChildren();
     productosVistos.clear();
+    cantidadProductosVistos = 0;
   }
   const fragmento = document.createDocumentFragment();
-  let agregados = 0;
-  for (const producto of productos) {
-    // Defensa de última milla: la página tampoco confía a ciegas en el motor.
-    if (!productoDisponible(producto)) continue;
-    const clave = claveProducto(producto);
-    if (productosVistos.has(clave)) continue;
-    const tarjeta = crearTarjetaProducto(producto, { mostrarRazon: true });
-    if (!tarjeta) continue;
-    productosVistos.add(clave);
+  preparados.forEach(({ tarjeta, claves }) => {
+    claves.forEach((clave) => productosVistos.add(clave));
     fragmento.appendChild(tarjeta);
-    agregados += 1;
-  }
+  });
   grid.appendChild(fragmento);
-  return agregados;
+  cantidadProductosVistos += preparados.length;
+  return preparados.length;
 }
 
 function actualizarCabecera() {
@@ -139,7 +159,7 @@ function actualizarCabecera() {
 
 function actualizarTotal() {
   totalNodo.textContent = total === 1 ? '1 producto disponible' : `${total} productos disponibles`;
-  botonMas.hidden = productosVistos.size >= total || desde >= total || total === 0;
+  botonMas.hidden = cantidadProductosVistos >= total || desde >= total || total === 0;
 }
 
 function limpiarDescubrimiento() {
@@ -267,7 +287,7 @@ async function cargarPagina(agregar) {
     mostrarEstado('');
     actualizarTotal();
     if (!agregar) emitirResultados(respuesta);
-    if (!productosVistos.size) {
+    if (!cantidadProductosVistos) {
       const contexto = consulta ? ` para “${consulta}”` : '';
       mostrarEstado(`No encontramos productos disponibles${contexto}. Prueba otra palabra o categoría.`);
       montarDescubrimiento();
@@ -291,7 +311,8 @@ async function cargarPagina(agregar) {
 
 function navegarConCategoria(codigo) {
   const destino = new URL(paginaBuscar.href);
-  if (consulta) destino.searchParams.set('q', consulta);
+  const consultaViva = normalizarConsulta(entradaPrincipal?.value);
+  if (consultaViva) destino.searchParams.set('q', consultaViva);
   if (codigo) destino.searchParams.set('categoria', codigo);
   window.location.assign(destino.href);
 }
@@ -322,6 +343,7 @@ async function cargarCategorias() {
     });
     categoriaActiva = categoriaPedida ? categoriaPorCodigo(categoriaPedida, categorias) : null;
     categoriaFiltro = categoriaActiva?.codigo || categoriaPedida || null;
+    actualizarCategoriaFormulario();
     if (categoriaPedida && !categoriaActiva) {
       const retirada = document.createElement('option');
       retirada.value = categoriaPedida;
@@ -344,6 +366,7 @@ async function cargarCategorias() {
     // El código ya pasó la validación sintáctica local: conservarlo evita que
     // una búsqueda filtrada se amplíe silenciosamente a todo el catálogo.
     categoriaFiltro = categoriaPedida || null;
+    actualizarCategoriaFormulario();
     selectorCategoria.disabled = true;
     selectorCategoria.title = 'No pudimos cargar las categorías. Puedes reintentar sin perder el filtro solicitado.';
     avisoCategorias.querySelector('span').textContent = categoriaFiltro
@@ -357,6 +380,7 @@ async function cargarCategorias() {
   }
 }
 
+actualizarCategoriaFormulario();
 selectorCategoria.addEventListener('change', () => navegarConCategoria(selectorCategoria.value));
 botonReintentarCategorias.addEventListener('click', () => cargarCategorias());
 botonMas.addEventListener('click', () => cargarPagina(true));
