@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="robots" content="noindex,nofollow">
+  <meta name="theme-color" content="#8f2c28">
+  <title>Revisa tu compra · MAGANDHI</title>
+  <link rel="icon" href="../favicon.png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../marca.css?v=3">
+  <link rel="stylesheet" href="compra.css?v=1">
+</head>
+<body data-compra-paso="resumen">
+<header class="cp-header">
+  <a class="cp-back" href="../" data-compra-back aria-label="Volver a la página anterior">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m15 18-6-6 6-6"/></svg>
+    <span>Volver</span>
+  </a>
+  <a class="cp-brand" href="../" aria-label="MAGANDHI, inicio">
+    <span class="cp-brand__mark"><img src="../logo-mark-terracota.png" alt=""></span>
+    <span class="cp-brand__name">MAGANDHI</span>
+  </a>
+  <span class="cp-secure">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="10" width="16" height="11" rx="2"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/></svg>
+    Compra segura
+  </span>
+</header>
+
+<main class="cp-main">
+  <nav class="cp-progress" aria-label="Progreso de compra">
+    <ol>
+      <li class="is-current" aria-current="step"><span>1</span><b>Resumen</b></li>
+      <li><span>2</span><b>Tus datos</b></li>
+      <li><span>3</span><b>Entrega</b></li>
+    </ol>
+  </nav>
+
+  <section class="cp-heading" aria-labelledby="cp-title">
+    <span class="cp-kicker">Paso 1 de 3</span>
+    <h1 id="cp-title" tabindex="-1">Revisa tu compra</h1>
+    <p>Confirma los productos y el total actual antes de continuar.</p>
+  </section>
+
+  <div class="cp-layout cp-layout--summary">
+    <section class="cp-card cp-order" aria-live="polite">
+      <div class="cp-loading" data-compra-loading>
+        <span class="cp-spinner" aria-hidden="true"></span>
+        <p>Estamos preparando tu compra…</p>
+      </div>
+
+      <div class="cp-empty" data-compra-error hidden>
+        <span class="cp-empty__icon" aria-hidden="true">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 8v5M12 16h.01"/></svg>
+        </span>
+        <h2>No pudimos preparar esta compra</h2>
+        <p data-compra-error-text>Vuelve al producto o al carrito para intentarlo de nuevo.</p>
+        <a class="cp-secondary" href="../">Volver a la tienda</a>
+      </div>
+
+      <div data-compra-resumen hidden>
+        <div class="cp-order__top">
+          <div><span class="cp-eyebrow">Tu pedido</span><h2 data-compra-source-title>Productos seleccionados</h2></div>
+          <span class="cp-order__units" data-compra-units></span>
+        </div>
+        <div class="cp-update" data-compra-update hidden>Actualizamos el resumen porque cambió la disponibilidad o el precio. Revísalo antes de continuar.</div>
+        <div class="cp-order-list" data-compra-items></div>
+        <div class="cp-total">
+          <span>Total actual <small>Impuestos incluidos</small></span>
+          <strong data-compra-total>—</strong>
+        </div>
+      </div>
+    </section>
+
+    <aside class="cp-card cp-assurance">
+      <span class="cp-assurance__icon" aria-hidden="true">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z"/><path d="m9 12 2 2 4-4"/></svg>
+      </span>
+      <h2>Compra protegida</h2>
+      <p>El precio y la disponibilidad se vuelven a validar antes de abrir Wompi.</p>
+      <ul><li>Pago procesado por Wompi</li><li>Conexión cifrada</li><li>Envíos en Colombia</li></ul>
+    </aside>
+  </div>
+
+  <div class="cp-action-bar">
+    <div><span>¿Todo está bien?</span><small>En el siguiente paso pediremos tus datos.</small></div>
+    <button class="cp-primary" type="button" data-compra-continuar disabled>
+      Continuar
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m9 18 6-6-6-6"/></svg>
+    </button>
+  </div>
+</main>
+
+<footer class="cp-footer"><span>© 2026 MAGANDHI</span><a href="../politicas/">Políticas</a><a href="mailto:contacto@magandhi.com">Ayuda</a></footer>
+<script type="module" src="compra-page.js?v=1"></script>
+</body>
+</html>

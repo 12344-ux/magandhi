@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="robots" content="noindex,nofollow">
+  <meta name="theme-color" content="#8f2c28">
+  <title>Tus datos · MAGANDHI</title>
+  <link rel="icon" href="../../favicon.png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../../marca.css?v=3">
+  <link rel="stylesheet" href="../compra.css?v=1">
+</head>
+<body data-compra-paso="datos">
+<header class="cp-header">
+  <a class="cp-back" href="../" data-compra-back aria-label="Volver al resumen">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m15 18-6-6 6-6"/></svg><span>Volver</span>
+  </a>
+  <a class="cp-brand" href="../../" aria-label="MAGANDHI, inicio"><span class="cp-brand__mark"><img src="../../logo-mark-terracota.png" alt=""></span><span class="cp-brand__name">MAGANDHI</span></a>
+  <span class="cp-secure"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="10" width="16" height="11" rx="2"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/></svg>Compra segura</span>
+</header>
+
+<main class="cp-main">
+  <nav class="cp-progress" aria-label="Progreso de compra"><ol>
+    <li class="is-done"><a href="../"><span>✓</span><b>Resumen</b></a></li>
+    <li class="is-current" aria-current="step"><span>2</span><b>Tus datos</b></li>
+    <li><span>3</span><b>Entrega</b></li>
+  </ol></nav>
+
+  <section class="cp-heading" aria-labelledby="cp-title"><span class="cp-kicker">Paso 2 de 3</span><h1 id="cp-title" tabindex="-1">Cuéntanos quién recibe</h1><p>Usaremos estos datos únicamente para gestionar tu compra y mantenerte informado.</p></section>
+
+  <div class="cp-layout">
+    <form class="cp-card cp-form" id="cp-personal-form" novalidate>
+      <div class="cp-form__intro"><span class="cp-form__icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg></span><div><h2>Datos personales</h2><p>Todos los campos son obligatorios.</p></div></div>
+      <div class="cp-form-alert" role="alert" data-form-alert hidden></div>
+      <div class="cp-field">
+        <label for="cp-nombre">Nombre completo <span aria-hidden="true">*</span></label>
+        <input id="cp-nombre" name="nombre" type="text" autocomplete="name" maxlength="120" placeholder="Nombre y apellido" required aria-required="true" aria-invalid="false">
+        <span class="cp-field__error" id="cp-nombre-error">Escribe el nombre completo de quien recibe.</span>
+      </div>
+      <div class="cp-field">
+        <label for="cp-correo">Correo <span aria-hidden="true">*</span></label>
+        <input id="cp-correo" name="correo" type="email" autocomplete="email" inputmode="email" maxlength="160" placeholder="tucorreo@ejemplo.com" required aria-required="true" aria-invalid="false" aria-describedby="cp-correo-help">
+        <span class="cp-field__help" id="cp-correo-help">Aquí recibirás la confirmación y el seguimiento.</span>
+        <span class="cp-field__error" id="cp-correo-error">Escribe un correo válido.</span>
+      </div>
+      <div class="cp-field">
+        <label for="cp-telefono">Teléfono <span aria-hidden="true">*</span></label>
+        <div class="cp-phone"><span aria-hidden="true">+57</span><input id="cp-telefono" name="telefono" type="tel" autocomplete="tel" inputmode="numeric" maxlength="14" placeholder="300 123 4567" required aria-required="true" aria-invalid="false" aria-describedby="cp-telefono-help"></div>
+        <span class="cp-field__help" id="cp-telefono-help">Para coordinar la entrega si es necesario.</span>
+        <span class="cp-field__error" id="cp-telefono-error">Escribe los 10 dígitos de un teléfono colombiano.</span>
+      </div>
+      <button class="cp-primary cp-form__submit" type="submit" disabled>Continuar <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m9 18 6-6-6-6"/></svg></button>
+    </form>
+
+    <aside class="cp-card cp-mini" aria-label="Resumen de la compra" data-compra-mini>
+      <span class="cp-eyebrow">Tu compra</span><h2>Resumen</h2><div class="cp-mini__rows" data-mini-items></div><div class="cp-mini__total"><span>Total actual</span><strong data-mini-total>—</strong></div><a href="../">Ver resumen completo</a>
+    </aside>
+  </div>
+</main>
+<footer class="cp-footer"><span>© 2026 MAGANDHI</span><a href="../../politicas/">Políticas</a><a href="mailto:contacto@magandhi.com">Ayuda</a></footer>
+<script type="module" src="../compra-page.js?v=1"></script>
+</body>
+</html>

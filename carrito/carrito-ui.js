@@ -5,8 +5,9 @@ import {
   quitarDelCarrito,
   mensajeErrorCarrito,
 } from './carrito-core.js?v=3';
-import { configurarCheckoutCarrito } from './checkout-carrito.js?v=9';
+import { configurarCheckoutCarrito } from './checkout-carrito.js?v=10';
 import { sincronizarCuentaCarrito } from '../componentes/cuenta-carrito.js?v=8';
+import { iniciarCompraCarrito } from '../compra/compra-core.js?v=1';
 
 const vistas = ['loading', 'session', 'disabled', 'error', 'empty', 'content'];
 let uidActual = null;
@@ -284,6 +285,18 @@ checkout = configurarCheckoutCarrito({
   obtenerEstado: estadoCheckout,
   recargarCarrito: cargar,
   revalidarSesion: revalidarSesionCliente,
+  iniciarFlujo: (estado) => {
+    const snapshot = estado?.snapshot;
+    const preparada = iniciarCompraCarrito({
+      uid: estado?.sesion?.uid,
+      carritoId: snapshot?.carrito_id,
+      version: snapshot?.version,
+      retorno: window.location.href,
+    });
+    if (!preparada) return false;
+    window.location.assign('../compra/');
+    return true;
+  },
 });
 
 observarSesionCliente((sesion) => {

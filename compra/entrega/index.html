@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="robots" content="noindex,nofollow">
+  <meta name="theme-color" content="#8f2c28">
+  <title>Entrega y pago · MAGANDHI</title>
+  <link rel="icon" href="../../favicon.png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../../marca.css?v=3">
+  <link rel="stylesheet" href="../compra.css?v=1">
+</head>
+<body data-compra-paso="entrega">
+<header class="cp-header">
+  <a class="cp-back" href="../datos/" data-compra-back aria-label="Volver a tus datos"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m15 18-6-6 6-6"/></svg><span>Volver</span></a>
+  <a class="cp-brand" href="../../" aria-label="MAGANDHI, inicio"><span class="cp-brand__mark"><img src="../../logo-mark-terracota.png" alt=""></span><span class="cp-brand__name">MAGANDHI</span></a>
+  <span class="cp-secure"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="10" width="16" height="11" rx="2"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/></svg>Compra segura</span>
+</header>
+
+<main class="cp-main">
+  <nav class="cp-progress" aria-label="Progreso de compra"><ol>
+    <li class="is-done"><a href="../"><span>✓</span><b>Resumen</b></a></li>
+    <li class="is-done"><a href="../datos/"><span>✓</span><b>Tus datos</b></a></li>
+    <li class="is-current" aria-current="step"><span>3</span><b>Entrega</b></li>
+  </ol></nav>
+
+  <section class="cp-heading" aria-labelledby="cp-title"><span class="cp-kicker">Paso 3 de 3</span><h1 id="cp-title" tabindex="-1">¿Dónde entregamos?</h1><p>Completa la dirección y te llevaremos al pago seguro de Wompi.</p></section>
+
+  <div class="cp-layout">
+    <form class="cp-card cp-form" id="cp-delivery-form" novalidate>
+      <div class="cp-form__intro"><span class="cp-form__icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0z"/><circle cx="12" cy="10" r="3"/></svg></span><div><h2>Datos de entrega</h2><p>Solo las indicaciones adicionales son opcionales.</p></div></div>
+      <div class="cp-form-alert" role="alert" data-form-alert hidden></div>
+      <div class="cp-form__row">
+        <div class="cp-field">
+          <label for="cp-departamento">Departamento <span aria-hidden="true">*</span></label>
+          <select id="cp-departamento" name="departamento" autocomplete="address-level1" required aria-required="true" aria-invalid="false" data-vacio="true">
+            <option value="" selected>Elige tu departamento</option>
+            <option>Amazonas</option><option>Antioquia</option><option>Arauca</option><option>Atlántico</option><option>Bogotá D.C.</option><option>Bolívar</option><option>Boyacá</option><option>Caldas</option><option>Caquetá</option><option>Casanare</option><option>Cauca</option><option>Cesar</option><option>Chocó</option><option>Córdoba</option><option>Cundinamarca</option><option>Guainía</option><option>Guaviare</option><option>Huila</option><option>La Guajira</option><option>Magdalena</option><option>Meta</option><option>Nariño</option><option>Norte de Santander</option><option>Putumayo</option><option>Quindío</option><option>Risaralda</option><option>San Andrés y Providencia</option><option>Santander</option><option>Sucre</option><option>Tolima</option><option>Valle del Cauca</option><option>Vaupés</option><option>Vichada</option>
+          </select>
+          <span class="cp-field__error" id="cp-departamento-error">Elige tu departamento.</span>
+        </div>
+        <div class="cp-field">
+          <label for="cp-ciudad">Ciudad o municipio <span aria-hidden="true">*</span></label>
+          <input id="cp-ciudad" name="ciudad" type="text" autocomplete="address-level2" maxlength="80" placeholder="Ej. Tunja" required aria-required="true" aria-invalid="false">
+          <span class="cp-field__error" id="cp-ciudad-error">Escribe tu ciudad o municipio.</span>
+        </div>
+      </div>
+      <div class="cp-field">
+        <label for="cp-direccion">Dirección <span aria-hidden="true">*</span></label>
+        <input id="cp-direccion" name="direccion" type="text" autocomplete="street-address" maxlength="120" placeholder="Ej. Calle 20 # 10-45" required aria-required="true" aria-invalid="false">
+        <span class="cp-field__error" id="cp-direccion-error">Escribe una dirección válida.</span>
+      </div>
+      <div class="cp-field">
+        <label for="cp-detalles">Indicaciones adicionales <small>(opcional)</small></label>
+        <input id="cp-detalles" name="detalles" type="text" autocomplete="address-line2" maxlength="70" placeholder="Apartamento, torre, barrio o referencia" aria-describedby="cp-detalles-help">
+        <span class="cp-field__help" id="cp-detalles-help">Ayuda a encontrar tu dirección sin llamadas de más.</span>
+      </div>
+      <button class="cp-primary cp-form__submit cp-form__submit--pay" type="submit" disabled>
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="2" y="5" width="20" height="14" rx="2"/><path d="M2 10h20"/></svg>
+        <span data-pay-label>Pagar con Wompi</span>
+      </button>
+      <p class="cp-payment-note"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="10" width="16" height="11" rx="2"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/></svg>MAGANDHI no ve ni guarda los datos de tu tarjeta.</p>
+    </form>
+
+    <aside class="cp-card cp-mini" aria-label="Resumen de la compra" data-compra-mini>
+      <span class="cp-eyebrow">Última revisión</span><h2>Tu compra</h2><div class="cp-mini__rows" data-mini-items></div><div class="cp-mini__total"><span>Total actual</span><strong data-mini-total>—</strong></div><a href="../">Revisar productos</a>
+    </aside>
+  </div>
+</main>
+<footer class="cp-footer"><span>© 2026 MAGANDHI</span><a href="../../politicas/">Políticas</a><a href="mailto:contacto@magandhi.com">Ayuda</a></footer>
+<script type="module" src="../compra-page.js?v=1"></script>
+</body>
+</html>
