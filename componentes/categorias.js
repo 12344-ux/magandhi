@@ -124,6 +124,7 @@ export function fusionarCategoriasPublicas(filas) {
       descripcion,
       icono: claveIconoCategoria(fila?.icono_codigo || respaldo?.icono || codigo),
       orden,
+      tipo: fila?.tipo === 'temporal' ? 'temporal' : 'permanente',
     }));
   });
   categorias.sort((a, b) => a.orden - b.orden || a.nombre.localeCompare(b.nombre, 'es'));
@@ -138,23 +139,46 @@ export function esContratoCategoriasAusente(error) {
     (texto.includes('schema cache') && (texto.includes('could not find') || texto.includes('not find')));
 }
 
+function esColumnaTipoAusente(error) {
+  const codigo = String(error?.code || '').toUpperCase();
+  const texto = `${error?.message || ''} ${error?.details || ''} ${error?.hint || ''}`.toLowerCase();
+  return (codigo === 'PGRST204' || codigo === '42703' || texto.includes('schema cache')) &&
+    /\btipo\b/.test(texto) && /(column|columna|field|campo|schema cache)/.test(texto);
+}
+
 /**
- * Fallback deliberadamente estrecho: solo ausencia del contrato nuevo. Una
- * respuesta vacía es válida; red, permisos y cualquier otro error se propagan.
+ * Fallback deliberadamente estrecho: si solo falta la columna aditiva `tipo`,
+ * repite el contrato anterior y trata esas filas como permanentes. Los datos
+ * fijos se usan únicamente cuando la vista completa todavía no existe.
  */
 export async function cargarCategoriasPublicas(clienteSupabase) {
-  const { data, error } = await clienteSupabase
+  let resultado = await clienteSupabase
     .from('categorias_publicas')
-    .select('codigo,nombre,icono_codigo,descripcion,orden')
+    .select('codigo,nombre,icono_codigo,descripcion,orden,tipo')
     .order('orden', { ascending: true })
     .order('codigo', { ascending: true });
-  if (!error) {
-    return Object.freeze({ categorias: fusionarCategoriasPublicas(data || []), origen: 'categorias_publicas' });
+
+  if (resultado.error && esColumnaTipoAusente(resultado.error)) {
+    resultado = await clienteSupabase
+      .from('categorias_publicas')
+      .select('codigo,nombre,icono_codigo,descripcion,orden')
+      .order('orden', { ascending: true })
+      .order('codigo', { ascending: true });
+    if (!resultado.error) {
+      return Object.freeze({
+        categorias: fusionarCategoriasPublicas(resultado.data || []),
+        origen: 'categorias_publicas_sin_tipo',
+      });
+    }
   }
-  if (esContratoCategoriasAusente(error)) {
+
+  if (!resultado.error) {
+    return Object.freeze({ categorias: fusionarCategoriasPublicas(resultado.data || []), origen: 'categorias_publicas' });
+  }
+  if (esContratoCategoriasAusente(resultado.error)) {
     return Object.freeze({ categorias: CATEGORIAS_FALLBACK, origen: 'fallback_contrato_ausente' });
   }
-  throw error;
+  throw resultado.error;
 }
 
 export function categoriaPorCodigo(valor, categorias = CATEGORIAS_FALLBACK) {
