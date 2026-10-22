@@ -88,6 +88,16 @@
 > **Dropshipping:** D2c está desplegado; la tienda ya puede vender productos de
 > proveedor con stock vivo y verificación antes de Wompi. El despacho posterior
 > continúa manual en el back-office.
+>
+> **Categorías oficiales · IMPLEMENTACIÓN EN RAMA / NO DESPLEGADA.** La rama
+> `feat/categorias-oficiales` completa el frente iniciado en el PR #126. El
+> fallback público contiene exactamente ocho raíces, en este orden:
+> **Tecnología, Moda, Hogar, Deportes, Belleza, Accesorios, Mascotas y
+> Juguetería**. No expone Alimentos y bebidas ni subcategorías de Belleza; sus
+> códigos históricos solo se aceptan como aliases hacia `belleza`. La lista
+> viva procede de `categorias_publicas` y solo usa esas ocho filas cuando la
+> vista nueva todavía no existe. Este estado no acredita migración, Pages ni
+> prueba visual en producción.
 
 **Producción:** `https://magandhi.com`
 **Repositorio:** `12344-ux/magandhi`
@@ -123,6 +133,31 @@ Los JPG de `marca/` son referencias históricas. No gobiernan la identidad ni de
   único flag, **encendido al 20-oct-2026**. Apagado, el carrito permanece oculto
   y no altera la navegación ni la compra invitada.
 - Contacto real por WhatsApp y `contacto@magandhi.com`.
+- En esta rama, una banda hermana inmediatamente posterior al hero muestra seis
+  accesos fijos (Tecnología, Moda, Hogar, Deportes, Belleza y Accesorios) y
+  «Más categorías». «Ver todas» y «Más categorías» abren el mismo panel
+  accesible; sin JavaScript, ambos conservan `/categorias/` como destino.
+
+### Categorías — `componentes/categorias*.js` + `categorias/` (EN RAMA / NO DESPLEGADA)
+
+- `componentes/categorias.js` concentra las ocho categorías fallback, aliases,
+  normalización, fusión segura del contrato público, iconos locales y
+  pertenencia de productos. Ningún SVG, URL o color del backend se inyecta.
+- El panel consulta `categorias_publicas`, admite categorías nuevas de Campañas
+  y diferencia contrato ausente de fallos de red o permisos. Incluye backdrop,
+  Escape, trampa y retorno de foco, bloqueo de scroll, modal amplio y bottom
+  sheet móvil.
+- `/categorias/` sigue siendo la ruta compartible y progresiva. Su cuadrícula se
+  alimenta de `categorias_publicas`; cada filtro usa
+  `catalogo_publico.categoria_codigos` y conserva fallback selectivo al contrato
+  anterior. Una campaña con varias categorías aparece en cada una.
+- Sin `?categoria`, la página muestra todos los productos. Vacío y error son
+  estados distintos; el vacío ofrece «Ver todos los productos» y cambio de
+  categoría.
+- La ruta permanece `noindex,follow` y fuera del sitemap mientras las políticas
+  públicas sigan en borrador, igual que los productos. No afirmar despliegue
+  hasta aplicar el contrato coordinado, publicar Pages y completar revisión
+  visual.
 
 ### Producto — `producto/index.html` + shells P1
 
@@ -173,10 +208,10 @@ aliases productiva (0 aliases históricos en este corte).
   Grisi). Los aliases activos redirigen al slug actual conservando query y hash.
 - Las imágenes salen del bucket público `campanas`; si una fila no tiene imagen,
   se usa `https://magandhi.com/logo.png` como fallback estable de marca.
-- Plantilla y shells conservan `noindex,follow` mientras las políticas públicas
-  estén en borrador. El sitemap solo contiene la home durante ese gate; al
+- Plantilla, shells y `/categorias/` conservan `noindex,follow`, y el sitemap
+  solo publica la home, mientras las políticas públicas estén en borrador. Al
   registrar políticas publicadas, una regeneración conjunta habilita
-  `index,follow` y agrega los productos al sitemap.
+  `index,follow` en productos y categorías y agrega ambas rutas al sitemap.
 
 ### Mi cuenta — `cuenta/` (C2, preapertura 16-oct-2026)
 
@@ -286,7 +321,13 @@ volver a existir una ficha manual o un precio escrito a mano por slug.
 ## Contrato de datos
 
 - Proyecto Supabase compartido con el back-office.
-- La tienda anónima solo debe leer la vista con lista blanca `catalogo_publico`.
+- La tienda anónima solo debe leer las vistas con lista blanca
+  `catalogo_publico` y, para la navegación de esta rama,
+  `categorias_publicas`.
+- `categorias_publicas` aporta raíces activas/visibles y metadatos públicos.
+  `catalogo_publico.categoria_codigos` aporta la pertenencia muchos-a-muchos,
+  incluidos ancestros visibles. La ausencia comprobada de estos campos activa
+  compatibilidad; red, permisos u otros errores permanecen como errores.
 - Las tablas base de Inventario, Campañas, Ventas y Finanzas no son públicas.
 - Opiniones: la tienda anónima solo lee las vistas con lista blanca `producto_rating_publico` (total y promedio por slug) y `opiniones_publicas` (tarjetas). La tabla `opiniones` no es pública.
 - Escribir una opinión ocurre únicamente a través de la Edge Function `enviar-opinion`, que valida el código del pedido server-side. La tienda nunca escribe la tabla.
@@ -457,7 +498,10 @@ Estado al 21-oct-2026:
 
 - Marca pública: `marca/logo/logo-magandhi.svg`, `marca/generar_assets.py`, `marca.css`.
 - Banners: `.kiro/steering/estandar-banners-magandhi.md` y `banners/LEEME.md`.
-- Presentación pública: `index.html` y `producto/index.html`.
+- Presentación pública: `index.html`, `producto/index.html` y `categorias/index.html`.
+- Registro fallback, normalización, iconos y pertenencia de categorías:
+  `componentes/categorias.js`; panel compartido:
+  `componentes/categorias-panel.js`. Ambos están EN RAMA / NO DESPLEGADOS.
 - Cuenta C2 y gates de apertura: `cuenta/CONFIGURACION.md`.
 - Esquema/RLS/RPC/Edge Functions: repositorio del back-office, carpeta `supabase/`.
 - Relevo general vigente de Promocionar:
