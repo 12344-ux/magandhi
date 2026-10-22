@@ -404,9 +404,10 @@
   .hg-slide{
     position:relative;flex:0 0 100%;min-width:100%;
     aspect-ratio:1600/600;              /* recorte PC */
-    background-size:cover;background-position:center;
+    background-color:#79211F;background-size:cover;background-position:center;
     display:flex;align-items:center;
   }
+  .hg-slide--profundo{background-color:#111}
   /* velo para que el texto blanco siempre tenga contraste sobre la imagen */
   .hg-slide::before{
     content:"";position:absolute;inset:0;
@@ -499,7 +500,8 @@
        caja horizontal de PC; el arte cambia por completo en movil sin cambiar
        el espacio vertical que ya ocupa el contenido. */
     display:grid;grid-template-columns:1fr 1fr;gap:0;border-radius:20px;overflow:hidden;
-    background-image:url('banners/banner-historia-dorado-negro-v1-pc.jpg');
+    background-image:url('recursos/home/historia-dorado-negro-pc.jpg');
+    background-color:#111;
     background-size:cover;background-position:center;
     border:1px solid rgba(255,255,255,.08);
     box-shadow:0 14px 40px rgba(17,17,17,.10);
@@ -520,7 +522,7 @@
     .hg-historia{padding:0 12px}
     .hg-historia__caja{
       grid-template-columns:1fr;
-      background-image:url('banners/banner-historia-dorado-negro-v1-movil.jpg');
+      background-image:url('recursos/home/historia-dorado-negro-movil.jpg');
     }
     .hg-historia__img{min-height:220px;order:-1}
   }
@@ -630,8 +632,8 @@
      Estructura de banner con dos recortes de imagen (PC 1600x600 ~8:3 y movil
      1080x1080 1:1), elegidos por CSS segun el ancho. El TEXTO va en HTML (no
      quemado en la imagen): editable, nitido y con tildes correctas. Los assets
-     de banners/ son las campañas vigentes y cada espacio conserva las medidas
-     inmutables documentadas en .kiro/steering/estandar-banners-magandhi.md.
+     de recursos/home/ usan nombres neutrales para evitar falsos positivos de
+     bloqueadores de contenido y conservan las medidas inmutables documentadas en .kiro/steering/estandar-banners-magandhi.md.
      ============================================================ -->
 <section class="hg-hero" aria-label="Destacados">
   <div class="hg-carrusel" id="hg-carrusel">
@@ -639,8 +641,8 @@
 
       <!-- Slide 1 · terracota (texto blanco) -->
       <div class="hg-slide" role="group" aria-roledescription="diapositiva" aria-label="1 de 2"
-           style="background-image:url('banners/banner-1-pc.jpg')"
-           data-pc="banners/banner-1-pc.jpg" data-movil="banners/banner-1-movil.jpg">
+           style="background-image:url('recursos/home/hero-seleccion-pc.jpg')"
+           data-pc="recursos/home/hero-seleccion-pc.jpg" data-movil="recursos/home/hero-seleccion-movil.jpg">
         <div class="hg-slide__cont">
           <span class="hg-pill">
             <svg viewBox="0 0 24 24" fill="currentColor"><path d="m12 2 3 6.3 6.9 1-5 4.9 1.2 6.8L12 17.8 5.9 21l1.2-6.8-5-4.9 6.9-1z"/></svg>
@@ -655,9 +657,9 @@
       </div>
 
       <!-- Slide 2 · negro profundo (texto blanco) -->
-      <div class="hg-slide" role="group" aria-roledescription="diapositiva" aria-label="2 de 2"
-           style="background-image:url('banners/banner-curaduria-v2-pc.jpg')"
-           data-pc="banners/banner-curaduria-v2-pc.jpg" data-movil="banners/banner-curaduria-v2-movil.jpg">
+      <div class="hg-slide hg-slide--profundo" role="group" aria-roledescription="diapositiva" aria-label="2 de 2"
+           style="background-image:url('recursos/home/hero-curaduria-pc.jpg')"
+           data-pc="recursos/home/hero-curaduria-pc.jpg" data-movil="recursos/home/hero-curaduria-movil.jpg">
         <div class="hg-slide__cont">
           <span class="hg-pill">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m9 12 2 2 4-4"/><circle cx="12" cy="12" r="10"/></svg>

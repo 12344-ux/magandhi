@@ -1,8 +1,13 @@
 # Banners de la tienda MAGANDHI
 
-Esta carpeta contiene las imágenes de los espacios promocionales del home. Cada
-espacio tiene una geometría propia e inmutable. **PC y móvil son dos direcciones
-de arte distintas**, no un recorte automático de una misma imagen.
+Esta carpeta conserva las imágenes históricas de los espacios promocionales del
+home. Las copias enlazadas en producción viven en `recursos/home/` con nombres
+neutrales: algunas extensiones de privacidad bloquean rutas o archivos llamados
+`banner`, aunque no sean publicidad de terceros. No volver a enlazar esta carpeta
+desde el frontend; se mantiene temporalmente para compatibilidad y trazabilidad.
+
+Cada espacio tiene una geometría propia e inmutable. **PC y móvil son dos
+direcciones de arte distintas**, no un recorte automático de una misma imagen.
 
 ## Perfiles exactos por espacio
 
@@ -44,16 +49,20 @@ dominante de banner porque se confunden con la interfaz. El dorado puede ocupar
 una zona amplia solo cuando se combina con negro y cumple una función compositiva;
 nunca como marco protagonista junto al terracota/rojo.
 
-## Archivos actuales
+## Assets activos en `recursos/home/`
 
 ```text
-banner-1-pc.jpg                       1600×600
-banner-1-movil.jpg                    1080×1080
-banner-curaduria-v2-pc.jpg            1600×600
-banner-curaduria-v2-movil.jpg         1080×1080
-banner-historia-dorado-negro-v1-pc.jpg      1600×478
-banner-historia-dorado-negro-v1-movil.jpg   1080×1854
+hero-seleccion-pc.jpg                 1600×600
+hero-seleccion-movil.jpg              1080×1080
+hero-curaduria-pc.jpg                 1600×600
+hero-curaduria-movil.jpg              1080×1080
+historia-dorado-negro-pc.jpg          1600×478
+historia-dorado-negro-movil.jpg       1080×1854
 ```
+
+Los seis JPG de esta carpeta son las fuentes históricas byte a byte de esas
+copias. Los nuevos nombres no incluyen `banner` y deben ser los únicos usados en
+HTML, CSS y JavaScript.
 
 El carrusel declara su pareja mediante `data-pc` y `data-movil`. Historia cambia
 su pareja desde CSS en el mismo breakpoint de `760px`. Aunque dos piezas compartan
