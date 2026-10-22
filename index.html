@@ -23,7 +23,7 @@
 <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="marca.css?v=3">
 <link rel="stylesheet" href="componentes/cuenta-carrito.css?v=10">
-<link rel="stylesheet" href="componentes/categorias.css?v=3">
+<link rel="stylesheet" href="componentes/categorias.css?v=4">
 
 <!--
   MAGANDHI · portada / home de la tienda.
@@ -505,16 +505,17 @@
 
   /* ---------- separador de seccion (titulo centrado con filetes) ----------
      Mismo riel comun (1200px / padding 24px) que el banner y la vitrina. */
-  .hg-sep{max-width:1200px;margin:66px auto 6px;padding:0 24px;text-align:center}
+  .hg-sep{max-width:1200px;margin:33px auto 6px;padding:0 24px;text-align:center}
   .hg-sep__k{
     display:inline-flex;align-items:center;gap:16px;
     font-size:12.5px;font-weight:600;letter-spacing:.22em;text-transform:uppercase;color:var(--acento);
   }
   .hg-sep__k::before,.hg-sep__k::after{content:"";width:46px;height:1px;background:var(--acento-cl)}
   .hg-sep__d{font-size:13.5px;color:var(--gris-cl);margin:8px 0 0}
-  /* movil: menos vacio entre el carril de categorias y la vitrina. */
+  /* El carril de categorias queda con el mismo aire arriba (banner) y abajo
+     (Hora de descubrir): ~40px en PC y ~32px en movil, medidos a la vista. */
   @media(max-width:760px){
-    .hg-sep{margin-top:34px}
+    .hg-sep{margin-top:13px}
   }
 
   /* ---------- bloque HISTORIA ("mas que productos...") ---------- */
@@ -721,13 +722,13 @@
       <span class="mg-category-strip__eyebrow">Explora por categoría</span>
       <h2 class="mg-category-strip__title" id="hg-category-title">Encuentra algo para ti</h2>
     </div>
-    <a class="mg-category-strip__all" href="categorias/" data-categorias-abrir>Ver todas</a>
+    <a class="mg-category-strip__all" href="categorias/">Ver todas</a>
   </div>
   <div class="mg-category-strip__viewport">
     <nav class="mg-category-strip__track" aria-label="Categorías destacadas" data-categorias-inicio></nav>
   </div>
 </section>
-<script type="module" src="componentes/categorias-inicio.js?v=4"></script>
+<script type="module" src="componentes/categorias-inicio.js?v=5"></script>
 
 <!-- separador de seccion -->
 <div class="hg-sep" id="descubrir">
