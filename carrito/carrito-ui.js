@@ -7,6 +7,7 @@ import {
 } from './carrito-core.js?v=3';
 import { configurarCheckoutCarrito } from './checkout-carrito.js?v=10';
 import { sincronizarCuentaCarrito } from '../componentes/cuenta-carrito.js?v=9';
+import { iniciarCompraCarrito } from '../compra/compra-core.js?v=1';
 
 const vistas = ['loading', 'session', 'disabled', 'error', 'empty', 'content'];
 let uidActual = null;
@@ -18,6 +19,24 @@ let checkout = { actualizar() {} };
 
 const porId = (id) => document.getElementById(id);
 const moneda = (valor) => '$ ' + Math.round(Number(valor)).toLocaleString('es-CO') + ' COP';
+
+function configurarRegreso() {
+  const enlace = document.querySelector('[data-co-back]');
+  if (!enlace) return;
+  enlace.addEventListener('click', (evento) => {
+    if (evento.defaultPrevented || evento.button !== 0 || evento.metaKey || evento.ctrlKey || evento.shiftKey || evento.altKey) return;
+    try {
+      const hayPaginaAnteriorDelSitio = history.length > 1
+        && document.referrer
+        && new URL(document.referrer).origin === window.location.origin;
+      if (!hayPaginaAnteriorDelSitio) return;
+      evento.preventDefault();
+      history.back();
+    } catch {
+      // El href mantiene un regreso seguro al inicio si el historial no se puede consultar.
+    }
+  });
+}
 
 function estadoCheckout() {
   return { sesion: sesionActual, snapshot: snapshotActual, operacion };
@@ -255,6 +274,8 @@ function quitar(item, version, linea) {
   );
 }
 
+configurarRegreso();
+
 porId('co-retry').addEventListener('click', () => {
   if (uidActual) cargar();
   else revalidarSesionCliente();
@@ -264,6 +285,18 @@ checkout = configurarCheckoutCarrito({
   obtenerEstado: estadoCheckout,
   recargarCarrito: cargar,
   revalidarSesion: revalidarSesionCliente,
+  iniciarFlujo: (estado) => {
+    const snapshot = estado?.snapshot;
+    const preparada = iniciarCompraCarrito({
+      uid: estado?.sesion?.uid,
+      carritoId: snapshot?.carrito_id,
+      version: snapshot?.version,
+      retorno: window.location.href,
+    });
+    if (!preparada) return false;
+    window.location.assign('../compra/');
+    return true;
+  },
 });
 
 observarSesionCliente((sesion) => {
