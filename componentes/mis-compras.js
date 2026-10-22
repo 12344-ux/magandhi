@@ -344,6 +344,7 @@ export function crearControlMisCompras({ supabase, obtenerSesion, obtenerRutas, 
   let mensajeGeneral = '';
   let anuncio = '';
   let huellaListado = '[]';
+  let referenciaExpandida = '';
 
   function sesionValida() {
     const sesion = obtenerSesion();
@@ -550,6 +551,7 @@ export function crearControlMisCompras({ supabase, obtenerSesion, obtenerRutas, 
     mensajeAccion = mensaje;
     mensajeAccionReferencia = referencia;
     referenciaEnAccion = '';
+    referenciaExpandida = referencia;
     if (activa) renderizar();
     const alerta = contenedor?.querySelector(`[data-compra-ref="${CSS.escape(referencia)}"] [data-cc-purchase-alert]`);
     if (alerta) alerta.focus();
@@ -559,6 +561,7 @@ export function crearControlMisCompras({ supabase, obtenerSesion, obtenerRutas, 
     if (referenciaEnAccion || !sesionValida() || compra.puede_continuar !== true || compra.confirmacion_pendiente) return;
     const uidAccion = obtenerSesion().uid;
     referenciaEnAccion = compra.referencia;
+    referenciaExpandida = compra.referencia;
     mensajeAccion = '';
     mensajeAccionReferencia = '';
     renderizar();
@@ -582,6 +585,7 @@ export function crearControlMisCompras({ supabase, obtenerSesion, obtenerRutas, 
     if (referenciaEnAccion || !sesionValida()) return;
     const uidAccion = obtenerSesion().uid;
     referenciaEnAccion = compra.referencia;
+    referenciaExpandida = compra.referencia;
     mensajeAccion = '';
     mensajeAccionReferencia = '';
     renderizar();
@@ -603,59 +607,91 @@ export function crearControlMisCompras({ supabase, obtenerSesion, obtenerRutas, 
   }
 
   function tarjetaCompra(compra) {
+    const expandida = referenciaExpandida === compra.referencia;
     const tarjeta = crear('article', `cc-purchase-card cc-purchase-card--${compra.grupo}`);
     tarjeta.dataset.compraRef = compra.referencia;
+    tarjeta.classList.toggle('is-expanded', expandida);
     if (referenciaEnAccion === compra.referencia) tarjeta.setAttribute('aria-busy', 'true');
 
-    const superior = crear('header', 'cc-purchase-card__head');
+    const idDetalle = `cc-purchase-detail-${compra.referencia}`;
+    const superior = crear('button', 'cc-purchase-card__summary');
+    superior.type = 'button';
+    superior.dataset.ccFocusKey = `compra:${compra.referencia}:toggle`;
+    superior.setAttribute('aria-expanded', expandida ? 'true' : 'false');
+    superior.setAttribute('aria-controls', idDetalle);
+
     const estado = crear('span', `cc-purchase-status cc-purchase-status--${compra.grupo}`, compra.etiqueta);
-    const meta = crear('div', 'cc-purchase-card__meta');
+    const meta = crear('span', 'cc-purchase-card__meta');
     const fechaCompra = compra.grupo === 'realizada' ? compra.comprada_en : compra.creada_en;
     const tiempo = crear('time', '', `${compra.grupo === 'realizada' ? 'Comprado el' : 'Creada el'} ${fecha(fechaCompra)}`);
     tiempo.dateTime = fechaCompra;
     meta.append(estado, tiempo);
-    const total = crear('div', 'cc-purchase-card__total');
+
+    const unidades = compra.lineas.reduce((total, linea) => total + linea.cantidad, 0);
+    const resumenLineas = compra.lineas.length === 1
+      ? `${unidades} ${unidades === 1 ? 'unidad' : 'unidades'} · ${compra.lineas[0].nombre}`
+      : `${unidades} unidades · ${compra.lineas.length} productos`;
+    const resumen = crear('span', 'cc-purchase-card__brief', resumenLineas);
+    const principal = crear('span', 'cc-purchase-card__summary-main');
+    principal.append(meta, resumen);
+
+    const total = crear('span', 'cc-purchase-card__total');
     total.append(crear('span', '', 'Total'), crear('strong', '', moneda(compra.total)));
-    superior.append(meta, total);
 
-    const cuerpo = crear('div', 'cc-purchase-card__body');
-    if (compra.grupo === 'proceso') detalleProceso(compra, cuerpo);
-    if (compra.grupo === 'realizada') detalleLogistico(compra, cuerpo);
-    const lineas = crear('div', 'cc-purchase-lines');
-    compra.lineas.forEach((linea, indice) => lineas.appendChild(lineaCompra(linea, compra, indice)));
-    cuerpo.appendChild(lineas);
+    const indicador = crear('span', 'cc-purchase-card__toggle');
+    indicador.setAttribute('aria-hidden', 'true');
+    indicador.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m7 10 5 5 5-5"/></svg>';
+    const accion = crear('span', 'cc-purchase-card__toggle-label', expandida ? 'Ocultar detalles' : 'Ver detalles');
+    superior.append(principal, total, indicador, accion);
+    superior.addEventListener('click', () => {
+      referenciaExpandida = expandida ? '' : compra.referencia;
+      renderizar();
+    });
 
-    const pie = crear('footer', 'cc-purchase-card__footer');
-    const referencia = crear('span', 'cc-purchase-reference', `Referencia ${compra.referencia}`);
-    pie.appendChild(referencia);
-    if (compra.grupo === 'proceso') {
-      const acciones = crear('div', 'cc-purchase-card__actions');
-      if (compra.puede_continuar) {
-        const continuarPago = crear('button', 'cc-purchase-action cc-purchase-action--primary', 'Continuar pago');
-        continuarPago.type = 'button';
-        continuarPago.dataset.ccFocusKey = `compra:${compra.referencia}:continuar`;
-        continuarPago.setAttribute('aria-disabled', referenciaEnAccion === compra.referencia ? 'true' : 'false');
-        continuarPago.addEventListener('click', () => continuar(compra));
-        acciones.appendChild(continuarPago);
+    const detalles = crear('div', 'cc-purchase-card__details');
+    detalles.id = idDetalle;
+    detalles.hidden = !expandida;
+    if (expandida) {
+      const cuerpo = crear('div', 'cc-purchase-card__body');
+      if (compra.grupo === 'proceso') detalleProceso(compra, cuerpo);
+      if (compra.grupo === 'realizada') detalleLogistico(compra, cuerpo);
+      const lineas = crear('div', 'cc-purchase-lines');
+      compra.lineas.forEach((linea, indice) => lineas.appendChild(lineaCompra(linea, compra, indice)));
+      cuerpo.appendChild(lineas);
+
+      const pie = crear('footer', 'cc-purchase-card__footer');
+      const referencia = crear('span', 'cc-purchase-reference', `Referencia ${compra.referencia}`);
+      pie.appendChild(referencia);
+      if (compra.grupo === 'proceso') {
+        const acciones = crear('div', 'cc-purchase-card__actions');
+        if (compra.puede_continuar) {
+          const continuarPago = crear('button', 'cc-purchase-action cc-purchase-action--primary', 'Continuar pago');
+          continuarPago.type = 'button';
+          continuarPago.dataset.ccFocusKey = `compra:${compra.referencia}:continuar`;
+          continuarPago.setAttribute('aria-disabled', referenciaEnAccion === compra.referencia ? 'true' : 'false');
+          continuarPago.addEventListener('click', () => continuar(compra));
+          acciones.appendChild(continuarPago);
+        }
+        if (compra.puede_verificar) {
+          const comprobar = crear('button', 'cc-purchase-action', referenciaEnAccion === compra.referencia ? 'Verificando…' : 'Verificar estado');
+          comprobar.type = 'button';
+          comprobar.dataset.ccFocusKey = `compra:${compra.referencia}:verificar`;
+          comprobar.setAttribute('aria-disabled', referenciaEnAccion ? 'true' : 'false');
+          comprobar.addEventListener('click', () => verificar(compra));
+          acciones.appendChild(comprobar);
+        }
+        if (acciones.childElementCount) pie.appendChild(acciones);
       }
-      if (compra.puede_verificar) {
-        const comprobar = crear('button', 'cc-purchase-action', referenciaEnAccion === compra.referencia ? 'Verificando…' : 'Verificar estado');
-        comprobar.type = 'button';
-        comprobar.dataset.ccFocusKey = `compra:${compra.referencia}:verificar`;
-        comprobar.setAttribute('aria-disabled', referenciaEnAccion ? 'true' : 'false');
-        comprobar.addEventListener('click', () => verificar(compra));
-        acciones.appendChild(comprobar);
+      if (mensajeAccion && mensajeAccionReferencia === compra.referencia && !referenciaEnAccion) {
+        const alerta = crear('p', 'cc-purchase-alert', mensajeAccion);
+        alerta.dataset.ccPurchaseAlert = '';
+        alerta.tabIndex = -1;
+        alerta.setAttribute('role', 'alert');
+        cuerpo.appendChild(alerta);
       }
-      if (acciones.childElementCount) pie.appendChild(acciones);
+      detalles.append(cuerpo, pie);
     }
-    if (mensajeAccion && mensajeAccionReferencia === compra.referencia && !referenciaEnAccion) {
-      const alerta = crear('p', 'cc-purchase-alert', mensajeAccion);
-      alerta.dataset.ccPurchaseAlert = '';
-      alerta.tabIndex = -1;
-      alerta.setAttribute('role', 'alert');
-      cuerpo.appendChild(alerta);
-    }
-    tarjeta.append(superior, cuerpo, pie);
+    tarjeta.append(superior, detalles);
     return tarjeta;
   }
 
@@ -715,6 +751,9 @@ export function crearControlMisCompras({ supabase, obtenerSesion, obtenerRutas, 
         if (cambio) {
           compras = listado;
           huellaListado = nuevaHuella;
+          if (referenciaExpandida && !listado.some((compra) => compra.referencia === referenciaExpandida)) {
+            referenciaExpandida = '';
+          }
         }
         uidActual = uidAlPedir;
         cargada = true;
@@ -783,6 +822,7 @@ export function crearControlMisCompras({ supabase, obtenerSesion, obtenerRutas, 
       cargada = false;
       errorCarga = false;
       referenciaEnAccion = '';
+      referenciaExpandida = '';
       mensajeAccion = '';
       mensajeGeneral = '';
       anuncio = '';
