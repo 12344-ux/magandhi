@@ -1,4 +1,9 @@
-import { supabase } from '../supabase-config.js';
+import { supabase, SUPABASE_URL } from '../supabase-config.js';
+import {
+  buscarProductos,
+  extraerProductos,
+  montarSlots,
+} from '../componentes/motor-tienda.js?v=1';
 import {
   cargarCategoriasPublicas,
   categoriaPorCodigo,
@@ -10,11 +15,10 @@ import {
 import { crearPanelCategorias } from '../componentes/categorias-panel.js?v=2';
 
 const BUCKET_CAMPANAS = 'campanas';
-const CAMPOS_ANTIGUOS = [
-  'id', 'nombre', 'slug', 'categoria_codigo', 'categoria_nombre', 'detalle_presentacion',
-  'imagen_banner_path', 'precio_venta', 'imagenes', 'agotado', 'orden',
-].join(',');
-const CAMPOS_NUEVOS = `${CAMPOS_ANTIGUOS},categoria_codigos`;
+const TAMANO_PAGINA_CATALOGO = 60;
+const MAX_TOTAL_CATALOGO = 10000;
+// El contrato limita total/desplazamiento a 10.000: como máximo 167 páginas.
+const MAX_PAGINAS_CATALOGO = Math.ceil(MAX_TOTAL_CATALOGO / TAMANO_PAGINA_CATALOGO);
 const parametros = new URLSearchParams(window.location.search);
 const codigoSolicitado = parametros.get('categoria') || '';
 const hayFiltroSolicitado = Boolean(codigoSolicitado.trim());
@@ -33,29 +37,61 @@ function obtenerCategorias({ recargar = false } = {}) {
 }
 
 function urlPublica(path) {
-  if (!path) return '';
-  if (/^https?:\/\//i.test(path)) return path;
+  if (!path || typeof path !== 'string') return '';
+  if (/^https:\/\//i.test(path)) {
+    try {
+      const candidata = new URL(path);
+      const storage = new URL(SUPABASE_URL);
+      const prefijo = `/storage/v1/object/public/${BUCKET_CAMPANAS}/`;
+      if (candidata.origin === storage.origin && !candidata.username && !candidata.password &&
+          !candidata.port && candidata.pathname.startsWith(prefijo)) return candidata.href;
+    } catch { /* cae al placeholder */ }
+    return '';
+  }
+  if (/^[a-z][a-z0-9+.-]*:/i.test(path)) return '';
+  const segmentos = path.split('/');
+  for (const segmento of segmentos) {
+    let decodificado = '';
+    try { decodificado = decodeURIComponent(segmento); } catch { return ''; }
+    if (!segmento || decodificado === '.' || decodificado === '..' || /[\\/]/.test(decodificado)) return '';
+  }
   const { data } = supabase.storage.from(BUCKET_CAMPANAS).getPublicUrl(path);
   return data?.publicUrl || '';
 }
 
-function pathLiviana(path) {
-  if (!path || /^https?:\/\//i.test(path)) return '';
-  const punto = path.lastIndexOf('.');
-  if (punto <= 0) return '';
-  const base = path.slice(0, punto);
-  return base.endsWith('-sm') ? path : `${base}-sm.${path.slice(punto + 1)}`;
+function pathLiviana(pathGrande) {
+  if (!pathGrande || typeof pathGrande !== 'string') return '';
+  const conSufijo = (path) => {
+    const punto = path.lastIndexOf('.');
+    const barra = path.lastIndexOf('/');
+    if (punto <= barra + 1 || punto === path.length - 1) return '';
+    const base = path.slice(0, punto);
+    return base.endsWith('-sm') ? path : `${base}-sm.${path.slice(punto + 1)}`;
+  };
+  if (/^https:\/\//i.test(pathGrande)) {
+    try {
+      const url = new URL(pathGrande);
+      const pathname = conSufijo(url.pathname);
+      if (!pathname) return '';
+      url.pathname = pathname;
+      return url.href;
+    } catch { return ''; }
+  }
+  if (/^[a-z][a-z0-9+.-]*:/i.test(pathGrande)) return '';
+  return conSufijo(pathGrande);
 }
 
 function fotosProducto(fila) {
+  const asset = fila.asset && typeof fila.asset.path === 'string' ? fila.asset.path.trim() : '';
   const galeria = Array.isArray(fila.imagenes)
     ? fila.imagenes.find((item) => typeof item === 'string' && item.trim())
     : '';
   const banner = typeof fila.imagen_banner_path === 'string' ? fila.imagen_banner_path.trim() : '';
-  const path = galeria || banner;
+  const path = asset || galeria || banner;
   if (!path) return { liviana: '', grande: '' };
   const grande = urlPublica(path);
-  const liviana = galeria ? urlPublica(pathLiviana(path)) || grande : grande;
+  const intentaLiviana = Boolean(asset || galeria);
+  const liviana = intentaLiviana ? urlPublica(pathLiviana(path)) || grande : grande;
   return { liviana, grande };
 }
 
@@ -77,25 +113,24 @@ function nombreCategoriaFila(fila, categoriaSeleccionada) {
 }
 
 const ICONO_IMAGEN = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="9" cy="9" r="2"/><path d="m21 15-3.1-3.1a2 2 0 0 0-2.8 0L6 21"/></svg>';
-const ICONO_AGOTADO = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="M4.9 4.9 19.1 19.1"/></svg>';
 
 function placeholder() {
   return `<span class="cp-product-card__placeholder" aria-hidden="true">${ICONO_IMAGEN}</span>`;
 }
 
 function tarjetaProducto(fila, categoriaSeleccionada) {
+  if (!fila || fila.agotado === true || !Number.isSafeInteger(fila.max_comprable) || fila.max_comprable <= 0) return '';
   const fotos = fotosProducto(fila);
   const imagen = fotos.liviana
-    ? `<img src="${esc(fotos.liviana)}" data-fallback-grande="${esc(fotos.grande)}" alt="${esc(fila.nombre)}" loading="lazy">`
+    ? `<img src="${esc(fotos.liviana)}" data-fallback-grande="${esc(fotos.grande)}" alt="${esc(fila.asset?.alt || fila.nombre)}" loading="lazy">`
     : placeholder();
   const precio = formatearPrecio(fila.precio_venta);
-  return `<a class="cp-product-card" href="${esc(hrefProducto(fila))}">
+  return `<a class="cp-product-card" href="${esc(hrefProducto(fila))}" data-sn-producto-id="${esc(fila.id)}" data-sn-producto-slug="${esc(fila.slug || '')}">
     <div class="cp-product-card__photo">${imagen}</div>
     <div class="cp-product-card__body">
       <span class="cp-product-card__category">${esc(nombreCategoriaFila(fila, categoriaSeleccionada))}</span>
       <h3>${esc(fila.nombre)}</h3>
       <p class="cp-product-card__detail">${esc(fila.detalle_presentacion || '')}</p>
-      ${fila.agotado === true ? `<span class="cp-product-card__stock">${ICONO_AGOTADO}Agotado</span>` : ''}
       ${precio ? `<span class="cp-product-card__price">${esc(precio)}<small>COP</small></span>` : ''}
     </div>
   </a>`;
@@ -116,30 +151,57 @@ function activarFallbacksImagen() {
   });
 }
 
-function esColumnaCategoriaAusente(error) {
-  const texto = `${error?.code || ''} ${error?.message || ''} ${error?.details || ''}`.toLowerCase();
-  return texto.includes('categoria_codigos') && (
-    texto.includes('does not exist') || texto.includes('schema cache') ||
-    texto.includes('42703') || texto.includes('pgrst200') || texto.includes('pgrst204')
-  );
-}
-
 async function consultarCatalogo(categoriaSeleccionada) {
-  let consulta = supabase.from('catalogo_publico').select(CAMPOS_NUEVOS);
-  if (categoriaSeleccionada) consulta = consulta.contains('categoria_codigos', [categoriaSeleccionada.codigo]);
-  const resultadoNuevo = await consulta.order('orden', { ascending: true });
-  if (!resultadoNuevo.error) return resultadoNuevo.data || [];
-  if (!esColumnaCategoriaAusente(resultadoNuevo.error)) throw resultadoNuevo.error;
+  const filas = [];
+  const vistos = new Set();
+  let totalEsperado = null;
+  let desde = 0;
 
-  const resultadoAntiguo = await supabase
-    .from('catalogo_publico')
-    .select(CAMPOS_ANTIGUOS)
-    .order('orden', { ascending: true });
-  if (resultadoAntiguo.error) throw resultadoAntiguo.error;
-  const filas = resultadoAntiguo.data || [];
-  return categoriaSeleccionada
-    ? filas.filter((fila) => filaPerteneceACategoria(fila, categoriaSeleccionada.codigo))
-    : filas;
+  for (let pagina = 0; pagina < MAX_PAGINAS_CATALOGO; pagina += 1) {
+    const respuesta = await buscarProductos({
+      consulta: '',
+      categoria: categoriaSeleccionada?.codigo || null,
+      limite: TAMANO_PAGINA_CATALOGO,
+      desde,
+      productoActual: null,
+    });
+    if (!Number.isSafeInteger(respuesta.total) || respuesta.total < 0 ||
+        respuesta.total > MAX_TOTAL_CATALOGO) {
+      throw new Error('SN1 devolvió un total de catálogo fuera de contrato.');
+    }
+    if (totalEsperado === null) totalEsperado = respuesta.total;
+    else if (respuesta.total !== totalEsperado) {
+      throw new Error('El catálogo cambió durante la paginación; es necesario reintentar.');
+    }
+    if (totalEsperado === 0) return [];
+
+    const lote = extraerProductos(respuesta, { productoActual: null }).filter((fila) =>
+      fila.agotado !== true && Number.isSafeInteger(fila.max_comprable) && fila.max_comprable > 0
+    );
+    let agregados = 0;
+    for (const fila of lote) {
+      const claves = [`id:${fila.id.toLowerCase()}`];
+      if (fila.slug) claves.push(`slug:${fila.slug.toLowerCase()}`);
+      if (claves.some((clave) => vistos.has(clave))) continue;
+      claves.forEach((clave) => vistos.add(clave));
+      filas.push(fila);
+      agregados += 1;
+    }
+
+    const siguienteDesde = desde + TAMANO_PAGINA_CATALOGO;
+    if (siguienteDesde >= totalEsperado) {
+      if (filas.length !== totalEsperado) {
+        throw new Error('SN1 devolvió páginas incompletas o productos duplicados.');
+      }
+      return filas;
+    }
+    if (!lote.length || agregados === 0 || siguienteDesde <= desde) {
+      throw new Error('SN1 no avanzó durante la paginación del catálogo.');
+    }
+    desde = siguienteDesde;
+  }
+
+  throw new Error('SN1 superó el techo documentado de paginación del catálogo.');
 }
 
 function pintarNavegacion(categorias, categoriaSeleccionada) {
@@ -279,13 +341,25 @@ function markupEstadoError(titulo = 'No pudimos cargar la selección', detalle =
   </div>`;
 }
 
+function configurarSlotDescubrimiento(categoriaSeleccionada, habilitado = true) {
+  const slot = document.querySelector('[data-sn-slot="categoria-descubrimiento"]');
+  if (!slot) return;
+  const reactivado = habilitado && slot.dataset.snDisabled === 'true';
+  slot.dataset.snCategoria = categoriaSeleccionada?.codigo || '';
+  slot.dataset.snDisabled = habilitado ? 'false' : 'true';
+  if (!habilitado) slot.hidden = true;
+  if (reactivado) montarSlots(slot, { forzar: true });
+}
+
 async function pintarProductos(categoriaSeleccionada) {
   const grid = document.getElementById('cp-product-grid');
   grid.setAttribute('aria-busy', 'true');
+  configurarSlotDescubrimiento(categoriaSeleccionada, true);
   grid.innerHTML = '<p class="cp-state cp-state--loading" role="status">Cargando la selección…</p>';
   try {
     const filas = (await consultarCatalogo(categoriaSeleccionada))
-      .filter((fila) => fila?.nombre && (fila.slug || fila.id));
+      .filter((fila) => fila?.nombre && (fila.slug || fila.id) && fila.agotado !== true &&
+        Number.isSafeInteger(fila.max_comprable) && fila.max_comprable > 0);
     if (!filas.length) {
       grid.innerHTML = markupEstadoVacio(categoriaSeleccionada);
       return;
@@ -302,12 +376,14 @@ async function pintarProductos(categoriaSeleccionada) {
 }
 
 function pintarCategoriaNoDisponible() {
+  configurarSlotDescubrimiento(null, false);
   const grid = document.getElementById('cp-product-grid');
   grid.setAttribute('aria-busy', 'false');
   grid.innerHTML = markupCategoriaNoDisponible();
 }
 
 function pintarProductosBloqueadosPorCategorias() {
+  configurarSlotDescubrimiento(null, false);
   const grid = document.getElementById('cp-product-grid');
   grid.setAttribute('aria-busy', 'false');
   grid.innerHTML = markupEstadoError(

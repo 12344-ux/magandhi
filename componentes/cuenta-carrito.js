@@ -1,4 +1,5 @@
 import '../scripts/atribucion-promocional.js?v=1';
+import { configurarBuscadores } from './motor-tienda.js?v=1';
 import { observarSesionCliente } from '../cliente/cliente-sesion.js';
 import { listarCarrito } from '../carrito/carrito-core.js?v=3';
 import { crearControlMisCompras } from './mis-compras.js?v=4';
@@ -644,23 +645,8 @@ function manejarTecladoCentro(evento) {
   }
 }
 
-function configurarBuscadores() {
-  document.querySelectorAll('[data-buscador-catalogo]').forEach((formulario) => {
-    formulario.addEventListener('submit', (evento) => {
-      evento.preventDefault();
-      const entrada = formulario.querySelector('input[type="search"]');
-      const estadoBusqueda = formulario.querySelector('[data-buscador-estado]');
-      if (!entrada?.value.trim()) {
-        entrada?.focus();
-        return;
-      }
-      if (estadoBusqueda) estadoBusqueda.textContent = 'La búsqueda estará disponible muy pronto.';
-    });
-    formulario.querySelector('input[type="search"]')?.addEventListener('input', () => {
-      const estadoBusqueda = formulario.querySelector('[data-buscador-estado]');
-      if (estadoBusqueda) estadoBusqueda.textContent = '';
-    });
-  });
+function configurarBuscadoresCuenta() {
+  configurarBuscadores(document);
 }
 
 window.addEventListener('popstate', manejarPopstateCentro);
@@ -699,4 +685,4 @@ observarSesionCliente((sesion) => {
   }
 });
 
-configurarBuscadores();
+configurarBuscadoresCuenta();

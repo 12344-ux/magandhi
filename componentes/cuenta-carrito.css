@@ -1,3 +1,5 @@
+@import url('./motor-tienda.css?v=1');
+
 [data-cuenta-carrito][hidden],.cc-carrito__badge[hidden],.cc-center[hidden]{display:none!important}
 [data-cuenta-carrito]{display:inline-flex;align-items:center;justify-content:flex-end;gap:9px;min-width:0;flex:none}
 
@@ -130,10 +132,12 @@
   .cc-auth-action{padding-inline:11px}
 }
 @media(max-width:720px){
-  .cc-store-header{padding:18px 14px 8px;grid-template-columns:1fr auto;gap:12px}
+  .cc-store-header{padding:18px 14px 8px;grid-template-columns:auto minmax(92px,1fr) auto;gap:9px}
   .cc-store-actions{min-width:0}
   .cc-store-brand{gap:9px}.cc-store-brand img{width:39px;height:39px}.cc-store-brand__text strong{font-size:17px}
-  .cc-search{display:none}
+  .cc-search{display:flex;min-width:0}
+  .cc-search input{height:42px;padding:9px 43px 9px 12px;font-size:12px}
+  .cc-search button{width:42px;height:42px}
   [data-cuenta-carrito]{gap:7px}
   .cc-auth-action,.cc-action{min-height:38px;padding:8px 9px;font-size:11px}
   .cc-action--account .cc-menu-icon{width:37px;height:20px}

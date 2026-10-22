@@ -14,7 +14,7 @@
 <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="../marca.css?v=3">
 <link rel="stylesheet" href="carrito.css?v=3">
-<link rel="stylesheet" href="../componentes/cuenta-carrito.css?v=7">
+<link rel="stylesheet" href="../componentes/cuenta-carrito.css?v=9">
 </head>
 <body>
 <header class="co-head cc-store-header">
@@ -111,6 +111,14 @@
     </div>
     <div class="co-notice" id="co-notice" role="status" aria-live="polite" hidden></div>
     <div class="co-lines" id="co-lines"></div>
+    <section data-sn-slot="carrito-recomendaciones"
+             data-sn-superficie="carrito"
+             data-sn-limite="6"
+             data-sn-layout="carril_derecha"
+             data-sn-titulo="Completa tu selección"
+             data-sn-subtitulo="Ideas disponibles para acompañar lo que llevas."
+             data-sn-espera-carrito
+             hidden></section>
     <aside class="co-summary" aria-label="Resumen del carrito">
       <div><span>Total actual</span><strong id="co-subtotal">—</strong></div>
       <p>El servidor volverá a validar cada línea y confirmará el total autoritativo antes de abrir el pago.</p>
@@ -223,7 +231,8 @@
 <footer class="co-footer">
   <span>© 2026 MAGANDHI</span><a href="../politicas/">Políticas</a><a href="mailto:contacto@magandhi.com">Contacto</a>
 </footer>
-<script type="module" src="../analitica/analitica.js?v=2"></script>
-<script type="module" src="carrito-ui.js?v=11"></script>
+<script type="module" src="../componentes/motor-tienda.js?v=1"></script>
+<script type="module" src="../analitica/analitica.js?v=3"></script>
+<script type="module" src="carrito-ui.js?v=12"></script>
 </body>
 </html>

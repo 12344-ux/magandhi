@@ -33,7 +33,7 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="../marca.css?v=3">
-<link rel="stylesheet" href="../componentes/cuenta-carrito.css?v=7">
+<link rel="stylesheet" href="../componentes/cuenta-carrito.css?v=9">
 
 <!--
   MAGANDHI · Plantilla funcional UNICA de producto. Se llena sola para cualquier
@@ -163,27 +163,16 @@
     header.mg-store-header{position:static;background:transparent;border-bottom:0;box-shadow:none}
   }
 
-  /* Buscador deliberadamente visual: anticipa la función sin crear un input o
-     un control falso enfocable. Estos estilos viven solo en la ficha. */
-  .mg-store-header .mg-search-visual{
-    display:none;min-width:0;height:44px;padding:0 12px 0 14px;
-    align-items:center;gap:9px;border:1px solid var(--linea);border-radius:999px;
-    background:var(--ml-panel);color:var(--gris);box-shadow:var(--ml-sombra);
-    cursor:default;pointer-events:none;user-select:none;
-  }
-  .mg-store-header .mg-search-visual svg{width:18px;height:18px;flex:none;color:var(--rojo)}
-  .mg-store-header .mg-search-visual span{min-width:0;font-size:12.5px;font-weight:500}
   @media(max-width:860px){
     .mg-store-header.cc-store-header{
       width:100%;padding:14px 16px 10px;
       grid-template-columns:auto minmax(76px,1fr) auto;gap:12px;
     }
-    .mg-store-header .mg-search-desktop{display:none}
+    .mg-store-header .cc-search{display:flex;min-width:0}
     .mg-store-header .cc-store-brand{gap:9px}
     .mg-store-header .cc-store-brand img{width:42px;height:42px}
     .mg-store-header .cc-store-brand__text small{display:none}
     .mg-store-header .cc-store-brand__text strong{font-size:18px}
-    .mg-store-header .mg-search-visual{display:flex!important;width:100%;height:44px;padding-inline:12px 9px}
     .mg-store-header .cc-store-actions{min-width:0}
     .mg-store-header [data-cuenta-carrito]{gap:6px}
     .mg-store-header .cc-auth-action,.mg-store-header .cc-action{min-height:44px}
@@ -192,8 +181,6 @@
     .mg-store-header.cc-store-header{padding-inline:12px;gap:8px}
     .mg-store-header .cc-store-brand__text{display:none}
     .mg-store-header .cc-store-brand img{width:38px;height:38px}
-    .mg-store-header .mg-search-visual{padding-inline:10px 7px;gap:6px}
-    .mg-store-header .mg-search-visual span{font-size:11.5px}
     .mg-store-header .cc-auth-action{padding-inline:8px;font-size:10.5px}
     .mg-store-header .cc-action{width:44px;padding:8px}
     .mg-store-header .cc-action--account{width:52px}
@@ -201,9 +188,6 @@
   @media(max-width:370px){
     .mg-store-header.cc-store-header{gap:6px;padding-inline:10px}
     .mg-store-header .cc-store-brand img{width:36px;height:36px}
-    .mg-store-header .mg-search-visual{gap:5px;padding-inline:8px 6px}
-    .mg-store-header .mg-search-visual svg{width:16px;height:16px}
-    .mg-store-header .mg-search-visual span{font-size:10.5px}
     .mg-store-header .cc-auth-action{padding-inline:6px;font-size:10px}
   }
   /* BARRA DE CONFIANZA EN MOVIL: la flecha queda fuera del flujo y los dos
@@ -1191,7 +1175,7 @@
       <small>Hoy mereces lo mejor</small>
     </span>
   </a>
-  <form class="cc-search mg-search-desktop" role="search" data-buscador-catalogo>
+  <form class="cc-search" role="search" data-buscador-catalogo>
     <label for="mg-search">Buscar productos</label>
     <input id="mg-search" type="search" inputmode="search" autocomplete="off" placeholder="¿Qué estás buscando?">
     <button type="submit" aria-label="Buscar">
@@ -1199,10 +1183,6 @@
     </button>
     <span class="cc-search__status" data-buscador-estado role="status" aria-live="polite"></span>
   </form>
-  <div class="mg-search-visual" aria-hidden="true">
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-4-4"/></svg>
-    <span>Buscar productos</span>
-  </div>
   <div class="cc-store-actions">
     <span data-cuenta-carrito
           data-inicio-href="../"
@@ -1401,6 +1381,15 @@
   <!-- "ver todas": aparece solo si hay mas de 4 opiniones -->
   <div class="mg-vertodas" id="mg-vertodas" hidden><button type="button"></button></div>
 </section>
+
+<section data-sn-slot="producto-final"
+         data-sn-superficie="producto_final"
+         data-sn-limite="8"
+         data-sn-layout="carril_derecha"
+         data-sn-titulo="También puedes descubrir"
+         data-sn-subtitulo="Productos disponibles que combinan con esta selección."
+         data-sn-espera-producto
+         hidden></section>
 
 <!-- modal: Dejar una reseña -->
 <div class="mg-modal" id="mg-modal-resena" role="dialog" aria-modal="true" aria-labelledby="mg-rf-tit" aria-hidden="true">
@@ -1775,12 +1764,13 @@
 <script type="module">
   import { supabase, SUPABASE_URL } from '../supabase-config.js';
   import { agregarAlCarrito, quitarDelCarrito, mensajeErrorCarrito } from '../carrito/carrito-core.js?v=3';
+  import '../componentes/motor-tienda.js?v=1';
   import {
     observarEstadoCarrito,
     sincronizarCuentaCarrito,
     refrescarCuentaCarrito,
     ocultarCuentaCarrito,
-  } from '../componentes/cuenta-carrito.js?v=8';
+  } from '../componentes/cuenta-carrito.js?v=9';
   import { revalidarSesionCliente } from '../cliente/cliente-sesion.js';
   import { codigoAtribucionParaIntencion } from '../scripts/atribucion-promocional.js?v=1';
 
@@ -1967,6 +1957,20 @@
     return !fila || fila.agotado === true || fila.max_comprable === 0;
   }
 
+  function anunciarProductoSN1(fila){
+    const disponible = !!fila && !productoAgotado(fila) &&
+      Number.isSafeInteger(fila.max_comprable) && fila.max_comprable > 0;
+    window.dispatchEvent(new CustomEvent('magandhi:producto', {
+      detail: disponible ? {
+        id: String(fila.id || ''),
+        slug: String(fila.slug || ''),
+        categoria: String(fila.categoria_codigo || fila.categoria_nombre || ''),
+        agotado: false,
+        max_comprable: fila.max_comprable,
+      } : null,
+    }));
+  }
+
   function cantidadSeleccionada(){
     const select = document.getElementById('mg-cantidad');
     if(!select || !/^\d+$/.test(select.value)) return null;
@@ -2062,6 +2066,7 @@
     pintarAgotado(filaProducto);
     actualizarResumenModal();
     actualizarBotonCarrito();
+    anunciarProductoSN1(filaProducto);
   }
 
   function mostrarAvisoCantidad(mensaje){
@@ -2495,6 +2500,7 @@
     actualizarBotonCarrito();
     set('mg-titulo', 'Producto no disponible');
     set('mg-sub', '');
+    anunciarProductoSN1(null);
   }
 
   // Fila del producto ya cargada (catalogo_publico). Se guarda en este scope del
@@ -2746,7 +2752,7 @@
 
     try{
       const camposBase = [
-        'id','nombre','slug','categoria_nombre','caracteristica_adicional','precio_venta',
+        'id','nombre','slug','categoria_codigo','categoria_nombre','caracteristica_adicional','precio_venta',
         'hook_largo','por_que_magandhi','sobre_este_producto','ficha_tecnica',
         'imagenes','imagen_banner_path','sello_elegido','agotado',
         'aviso_urgencia_activo','aviso_urgencia_cantidad'
@@ -2808,6 +2814,7 @@
       // el candado prudente en recargas posteriores.
       normalizarPagoPendiente(filaProducto);
       limpiarUrlCanonica(filaProducto);
+      anunciarProductoSN1(filaProducto);
     }catch(e){
       // Falla de red/consulta: no se pudo confirmar el producto ni su
       // disponibilidad, asi que se muestra el aviso sobrio de no disponible y
@@ -4063,6 +4070,6 @@
 </script>
 
 <!-- Analitica propia (EM7) -->
-<script type="module" src="../analitica/analitica.js?v=2"></script>
+<script type="module" src="../analitica/analitica.js?v=3"></script>
 </body>
 </html>
