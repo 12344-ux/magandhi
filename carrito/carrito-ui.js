@@ -19,6 +19,24 @@ let checkout = { actualizar() {} };
 const porId = (id) => document.getElementById(id);
 const moneda = (valor) => '$ ' + Math.round(Number(valor)).toLocaleString('es-CO') + ' COP';
 
+function configurarRegreso() {
+  const enlace = document.querySelector('[data-co-back]');
+  if (!enlace) return;
+  enlace.addEventListener('click', (evento) => {
+    if (evento.defaultPrevented || evento.button !== 0 || evento.metaKey || evento.ctrlKey || evento.shiftKey || evento.altKey) return;
+    try {
+      const hayPaginaAnteriorDelSitio = history.length > 1
+        && document.referrer
+        && new URL(document.referrer).origin === window.location.origin;
+      if (!hayPaginaAnteriorDelSitio) return;
+      evento.preventDefault();
+      history.back();
+    } catch {
+      // El href mantiene un regreso seguro al inicio si el historial no se puede consultar.
+    }
+  });
+}
+
 function estadoCheckout() {
   return { sesion: sesionActual, snapshot: snapshotActual, operacion };
 }
@@ -254,6 +272,8 @@ function quitar(item, version, linea) {
     () => document.getElementById('co-content-title')?.focus()
   );
 }
+
+configurarRegreso();
 
 porId('co-retry').addEventListener('click', () => {
   if (uidActual) cargar();
