@@ -14,7 +14,7 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="../../marca.css?v=3">
-<link rel="stylesheet" href="../../politicas/politicas.css?v=1">
+<link rel="stylesheet" href="../../politicas/politicas.css?v=2">
 <!--
   MAGANDHI · Políticas · Cookies y analítica.
   ESTRUCTURA, no texto final: las secciones (y sus anclas #id) son las
@@ -24,12 +24,16 @@
   back-office (Email marketing → Resumen → registrar politica).
 -->
 </head>
-<body>
-<header class="pol-head"><div class="pol-head__in"><a href="../../index.html" aria-label="MAGANDHI, inicio">
-  <img src="../../logo-mark-terracota.png" alt=""><b>MAG<i>A</i>NDHI</b></a></div></header>
-<div class="pol-aviso">Documento en preparación. El texto definitivo se publicará antes de la apertura de la tienda.</div>
+<body class="pol-app pol-app--documento" data-pol-doc="cookies">
+<header class="pol-head"><div class="pol-head__in">
+  <a class="pol-head__back" data-pol-back href="/politicas/" aria-label="Volver a todas las políticas"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m15 18-6-6 6-6"/></svg></a>
+  <a class="pol-head__brand" href="/" aria-label="MAGANDHI, inicio"><img src="/logo-mark-terracota.png" alt=""><b>MAG<i>A</i>NDHI</b></a>
+  <span class="pol-head__divider" aria-hidden="true"></span><div class="pol-head__context"><span>Información institucional</span><strong>Centro de políticas</strong></div>
+  <span class="pol-head__status">Borrador</span><a class="pol-head__store" href="/"><span>Volver a la tienda</span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg></a>
+</div></header>
+<div class="pol-aviso" role="status"><strong>Documento en preparación.</strong><span> El texto definitivo se publicará antes de la apertura de la tienda.</span></div>
 <div class="pol-wrap">
-<nav class="pol-nav" aria-label="Políticas"><p>Políticas</p><ul><li><a href="../">Todas las políticas</a></li><li><a href="../datos/">Tratamiento de datos personales</a></li><li><a href="../cookies/" aria-current="page">Cookies y analítica</a></li><li><a href="../terminos/">Términos y condiciones</a></li><li><a href="../envios/">Envíos y entregas</a></li><li><a href="../devoluciones/">Cambios, devoluciones y retracto</a></li></ul></nav>
+<nav class="pol-nav" data-pol-nav aria-label="Políticas"><div class="pol-nav__head"><span>Documentos</span><strong>Políticas</strong></div><ul><li><a href="/politicas/">Todas las políticas</a></li><li><a href="/politicas/datos/">Tratamiento de datos personales</a></li><li><a href="/politicas/cookies/" aria-current="page">Cookies y analítica</a></li><li><a href="/politicas/terminos/">Términos y condiciones</a></li><li><a href="/politicas/envios/">Envíos y entregas</a></li><li><a href="/politicas/devoluciones/">Cambios, devoluciones y retracto</a></li></ul><div class="pol-nav__foot"><span>Estado editorial</span><strong>Borrador-0</strong></div></nav>
 <main class="pol-doc">
 <h1>Cookies y analítica</h1>
 <p class="pol-meta">Versión borrador-0 · Estructura provisional</p>
@@ -46,6 +50,6 @@
 </main>
 </div>
 <p class="pol-pie">© 2026 MAGANDHI · Tunja · <a href="mailto:contacto@magandhi.com">contacto@magandhi.com</a></p>
-<script type="module" src="../../scripts/atribucion-promocional.js?v=1"></script>
+<script type="module" src="../politicas.js?v=1"></script>
 </body>
 </html>

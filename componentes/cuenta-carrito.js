@@ -15,7 +15,13 @@ let botonQueAbrio = null;
 let rutasCentro = null;
 const DESTINO_COMPRAS = '/carrito/?cuenta=compras';
 const CLAVE_DESTINO_CUENTA = 'mg_destino_cuenta';
+const CLAVE_HISTORIAL_CUENTA = '__magandhiCuenta';
+const mediaCuentaMovil = window.matchMedia('(max-width: 520px)');
 let abrirComprasPorDeepLink = false;
+let pantallaCentro = 'compras';
+let secuenciaHistorialCentro = 0;
+let historialCentro = { instancia: '', profundidad: 0 };
+let omitirSiguientePopstate = false;
 
 try {
   const url = new URL(window.location.href);
@@ -28,7 +34,7 @@ try {
     } catch { /* Si storage falla, la URL conserva el destino. */ }
     if (persistido) {
       url.searchParams.delete('cuenta');
-      history.replaceState(null, '', url.pathname + url.search + url.hash);
+      history.replaceState(history.state, '', url.pathname + url.search + url.hash);
     }
   } else {
     try { abrirComprasPorDeepLink = sessionStorage.getItem(CLAVE_DESTINO_CUENTA) === DESTINO_COMPRAS; } catch { /* Sin memoria, no se inventa destino. */ }
@@ -37,6 +43,7 @@ try {
 
 const ICONO_CARRITO = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="8" cy="21" r="1"/><circle cx="19" cy="21" r="1"/><path d="M2.05 2.05h2l2.66 12.42a2 2 0 0 0 2 1.58h9.78a2 2 0 0 0 1.95-1.57l1.65-7.43H5.12"/></svg>';
 const ICONO_CUENTA_MENU = '<svg class="cc-menu-icon" viewBox="0 0 48 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 6h12M2 12h12M2 18h12"/><circle cx="34" cy="7.5" r="4.5"/><path d="M25 22c.7-5 4-7.5 9-7.5S42.3 17 43 22"/></svg>';
+const ICONO_ATRAS = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m15 18-6-6 6-6"/></svg>';
 const ICONO_CERRAR = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18"/></svg>';
 
 const ICONOS_VISTA = {
@@ -126,7 +133,11 @@ function crearBotonCentro(slot) {
   boton.setAttribute('aria-expanded', 'false');
   boton.setAttribute('aria-controls', 'cc-account-center');
   boton.innerHTML = ICONO_CUENTA_MENU + '<span class="cc-action__label cc-action__label--account">Mi cuenta</span>';
-  boton.addEventListener('click', () => abrirCentroDesdeBoton(boton, rutasDelSlot(slot), 'compras'));
+  boton.addEventListener('click', () => abrirCentroDesdeBoton(
+    boton,
+    rutasDelSlot(slot),
+    mediaCuentaMovil.matches ? 'hub' : 'compras'
+  ));
   return boton;
 }
 
@@ -325,15 +336,18 @@ function asegurarCentro() {
   raiz.innerHTML = `
     <section class="cc-center__dialog" role="dialog" aria-modal="true" aria-labelledby="cc-center-title">
       <header class="cc-center__top">
-        <div><span>Tu espacio</span><h1 id="cc-center-title" tabindex="-1">Mi cuenta MAGANDHI</h1></div>
+        <button class="cc-center__back" type="button" aria-label="Volver a las opciones de mi cuenta" hidden>${ICONO_ATRAS}</button>
+        <div class="cc-center__identity"><span>Tu espacio</span><h1 id="cc-center-title" tabindex="-1">Mi cuenta MAGANDHI</h1></div>
         <button class="cc-center__close" type="button" aria-label="Cerrar mi cuenta">${ICONO_CERRAR}</button>
       </header>
       <div class="cc-center__layout">
         <nav class="cc-center__nav" aria-label="Secciones de mi cuenta">
+          <span class="cc-nav-group">Tu cuenta</span>
           <a class="cc-nav-item" data-cc-home href="#"><span class="cc-nav-item__icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m3 11 9-8 9 8"/><path d="M5 10v11h14V10M9 21v-7h6v7"/></svg></span>Inicio</a>
           <button class="cc-nav-item" type="button" data-cc-view="compras">${ICONOS_VISTA.compras}<span>Mis compras</span><span class="cc-nav-purchase-badge" data-cc-purchases-badge aria-label="Compras en proceso" hidden></span><span class="cc-nav-arrow" aria-hidden="true">›</span></button>
           <button class="cc-nav-item" type="button" data-cc-view="favoritos">${ICONOS_VISTA.favoritos}<span>Favoritos</span><span class="cc-nav-arrow" aria-hidden="true">›</span></button>
           <button class="cc-nav-item" type="button" data-cc-view="opiniones">${ICONOS_VISTA.opiniones}<span>Mis opiniones</span><span class="cc-nav-arrow" aria-hidden="true">›</span></button>
+          <span class="cc-nav-group cc-nav-group--secondary">Ayuda y privacidad</span>
           <button class="cc-nav-item" type="button" data-cc-view="pqrs">${ICONOS_VISTA.pqrs}<span>PQRS</span><span class="cc-nav-arrow" aria-hidden="true">›</span></button>
           <a class="cc-nav-item" data-cc-politicas href="#"><span class="cc-nav-item__icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 2h9l4 4v16H6z"/><path d="M14 2v5h5M9 12h6M9 16h6"/></svg></span>Políticas</a>
           <a class="cc-nav-item" data-cc-cookies href="#"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20.5 13.2A9 9 0 1 1 10.8 3.5a4.7 4.7 0 0 0 6.1 6.1 4.7 4.7 0 0 0 3.6 3.6z"/><circle cx="8" cy="12" r=".7" fill="currentColor"/><circle cx="12" cy="17" r=".7" fill="currentColor"/></svg><span>Cookies</span></a>
@@ -349,12 +363,13 @@ function asegurarCentro() {
   centro = raiz;
   actualizarIndicadoresCompras(controlCompras.estado());
 
-  raiz.querySelector('.cc-center__close').addEventListener('click', cerrarCentro);
+  raiz.querySelector('.cc-center__close').addEventListener('click', () => cerrarCentro());
+  raiz.querySelector('.cc-center__back').addEventListener('click', volverAlHubMovil);
   raiz.addEventListener('mousedown', (evento) => {
     if (evento.target === raiz) cerrarCentro();
   });
   raiz.querySelectorAll('[data-cc-view]').forEach((boton) => {
-    boton.addEventListener('click', () => mostrarVista(boton.dataset.ccView));
+    boton.addEventListener('click', () => navegarVistaCentro(boton.dataset.ccView));
   });
   raiz.querySelector('[data-cc-logout]').addEventListener('click', cerrarSesion);
   document.addEventListener('keydown', manejarTecladoCentro);
@@ -371,10 +386,94 @@ function actualizarRutasCentro() {
   centro.querySelectorAll('[data-cc-shop]').forEach((enlace) => { enlace.href = `${rutasCentro.inicio}#descubrir`; });
 }
 
+function historialEsPropio(valor = history.state) {
+  return valor?.[CLAVE_HISTORIAL_CUENTA]?.instancia === historialCentro.instancia && !!historialCentro.instancia;
+}
+
+function estadoHistorialCuenta(pantalla, vista = '', nivel = 1) {
+  const base = history.state && typeof history.state === 'object' && !Array.isArray(history.state)
+    ? history.state
+    : {};
+  return {
+    ...base,
+    [CLAVE_HISTORIAL_CUENTA]: {
+      instancia: historialCentro.instancia,
+      pantalla,
+      vista,
+      nivel,
+    },
+  };
+}
+
+function iniciarHistorialMovil(pantalla, vista = '') {
+  if (!mediaCuentaMovil.matches) return pantalla;
+  historialCentro = {
+    instancia: `cc-${Date.now().toString(36)}-${++secuenciaHistorialCentro}`,
+    profundidad: 0,
+  };
+  try {
+    history.pushState(estadoHistorialCuenta('hub', '', 1), '', window.location.href);
+    historialCentro.profundidad = 1;
+    if (pantalla === 'vista') {
+      try {
+        history.pushState(estadoHistorialCuenta('vista', vista, 2), '', window.location.href);
+        historialCentro.profundidad = 2;
+      } catch {
+        return 'hub';
+      }
+    }
+  } catch {
+    historialCentro = { instancia: '', profundidad: 0 };
+  }
+  return pantalla;
+}
+
+function registrarVistaEnHistorial(vista) {
+  if (!mediaCuentaMovil.matches || !centro || centro.hidden || !historialEsPropio()) return false;
+  const actual = history.state?.[CLAVE_HISTORIAL_CUENTA];
+  if (actual?.pantalla === 'vista' && actual.vista === vista) return true;
+  try {
+    const nivel = Math.max(2, Number(actual?.nivel || historialCentro.profundidad) + 1);
+    history.pushState(estadoHistorialCuenta('vista', vista, nivel), '', window.location.href);
+    historialCentro.profundidad = nivel;
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+function limpiarHistorialSinCerrar() {
+  const pasos = historialEsPropio() ? historialCentro.profundidad : 0;
+  historialCentro = { instancia: '', profundidad: 0 };
+  if (!pasos) return;
+  omitirSiguientePopstate = true;
+  try { history.go(-pasos); } catch { omitirSiguientePopstate = false; }
+  window.setTimeout(() => { omitirSiguientePopstate = false; }, 1200);
+}
+
+function mostrarHub(enfocarTitulo = true) {
+  asegurarCentro();
+  pantallaCentro = 'hub';
+  centro.dataset.ccScreen = 'hub';
+  controlCompras.desmontar();
+  centro.querySelectorAll('[data-cc-view]').forEach((boton) => {
+    boton.classList.remove('is-active');
+    boton.removeAttribute('aria-current');
+  });
+  centro.querySelector('[data-cc-content]').replaceChildren();
+  centro.querySelector('.cc-center__back').hidden = true;
+  actualizarRutasCentro();
+  centro.querySelector('.cc-center__nav').scrollTop = 0;
+  if (enfocarTitulo) requestAnimationFrame(() => centro.querySelector('#cc-center-title')?.focus());
+}
+
 function mostrarVista(vista = 'compras', enfocarTitulo = true) {
   asegurarCentro();
   const permitidas = new Set(['compras', 'favoritos', 'opiniones', 'pqrs', 'eliminar']);
   const seleccion = permitidas.has(vista) ? vista : 'compras';
+  pantallaCentro = seleccion;
+  centro.dataset.ccScreen = 'vista';
+  centro.querySelector('.cc-center__back').hidden = !mediaCuentaMovil.matches;
   centro.querySelectorAll('[data-cc-view]').forEach((boton) => {
     const activa = boton.dataset.ccView === seleccion;
     boton.classList.toggle('is-active', activa);
@@ -398,12 +497,32 @@ function mostrarVista(vista = 'compras', enfocarTitulo = true) {
   if (enfocarTitulo) requestAnimationFrame(() => titulo?.focus());
 }
 
+function navegarVistaCentro(vista) {
+  if (mediaCuentaMovil.matches && centro && !centro.hidden) registrarVistaEnHistorial(vista);
+  mostrarVista(vista);
+}
+
+function volverAlHubMovil() {
+  if (!mediaCuentaMovil.matches || pantallaCentro === 'hub') return;
+  const actual = history.state?.[CLAVE_HISTORIAL_CUENTA];
+  if (historialEsPropio() && actual?.pantalla === 'vista') {
+    history.back();
+    return;
+  }
+  mostrarHub();
+}
+
 function abrirCentroDesdeBoton(boton, rutas, vista = 'compras') {
   if (sesionActual.estado !== 'valida') return false;
   const raiz = asegurarCentro();
   botonQueAbrio = boton || null;
   rutasCentro = rutas;
-  mostrarVista(vista, false);
+  const pantallaSolicitada = mediaCuentaMovil.matches && vista === 'hub' ? 'hub' : 'vista';
+  const pantallaEfectiva = mediaCuentaMovil.matches
+    ? iniciarHistorialMovil(pantallaSolicitada, vista === 'hub' ? '' : vista)
+    : pantallaSolicitada;
+  if (pantallaEfectiva === 'hub') mostrarHub(false);
+  else mostrarVista(vista === 'hub' ? 'compras' : vista, false);
   raiz.hidden = false;
   document.body.classList.add('cc-center-open');
   boton?.setAttribute('aria-expanded', 'true');
@@ -425,16 +544,57 @@ export function invalidarComprasCuenta() {
   window.dispatchEvent(new CustomEvent('magandhi:compras-invalidar'));
 }
 
-function cerrarCentro() {
+function cerrarCentro({ limpiarHistorial = true } = {}) {
   if (!centro || centro.hidden) return;
+  const pasos = limpiarHistorial && historialEsPropio() ? historialCentro.profundidad : 0;
   controlCompras.desmontar();
   centro.hidden = true;
+  centro.removeAttribute('data-cc-screen');
   document.body.classList.remove('cc-center-open');
+  historialCentro = { instancia: '', profundidad: 0 };
+  pantallaCentro = 'compras';
   if (botonQueAbrio?.isConnected) {
     botonQueAbrio.setAttribute('aria-expanded', 'false');
     botonQueAbrio.focus();
   }
   botonQueAbrio = null;
+  if (pasos) {
+    try { history.go(-pasos); } catch { /* El centro ya quedó cerrado de forma segura. */ }
+  }
+}
+
+function manejarPopstateCentro(evento) {
+  if (omitirSiguientePopstate) {
+    omitirSiguientePopstate = false;
+    return;
+  }
+  if (!centro || centro.hidden || !historialCentro.instancia) return;
+  const destino = evento.state?.[CLAVE_HISTORIAL_CUENTA];
+  if (destino?.instancia !== historialCentro.instancia) {
+    cerrarCentro({ limpiarHistorial: false });
+    return;
+  }
+  historialCentro.profundidad = Number.isInteger(destino.nivel) ? destino.nivel : 1;
+  if (destino.pantalla === 'vista') mostrarVista(destino.vista, true);
+  else mostrarHub(true);
+}
+
+function manejarCambioModoCuenta(evento) {
+  if (!centro || centro.hidden) return;
+  if (evento.matches) {
+    const eraHub = pantallaCentro === 'hub';
+    const vista = eraHub ? '' : pantallaCentro;
+    const efectiva = iniciarHistorialMovil(eraHub ? 'hub' : 'vista', vista);
+    if (efectiva === 'hub') mostrarHub(false);
+    else {
+      centro.dataset.ccScreen = 'vista';
+      centro.querySelector('.cc-center__back').hidden = false;
+    }
+    return;
+  }
+  limpiarHistorialSinCerrar();
+  if (pantallaCentro === 'hub') mostrarVista('compras', false);
+  else centro.querySelector('.cc-center__back').hidden = true;
 }
 
 async function cerrarSesion(evento) {
@@ -471,10 +631,11 @@ function manejarTecladoCentro(evento) {
   if (!controles.length) return;
   const primero = controles[0];
   const ultimo = controles[controles.length - 1];
+  const tituloCentro = centro.querySelector('#cc-center-title');
   if (!centro.contains(document.activeElement)) {
     evento.preventDefault();
     (evento.shiftKey ? ultimo : primero).focus();
-  } else if (evento.shiftKey && document.activeElement === primero) {
+  } else if (evento.shiftKey && (document.activeElement === primero || document.activeElement === tituloCentro)) {
     evento.preventDefault();
     ultimo.focus();
   } else if (!evento.shiftKey && document.activeElement === ultimo) {
@@ -500,6 +661,13 @@ function configurarBuscadores() {
       if (estadoBusqueda) estadoBusqueda.textContent = '';
     });
   });
+}
+
+window.addEventListener('popstate', manejarPopstateCentro);
+if (typeof mediaCuentaMovil.addEventListener === 'function') {
+  mediaCuentaMovil.addEventListener('change', manejarCambioModoCuenta);
+} else {
+  mediaCuentaMovil.addListener(manejarCambioModoCuenta);
 }
 
 window.addEventListener('magandhi:compras-invalidar', () => {
