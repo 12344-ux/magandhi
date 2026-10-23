@@ -28,6 +28,7 @@ const estadoMasProductos = document.getElementById('cp-products-more-status');
 const seccionCategorias = document.querySelector('.mg-category-section');
 const bannerCategorias = document.querySelector('.cp-banner');
 const slotDescubrimiento = document.querySelector('[data-sn-slot="categoria-descubrimiento"]');
+const CODIGOS_CON_CABECERA_PROPIA = new Set(['navidad']);
 let categoriasDisponibles = [];
 let solicitudCategorias = null;
 let cicloInicio = 0;
@@ -45,6 +46,16 @@ function posicionarNavegacionCategorias(alFinal) {
   if (!seccionCategorias || !bannerCategorias || !slotDescubrimiento) return;
   const referencia = alFinal ? slotDescubrimiento : bannerCategorias;
   referencia.insertAdjacentElement('afterend', seccionCategorias);
+}
+
+function actualizarCabeceraCategoria(categoriaSeleccionada) {
+  if (!bannerCategorias) return;
+  const codigo = categoriaSeleccionada?.codigo || '';
+  if (CODIGOS_CON_CABECERA_PROPIA.has(codigo)) {
+    bannerCategorias.dataset.categoriaBanner = codigo;
+  } else {
+    delete bannerCategorias.dataset.categoriaBanner;
+  }
 }
 
 // Evita mostrar arriba el selector mientras se resuelve una categoría individual.
@@ -311,6 +322,7 @@ function pintarErrorCategorias() {
 }
 
 function actualizarContenido(categoriaSeleccionada, totalCategorias = 0) {
+  actualizarCabeceraCategoria(categoriaSeleccionada);
   const titulo = categoriaSeleccionada?.nombre || 'En MAGANDHI siempre hay algo nuevo por descubrir';
   const descripcion = categoriaSeleccionada?.descripcion || (totalCategorias
     ? `${totalCategorias} categorías con productos útiles, especiales y escogidos con intención.`
@@ -345,6 +357,7 @@ function actualizarContenido(categoriaSeleccionada, totalCategorias = 0) {
 }
 
 function actualizarContenidoNoDisponible() {
+  actualizarCabeceraCategoria(null);
   const titulo = 'Categoría no disponible';
   const descripcion = 'Esta categoría ya no forma parte de la selección pública. Puedes elegir otra o volver a todos los productos.';
   const robots = document.querySelector('[data-politicas-categorias]');
