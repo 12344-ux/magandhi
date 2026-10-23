@@ -1,4 +1,4 @@
-import '../componentes/cuenta-carrito.js?v=11';
+import '../componentes/cuenta-carrito.js?v=12';
 import {
   buscarProductos,
   crearTarjetaProducto,

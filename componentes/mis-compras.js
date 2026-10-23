@@ -110,6 +110,7 @@ function normalizarLinea(valor) {
     ? `https://magandhi.com/producto/${encodeURIComponent(slug)}/`
     : `https://magandhi.com/producto/?id=${encodeURIComponent(id)}`, 'producto') : '';
   return Object.freeze({
+    id: id || '',
     nombre,
     cantidad,
     subtotal,
@@ -144,6 +145,9 @@ function normalizarCompra(valor) {
   const total = totalPesos(valor);
   const lineas = valor.lineas;
   const pedido = valor.pedido;
+  const origen = ['directo', 'carrito', 'historial'].includes(valor.origen)
+    ? valor.origen
+    : '';
 
   if (!referencia || !FORMATO_REFERENCIA.test(referencia) || !configuracion ||
       clasificacion !== configuracion[0] || valor.etiqueta !== configuracion[1] ||
@@ -166,6 +170,7 @@ function normalizarCompra(valor) {
   const enVerificacion = estado === 'verificacion';
   return Object.freeze({
     referencia,
+    origen,
     estado,
     grupo: clasificacion,
     etiqueta: configuracion[1],
