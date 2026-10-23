@@ -1,6 +1,9 @@
 import { supabase } from '../supabase-config.js';
+import { resolverSolicitudAcotada } from '../componentes/solicitud-acotada.js?v=1';
 
 const CUENTA_INICIALIZAR = 'cuenta-inicializar';
+const TIEMPO_MAXIMO_SESION_MS = 8000;
+const TIEMPO_MAXIMO_INICIALIZACION_MS = 10000;
 const inicializacionesPorUid = new Map();
 const observadores = new Set();
 let ultimoUid = null;
@@ -17,11 +20,22 @@ function publicar(siguiente) {
 
 async function codigoFuncion(error, data) {
   if (typeof data?.codigo === 'string') return data.codigo;
+  const estadoHttp = Number(error?.context?.status || error?.status || 0);
   try {
     const payload = await error?.context?.json();
-    return typeof payload?.codigo === 'string' ? payload.codigo : '';
-  } catch {
-    return '';
+    if (typeof payload?.codigo === 'string') return payload.codigo;
+  } catch { /* El gateway puede responder sin JSON. */ }
+  return estadoHttp === 401 ? 'CC_SESION' : '';
+}
+
+async function leerSesionAcotada() {
+  try {
+    return await resolverSolicitudAcotada(
+      supabase.auth.getSession(),
+      { tiempoMaximoMs: TIEMPO_MAXIMO_SESION_MS },
+    );
+  } catch (error) {
+    return { data: { session: null }, error };
   }
 }
 
@@ -31,7 +45,13 @@ function inicializarCuenta(sesion) {
   if (inicializacionesPorUid.has(uid)) return inicializacionesPorUid.get(uid);
 
   const promesa = (async () => {
-    const { data, error } = await supabase.functions.invoke(CUENTA_INICIALIZAR, { body: {} });
+    const { data, error } = await resolverSolicitudAcotada(
+      (signal) => supabase.functions.invoke(CUENTA_INICIALIZAR, {
+        body: {},
+        signal,
+      }),
+      { tiempoMaximoMs: TIEMPO_MAXIMO_INICIALIZACION_MS },
+    );
     if (error || data?.error) {
       const fallo = new Error('cuenta_no_inicializada');
       fallo.code = await codigoFuncion(error, data);
@@ -61,11 +81,22 @@ async function validarSesion(sesion, tokenGeneracion) {
   } catch (error) {
     if (tokenGeneracion !== generacion) return;
     const codigo = typeof error?.code === 'string' ? error.code : '';
-    publicar({ estado: 'error', uid: null, sesion: null, codigo });
-    if (codigo === 'CC_NO_DISPONIBLE') {
+    if (codigo === 'CC_SESION' || codigo === 'CC_NO_DISPONIBLE') {
       inicializacionesPorUid.delete(uid);
-      try { await supabase.auth.signOut({ scope: 'local' }); } catch { /* El estado ya quedó cerrado. */ }
+      publicar({ estado: 'error', uid: null, sesion: null, codigo });
+      try {
+        const cierre = await resolverSolicitudAcotada(
+          supabase.auth.signOut({ scope: 'local' }),
+          { tiempoMaximoMs: TIEMPO_MAXIMO_SESION_MS },
+        );
+        if (!cierre.error && tokenGeneracion === generacion) {
+          ultimoUid = null;
+          publicar({ estado: 'sin-sesion', uid: null, sesion: null, codigo });
+        }
+      } catch { /* Conserva error hasta poder confirmar el cierre local. */ }
+      return;
     }
+    publicar({ estado: 'error', uid: null, sesion: null, codigo });
   }
 }
 
@@ -96,7 +127,9 @@ export function obtenerSesionCliente() {
 
 export async function revalidarSesionCliente(forzar = false) {
   if (forzar && ultimoUid) inicializacionesPorUid.delete(ultimoUid);
-  const { data, error } = await supabase.auth.getSession();
+  const tokenLectura = generacion;
+  const { data, error } = await leerSesionAcotada();
+  if (tokenLectura !== generacion) return estado;
   if (error) {
     ++generacion;
     publicar({ estado: 'error', uid: null, sesion: null, codigo: '' });
@@ -119,7 +152,9 @@ supabase.auth.onAuthStateChange((evento, sesion) => {
 });
 
 (async () => {
-  const { data, error } = await supabase.auth.getSession();
+  const tokenLectura = generacion;
+  const { data, error } = await leerSesionAcotada();
+  if (tokenLectura !== generacion) return;
   if (error) {
     ++generacion;
     publicar({ estado: 'error', uid: null, sesion: null, codigo: '' });

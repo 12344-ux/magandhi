@@ -11,7 +11,8 @@
 // · Respuesta igual exista o no el correo. Campo trampa contra bots.
 // Copy PROVISIONAL: el equipo lo reescribe antes de abrir la tienda.
 // ============================================================
-import { supabase } from '../supabase-config.js';
+import { supabasePublico } from '../supabase-publico.js?v=1';
+import { resolverSolicitudAcotada } from '../componentes/solicitud-acotada.js?v=1';
 
 const raiz = new URL('./', import.meta.url);
 if (!document.querySelector('link[data-su-css]')) {
@@ -25,7 +26,10 @@ const ICO_OK = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strok
 
 async function llamar(body) {
   try {
-    const { data, error } = await supabase.functions.invoke('em-suscripcion', { body });
+    const { data, error } = await resolverSolicitudAcotada(
+      (signal) => supabasePublico.functions.invoke('em-suscripcion', { body, signal }),
+      { tiempoMaximoMs: 10000 },
+    );
     if (error) {
       let j = null; try { j = await error.context.json(); } catch (_) {}
       return { ok: false, data: j, error: (j && j.error) || 'No pudimos conectarnos. Intenta de nuevo en un momento.' };

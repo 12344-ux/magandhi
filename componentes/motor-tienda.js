@@ -1,5 +1,7 @@
 import { supabase, SUPABASE_URL } from '../supabase-config.js';
-import { filaPerteneceACategoria } from './categorias.js?v=2';
+import { supabaseConToken, supabasePublico } from '../supabase-publico.js?v=1';
+import { filaPerteneceACategoria } from './categorias.js?v=4';
+import { resolverSolicitudAcotada } from './solicitud-acotada.js?v=1';
 
 // MAGANDHI · Sistema nervioso SN1
 // Cliente público compartido para composición, búsqueda y slots editoriales.
@@ -12,6 +14,11 @@ const MAX_LIMITE_BUSQUEDA = 60;
 const MAX_TOTAL_BUSQUEDA = 10000;
 const TAMANO_PAGINA_FALLBACK = 500;
 const MAX_EXCLUSIONES_CONTEXTO = 100;
+const TIEMPO_MAXIMO_COMPROBAR_SESION_MS = 1200;
+const TIEMPO_MAXIMO_RPC_CON_SESION_MS = 3500;
+const TIEMPO_MAXIMO_LECTURA_PUBLICA_MS = 8000;
+const TIEMPO_MAXIMO_CATALOGO_FALLBACK_MS = 8000;
+const FUENTES_LECTURA = new Set(['auto', 'sesion', 'publica', 'catalogo']);
 const TIPOS_MODULO = new Set([
   'mosaico',
   'carril_derecha',
@@ -160,14 +167,104 @@ function lanzarSiAbortado(signal) {
   if (abortado(signal)) throw errorAbortado();
 }
 
-async function resolverPeticion(peticion, signal) {
+async function resolverPeticion(peticion, signal, tiempoMaximoMs = TIEMPO_MAXIMO_LECTURA_PUBLICA_MS) {
   lanzarSiAbortado(signal);
-  const ejecutable = signal && typeof peticion?.abortSignal === 'function'
-    ? peticion.abortSignal(signal)
-    : peticion;
-  const resultado = await ejecutable;
+  const resultado = await resolverSolicitudAcotada(peticion, { signal, tiempoMaximoMs });
   lanzarSiAbortado(signal);
   return resultado;
+}
+
+function rechazoPorSesion(resultado) {
+  const estadoHttp = Number(resultado?.status || resultado?.error?.status || 0);
+  const codigo = String(resultado?.error?.code || '').toUpperCase();
+  const detalle = `${resultado?.error?.message || ''} ${resultado?.error?.details || ''}`.toLowerCase();
+  return estadoHttp === 401 || codigo === 'PGRST301' ||
+    (/jwt|token|authorization/.test(detalle) && /invalid|expired|missing|malformed/.test(detalle));
+}
+
+function requiereReintentoPublico(resultado) {
+  return rechazoPorSesion(resultado) || Boolean(resultado?.error) && Number(resultado?.status || 0) === 0;
+}
+
+async function haySesionDisponible(signal) {
+  try {
+    const { data, error } = await resolverPeticion(
+      supabase.auth.getSession(),
+      signal,
+      TIEMPO_MAXIMO_COMPROBAR_SESION_MS,
+    );
+    return !error && data?.session?.access_token ? data.session : null;
+  } catch (error) {
+    if (abortado(signal) || error?.name === 'AbortError') throw errorAbortado();
+    return false;
+  }
+}
+
+/**
+ * Conserva personalización cuando existe una sesión disponible. En modo auto,
+ * una sesión vencida o bloqueada repite solo esta RPC como anon. Las páginas
+ * paginadas guardan la fuente elegida y la fijan en sus siguientes lecturas.
+ */
+async function resolverRpcLectura(
+  nombre,
+  parametros,
+  signal,
+  fuente = 'auto',
+  sesionUidEsperado = '',
+) {
+  if (fuente === 'sesion') {
+    const sesion = await haySesionDisponible(signal);
+    const uid = sesion?.user?.id || '';
+    if (!sesion || !UUID_RE.test(sesionUidEsperado) || uid !== sesionUidEsperado) {
+      throw new ContratoSNError('La sesión usada para ordenar esta página ya no está disponible.');
+    }
+    return {
+      resultado: await resolverPeticion(
+        supabaseConToken(sesion.access_token).rpc(nombre, parametros),
+        signal,
+        TIEMPO_MAXIMO_RPC_CON_SESION_MS,
+      ),
+      fuente: 'sesion',
+      sesionUid: uid,
+    };
+  }
+  if (fuente === 'publica') {
+    return {
+      resultado: await resolverPeticion(
+        supabasePublico.rpc(nombre, parametros),
+        signal,
+        TIEMPO_MAXIMO_LECTURA_PUBLICA_MS,
+      ),
+      fuente: 'publica',
+      sesionUid: '',
+    };
+  }
+
+  const sesion = await haySesionDisponible(signal);
+  if (sesion) {
+    try {
+      const resultado = await resolverPeticion(
+        supabaseConToken(sesion.access_token).rpc(nombre, parametros),
+        signal,
+        TIEMPO_MAXIMO_RPC_CON_SESION_MS,
+      );
+      if (!requiereReintentoPublico(resultado)) {
+        return { resultado, fuente: 'sesion', sesionUid: sesion.user?.id || '' };
+      }
+    } catch (error) {
+      if (abortado(signal) || error?.name === 'AbortError') throw errorAbortado();
+    }
+  }
+
+  return {
+    resultado: await resolverPeticion(
+      supabasePublico.rpc(nombre, parametros),
+      signal,
+      TIEMPO_MAXIMO_LECTURA_PUBLICA_MS,
+    ),
+    fuente: 'publica',
+    sesionUid: '',
+  };
 }
 
 function crearSemilla() {
@@ -429,67 +526,82 @@ export function extraerProductos(valor, opciones = {}) {
 }
 
 function construirConsultaCatalogoSeguro(desde, hasta) {
-  return supabase.from('sn_catalogo_seguro_v1')
+  return supabasePublico.from('sn_catalogo_seguro_v1')
     .select(CAMPOS_CATALOGO_SEGURO.join(','), { count: 'exact' })
     .order('orden', { ascending: true })
     .order('slug', { ascending: true })
     .range(desde, hasta);
 }
 
-async function cargarCatalogoSeguro() {
-  if (catalogoPromesa) return catalogoPromesa;
-  const tarea = (async () => {
-    const vistos = new Set();
-    const productos = [];
-    let totalEsperado = null;
+async function cargarCatalogoSeguro(signal) {
+  if (!catalogoPromesa) {
+    const tarea = (async () => {
+      const vistos = new Set();
+      const productos = [];
+      let totalEsperado = null;
+      const ahora = () => globalThis.performance?.now?.() ?? Date.now();
+      const limite = ahora() + TIEMPO_MAXIMO_CATALOGO_FALLBACK_MS;
 
-    // PostgREST puede truncar silenciosamente una lectura sin rango. Se usan
-    // páginas explícitas y count exacto para probar completitud hasta el techo.
-    for (let desde = 0; desde <= MAX_TOTAL_BUSQUEDA; desde += TAMANO_PAGINA_FALLBACK) {
-      const resultado = await construirConsultaCatalogoSeguro(
-        desde,
-        desde + TAMANO_PAGINA_FALLBACK - 1,
-      );
-      if (resultado.error) throw resultado.error;
-      if (!Array.isArray(resultado.data) || !Number.isSafeInteger(resultado.count) ||
-          resultado.count < 0 || resultado.count > MAX_TOTAL_BUSQUEDA) {
-        throw new ContratoSNError('El catálogo seguro SN1 no devolvió una página contable válida.');
-      }
-      if (totalEsperado === null) totalEsperado = resultado.count;
-      else if (resultado.count !== totalEsperado) {
-        throw new ContratoSNError('El catálogo seguro SN1 cambió durante la paginación.');
-      }
-      const filasEsperadas = Math.min(
-        TAMANO_PAGINA_FALLBACK,
-        Math.max(0, totalEsperado - desde),
-      );
-      if (resultado.data.length !== filasEsperadas) {
-        throw new ContratoSNError('El catálogo seguro SN1 devolvió una página truncada.');
-      }
-
-      for (const fila of resultado.data) {
-        const producto = normalizarProducto(fila);
-        if (!producto || !productoDisponible(producto)) {
-          throw new ContratoSNError('El catálogo seguro SN1 devolvió una fila no comprable.');
+      // PostgREST puede truncar silenciosamente una lectura sin rango. Se usan
+      // páginas explícitas y count exacto para probar completitud hasta el techo.
+      for (let desde = 0; desde <= MAX_TOTAL_BUSQUEDA; desde += TAMANO_PAGINA_FALLBACK) {
+        const restante = Math.floor(limite - ahora());
+        if (restante <= 0) {
+          throw new ContratoSNError('El catálogo seguro SN1 superó el tiempo máximo de lectura.');
         }
-        if (!registrarProductoVisto(vistos, producto)) {
-          throw new ContratoSNError('El catálogo seguro SN1 devolvió productos duplicados.');
+        const resultado = await resolverPeticion(
+          construirConsultaCatalogoSeguro(
+            desde,
+            desde + TAMANO_PAGINA_FALLBACK - 1,
+          ),
+          undefined,
+          Math.min(TIEMPO_MAXIMO_LECTURA_PUBLICA_MS, restante),
+        );
+        if (resultado.error) throw resultado.error;
+        if (!Array.isArray(resultado.data) || !Number.isSafeInteger(resultado.count) ||
+            resultado.count < 0 || resultado.count > MAX_TOTAL_BUSQUEDA) {
+          throw new ContratoSNError('El catálogo seguro SN1 no devolvió una página contable válida.');
         }
-        productos.push(producto);
-      }
-      if (productos.length === totalEsperado) return Object.freeze(productos);
-    }
+        if (totalEsperado === null) totalEsperado = resultado.count;
+        else if (resultado.count !== totalEsperado) {
+          throw new ContratoSNError('El catálogo seguro SN1 cambió durante la paginación.');
+        }
+        const filasEsperadas = Math.min(
+          TAMANO_PAGINA_FALLBACK,
+          Math.max(0, totalEsperado - desde),
+        );
+        if (resultado.data.length !== filasEsperadas) {
+          throw new ContratoSNError('El catálogo seguro SN1 devolvió una página truncada.');
+        }
 
-    throw new ContratoSNError('El catálogo seguro SN1 no terminó dentro del máximo público.');
-  })();
-  catalogoPromesa = tarea;
-  try {
-    return await tarea;
-  } finally {
-    // Solo deduplica lectores simultáneos; una solicitud posterior vuelve a
-    // consultar la vista segura y nunca reutiliza indefinidamente datos viejos.
-    if (catalogoPromesa === tarea) catalogoPromesa = null;
+        for (const fila of resultado.data) {
+          const producto = normalizarProducto(fila);
+          if (!producto || !productoDisponible(producto)) {
+            throw new ContratoSNError('El catálogo seguro SN1 devolvió una fila no comprable.');
+          }
+          if (!registrarProductoVisto(vistos, producto)) {
+            throw new ContratoSNError('El catálogo seguro SN1 devolvió productos duplicados.');
+          }
+          productos.push(producto);
+        }
+        if (productos.length === totalEsperado) return Object.freeze(productos);
+      }
+
+      throw new ContratoSNError('El catálogo seguro SN1 no terminó dentro del máximo público.');
+    })();
+    catalogoPromesa = tarea;
+    const liberar = () => {
+      if (catalogoPromesa === tarea) catalogoPromesa = null;
+    };
+    void tarea.then(liberar, liberar);
   }
+
+  // Cada consumidor puede cancelarse sin abortar la lectura compartida de los
+  // demás. La tarea común tiene además su propio límite total de ocho segundos.
+  return resolverSolicitudAcotada(catalogoPromesa, {
+    signal,
+    tiempoMaximoMs: TIEMPO_MAXIMO_CATALOGO_FALLBACK_MS,
+  });
 }
 
 function validarRaizRespuesta(valor, campos) {
@@ -583,7 +695,7 @@ function tituloFallback(superficie) {
 
 async function composicionFallback(superficie, opciones) {
   lanzarSiAbortado(opciones.signal);
-  const catalogo = await cargarCatalogoSeguro();
+  const catalogo = await cargarCatalogoSeguro(opciones.signal);
   lanzarSiAbortado(opciones.signal);
   const exclusiones = conjuntoExclusiones(opciones.exclusiones, opciones.productoActual);
   const productos = catalogo
@@ -640,13 +752,13 @@ export async function solicitarComposicion(entrada, contextoPosicional) {
   const opciones = opcionesComposicion(entrada, contextoPosicional);
   let resultado;
   try {
-    const peticion = supabase.rpc('sn_recomendar_v1', {
+    const lectura = await resolverRpcLectura('sn_recomendar_v1', {
       p_superficie: opciones.superficie,
       p_contexto: opciones.contexto,
       p_semilla: semillaDePestana(),
       p_limite: opciones.limite,
-    });
-    resultado = await resolverPeticion(peticion, opciones.signal);
+    }, opciones.signal);
+    resultado = lectura.resultado;
   } catch (error) {
     if (abortado(opciones.signal) || error?.name === 'AbortError') throw errorAbortado();
     return composicionFallback(opciones.superficie, opciones);
@@ -664,7 +776,7 @@ export async function solicitarComposicion(entrada, contextoPosicional) {
   }
 }
 
-function normalizarBusqueda(valor, opciones) {
+function normalizarBusqueda(valor, opciones, fuenteCliente, sesionUid) {
   validarRaizRespuesta(valor, ['modelo_version', 'modo', 'consulta', 'total', 'productos']);
   const modeloVersion = textoEstricto(valor.modelo_version, 60, VERSION_RE) || '';
   const modo = textoEstricto(valor.modo, 60, VERSION_RE) || '';
@@ -711,6 +823,8 @@ function normalizarBusqueda(valor, opciones) {
     modo,
     consulta: consultaRespuesta,
     total: valor.total,
+    fuente_cliente: fuenteCliente,
+    sesion_uid: fuenteCliente === 'sesion' && UUID_RE.test(sesionUid) ? sesionUid : '',
     productos: Object.freeze(productos),
   });
 }
@@ -725,6 +839,10 @@ function opcionesBusqueda(entrada, categoriaPosicional) {
     limite: entero(base.limite, 1, MAX_LIMITE_BUSQUEDA, 12),
     desde: entero(base.desde, 0, MAX_TOTAL_BUSQUEDA, 0),
     signal: base.signal,
+    fuenteCliente: FUENTES_LECTURA.has(base.fuenteCliente) ? base.fuenteCliente : 'auto',
+    sesionUid: typeof base.sesionUid === 'string' && UUID_RE.test(base.sesionUid)
+      ? base.sesionUid.toLowerCase()
+      : '',
     exclusiones: base.exclusiones || [],
     productoActual: Object.prototype.hasOwnProperty.call(base, 'productoActual')
       ? base.productoActual
@@ -734,7 +852,7 @@ function opcionesBusqueda(entrada, categoriaPosicional) {
 
 async function busquedaFallback(opciones) {
   lanzarSiAbortado(opciones.signal);
-  const catalogo = await cargarCatalogoSeguro();
+  const catalogo = await cargarCatalogoSeguro(opciones.signal);
   lanzarSiAbortado(opciones.signal);
   const termino = claveBusqueda(opciones.consulta);
   const exclusiones = conjuntoExclusiones(opciones.exclusiones, opciones.productoActual);
@@ -758,6 +876,8 @@ async function busquedaFallback(opciones) {
     modo: 'fallback_catalogo_seguro',
     consulta: opciones.consulta,
     total,
+    fuente_cliente: 'catalogo',
+    sesion_uid: '',
     productos: Object.freeze(filtrados.slice(
       opciones.desde,
       Math.min(total, opciones.desde + opciones.limite),
@@ -772,27 +892,35 @@ export async function buscarProductos(entrada = {}, categoriaPosicional) {
   if (consultaSensible(opciones.consulta)) {
     throw new RespuestaSNError('SN_CONSULTA_SENSIBLE');
   }
-  let resultado;
+  if (opciones.fuenteCliente === 'catalogo') return busquedaFallback(opciones);
+
+  let lectura;
   try {
-    const peticion = supabase.rpc('sn_buscar_v1', {
+    lectura = await resolverRpcLectura('sn_buscar_v1', {
       p_consulta: opciones.consulta,
       p_categoria: opciones.categoria,
       p_semilla: semillaDePestana(),
       p_limite: opciones.limite,
       p_desde: opciones.desde,
-    });
-    resultado = await resolverPeticion(peticion, opciones.signal);
+    }, opciones.signal, opciones.fuenteCliente, opciones.sesionUid);
   } catch (error) {
     if (abortado(opciones.signal) || error?.name === 'AbortError') throw errorAbortado();
+    if (opciones.fuenteCliente !== 'auto') throw error;
     return busquedaFallback(opciones);
   }
+
+  const { resultado, fuente, sesionUid } = lectura;
   if (!resultado || typeof resultado !== 'object' || resultado.error) {
+    if (opciones.fuenteCliente !== 'auto') {
+      throw resultado?.error || new ContratoSNError('SN1 no devolvió una respuesta de búsqueda.');
+    }
     return busquedaFallback(opciones);
   }
   try {
-    return normalizarBusqueda(resultado.data, opciones);
+    return normalizarBusqueda(resultado.data, opciones, fuente, sesionUid);
   } catch (error) {
-    if (error instanceof RespuestaSNError && error.codigo === 'SN_APAGADO') {
+    if (error instanceof RespuestaSNError && error.codigo === 'SN_APAGADO' &&
+        opciones.fuenteCliente === 'auto') {
       return busquedaFallback(opciones);
     }
     throw error;
@@ -818,7 +946,7 @@ function pathSeguro(path) {
     try { decodificado = decodeURIComponent(segmento); } catch { return ''; }
     if (!segmento || decodificado === '.' || decodificado === '..' || /[\\/]/.test(decodificado)) return '';
   }
-  const { data } = supabase.storage.from(BUCKET_CAMPANAS).getPublicUrl(valor);
+  const { data } = supabasePublico.storage.from(BUCKET_CAMPANAS).getPublicUrl(valor);
   return data?.publicUrl || '';
 }
 

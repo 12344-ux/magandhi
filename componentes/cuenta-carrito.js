@@ -1,5 +1,5 @@
 import '../scripts/atribucion-promocional.js?v=1';
-import { configurarBuscadores } from './motor-tienda.js?v=2';
+import { configurarBuscadores } from './motor-tienda.js?v=3';
 import { observarSesionCliente } from '../cliente/cliente-sesion.js';
 import { listarCarrito } from '../carrito/carrito-core.js?v=3';
 import { crearControlMisCompras } from './mis-compras.js?v=4';
@@ -120,7 +120,7 @@ function crearAccesoRecuperacion(slot) {
   const enlace = document.createElement('a');
   enlace.className = 'cc-auth-action cc-auth-action--secondary';
   enlace.href = urlCuenta(slot, 'login');
-  enlace.textContent = 'Ingresar';
+  enlace.textContent = 'Revisar sesión';
   return enlace;
 }
 

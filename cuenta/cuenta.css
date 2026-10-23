@@ -115,6 +115,12 @@ h2[tabindex="-1"]:focus{
   align-items:center;justify-content:center;background:rgba(27,122,70,.1);color:var(--verde);
   font-size:25px;font-weight:700;
 }
+.ct-session[data-estado="comprobando"] .ct-session-icon{
+  background:var(--acento-sombra);color:var(--acento);
+}
+.ct-session[data-estado="error"] .ct-session-icon{
+  background:var(--red-50);color:var(--red-600);
+}
 .ct-session-email{margin:0 0 18px;color:var(--gris);font-size:14px;overflow-wrap:anywhere}
 .ct-session .ct-secondary{margin-top:12px}
 .ct-session .ct-fineprint{margin-top:18px}

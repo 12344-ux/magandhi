@@ -1,5 +1,6 @@
 import '../scripts/atribucion-promocional.js?v=1';
 import { supabase } from '../supabase-config.js';
+import { resolverSolicitudAcotada } from '../componentes/solicitud-acotada.js?v=1';
 import {
   SIGNUP_CALLBACK_URL,
   RECOVERY_CALLBACK_URL,
@@ -11,6 +12,8 @@ import {
 import { requestPasswordRecovery } from './cuenta-auth-helpers.js';
 
 const views = ['loading', 'auth', 'recovery', 'password', 'session'];
+const TIEMPO_MAXIMO_SESION_MS = 8000;
+const TIEMPO_MAXIMO_INICIALIZACION_MS = 10000;
 const captchaWidgets = new Map();
 const TURNSTILE_SCRIPT_URL = 'https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit';
 let turnstileScriptPromise = null;
@@ -18,6 +21,8 @@ let initializePromise = null;
 let initializeUserId = null;
 let authReady = false;
 let preserveAuthViewOnSignOut = false;
+let generacionSesion = 0;
+let recuperarSesionInicial = false;
 const RECOVERY_PROOF_KEY = 'mg_cuenta_recovery_validada';
 const RECOVERY_PROOF_MAX_AGE_MS = 10 * 60 * 1000;
 const GOOGLE_GSI_SCRIPT_URL = 'https://accounts.google.com/gsi/client';
@@ -136,11 +141,22 @@ function humanAuthError(error, context) {
 
 async function accountFunctionErrorCode(error, data) {
   if (data?.codigo) return data.codigo;
+  const status = Number(error?.context?.status || error?.status || 0);
   try {
     const payload = await error?.context?.json();
-    return payload?.codigo || '';
-  } catch {
-    return '';
+    if (payload?.codigo) return payload.codigo;
+  } catch { /* El gateway puede responder sin JSON. */ }
+  return status === 401 ? 'CC_SESION' : '';
+}
+
+async function leerSesionAcotada() {
+  try {
+    return await resolverSolicitudAcotada(
+      supabase.auth.getSession(),
+      { tiempoMaximoMs: TIEMPO_MAXIMO_SESION_MS },
+    );
+  } catch (error) {
+    return { data: { session: null }, error };
   }
 }
 
@@ -153,7 +169,13 @@ async function initializeAccount(session) {
   initializePromise = null;
   initializeUserId = userId;
   initializePromise = (async () => {
-    const { data, error } = await supabase.functions.invoke(CUENTA_INITIALIZE_FUNCTION, { body: {} });
+    const { data, error } = await resolverSolicitudAcotada(
+      (signal) => supabase.functions.invoke(CUENTA_INITIALIZE_FUNCTION, {
+        body: {},
+        signal,
+      }),
+      { tiempoMaximoMs: TIEMPO_MAXIMO_INICIALIZACION_MS },
+    );
     if (error || data?.error) {
       const failure = new Error('account_initialization_failed');
       failure.code = await accountFunctionErrorCode(error, data);
@@ -172,13 +194,53 @@ async function initializeAccount(session) {
   }
 }
 
+function presentarEstadoSesion(titulo, icono, estado = 'comprobando', mostrarReintento = false) {
+  const panel = byId('ct-session');
+  const encabezado = byId('ct-session-title');
+  const indicador = document.querySelector('#ct-session .ct-session-icon');
+  const reintentar = byId('ct-session-retry');
+  if (panel) panel.dataset.estado = estado;
+  if (encabezado) encabezado.textContent = titulo;
+  if (indicador) indicador.textContent = icono;
+  if (reintentar) reintentar.hidden = !mostrarReintento;
+}
+
+async function descartarSesionLocal() {
+  generacionSesion += 1;
+  recuperarSesionInicial = false;
+  initializePromise = null;
+  initializeUserId = null;
+  try {
+    const resultado = await resolverSolicitudAcotada(
+      supabase.auth.signOut({ scope: 'local' }),
+      { tiempoMaximoMs: TIEMPO_MAXIMO_SESION_MS },
+    );
+    return !resultado.error;
+  } catch {
+    return false;
+  }
+}
+
+function mostrarErrorAlDescartarSesion() {
+  presentarEstadoSesion('Necesitamos cerrar esta sesión', '!', 'error', true);
+  message(
+    'ct-session-message',
+    'La sesión ya no es válida y no pudimos confirmar que se retiró del dispositivo. Revisa tu conexión y usa “Cerrar sesión” para volver a intentarlo.',
+    'error',
+  );
+}
+
 async function showSession(session, status, permitirRetorno = true) {
+  const cicloSesion = generacionSesion;
   showView('session');
   byId('ct-session-email').textContent = session?.user?.email || '';
+  presentarEstadoSesion('Comprobando tu sesión', '…');
   message('ct-session-message', 'Terminando de preparar tu cuenta…', 'info');
 
   try {
     await initializeAccount(session);
+    if (cicloSesion !== generacionSesion) return;
+    presentarEstadoSesion('Tu sesión está activa', '✓', 'valida');
     if (permitirRetorno && retornoTrasAcceso) {
       const destino = retornoTrasAcceso;
       retornoTrasAcceso = '';
@@ -187,19 +249,46 @@ async function showSession(session, status, permitirRetorno = true) {
     }
     if (status === 'confirmed') message('ct-session-message', 'Correo confirmado. Tu cuenta está lista.', 'success');
     else if (status === 'password-updated') message('ct-session-message', 'Tu contraseña quedó actualizada.', 'success');
-    else if (status === 'session-warning') message('ct-session-message', 'La preparación pendiente terminó correctamente. Tu cuenta está lista.', 'success');
+    else if (status === 'session-warning') message('ct-session-message', 'La comprobación terminó correctamente. Tu cuenta está lista.', 'success');
     else message('ct-session-message');
   } catch (error) {
+    if (cicloSesion !== generacionSesion) return;
     if (error?.code === 'CC_NO_DISPONIBLE') {
-      await supabase.auth.signOut({ scope: 'local' });
-      initializePromise = null;
-      initializeUserId = null;
+      if (!await descartarSesionLocal()) {
+        mostrarErrorAlDescartarSesion();
+        return;
+      }
       setTab('login');
       showView('auth');
+      setupGoogleButton();
       message('ct-login-message', 'No pudimos habilitar esta cuenta. Si necesitas ayuda, escríbenos por nuestros canales de atención.', 'error');
       return;
     }
-    message('ct-session-message', 'Tu sesión está activa, pero no pudimos terminar de preparar la cuenta. Inténtalo de nuevo más tarde.', 'info');
+    if (error?.code === 'CC_SESION') {
+      if (!await descartarSesionLocal()) {
+        mostrarErrorAlDescartarSesion();
+        return;
+      }
+      setTab('login');
+      showView('auth');
+      setupGoogleButton();
+      message(
+        'ct-login-message',
+        status === 'password-updated'
+          ? 'Tu contraseña quedó actualizada. Inicia sesión nuevamente con la nueva contraseña.'
+          : 'Tu sesión venció o dejó de ser válida. Inicia sesión nuevamente.',
+        'error',
+      );
+      return;
+    }
+    presentarEstadoSesion('No pudimos comprobar tu sesión', '!', 'error', true);
+    message(
+      'ct-session-message',
+      status === 'password-updated'
+        ? 'Tu contraseña quedó actualizada, pero no pudimos comprobar la sesión. Revisa tu conexión y vuelve a intentarlo.'
+        : 'La sesión sigue guardada en este dispositivo, pero no pudimos validarla. Revisa tu conexión y vuelve a intentarlo.',
+      'error',
+    );
   }
 }
 
@@ -574,10 +663,17 @@ async function submitRegister(event) {
     // dejamos que SIGNED_OUT cambie la pestaña antes de mostrar el comprobante.
     if (data?.session) {
       preserveAuthViewOnSignOut = true;
+      let descartada = false;
       try {
-        await supabase.auth.signOut({ scope: 'local' });
+        descartada = await descartarSesionLocal();
       } finally {
         preserveAuthViewOnSignOut = false;
+      }
+      if (!descartada) {
+        showView('session');
+        byId('ct-session-email').textContent = data.session.user?.email || '';
+        mostrarErrorAlDescartarSesion();
+        return;
       }
       setTab('register');
       showView('auth', false);
@@ -635,9 +731,20 @@ async function submitNewPassword(event) {
   try {
     const { data, error } = await supabase.auth.updateUser({ password: passwordInput.value });
     if (error) throw error;
-    const { data: sessionData } = await supabase.auth.getSession();
-    await showSession(sessionData.session || { user: data.user }, 'password-updated', false);
     history.replaceState(null, '', window.location.pathname);
+    const { data: sessionData, error: sessionError } = await leerSesionAcotada();
+    if (sessionError) {
+      showView('session');
+      byId('ct-session-email').textContent = data.user?.email || '';
+      presentarEstadoSesion('Contraseña actualizada', '✓', 'valida', true);
+      message(
+        'ct-session-message',
+        'Tu contraseña quedó actualizada, pero no pudimos comprobar la sesión. Revisa tu conexión y vuelve a intentarlo.',
+        'error',
+      );
+      return;
+    }
+    await showSession(sessionData.session || { user: data.user }, 'password-updated', false);
   } catch (error) {
     message('ct-password-message', humanAuthError(error, 'password'), 'error');
   } finally {
@@ -646,13 +753,27 @@ async function submitNewPassword(event) {
 }
 
 async function signOutLocal() {
+  generacionSesion += 1;
+  recuperarSesionInicial = false;
   const button = byId('ct-signout');
   setBusy(button, true, 'Cerrando sesión…');
   message('ct-session-message');
-  const { error } = await supabase.auth.signOut({ scope: 'local' });
+  let error = null;
+  try {
+    const resultado = await resolverSolicitudAcotada(
+      supabase.auth.signOut({ scope: 'local' }),
+      { tiempoMaximoMs: TIEMPO_MAXIMO_SESION_MS },
+    );
+    error = resultado.error;
+  } catch (fallo) {
+    error = fallo;
+  }
   setBusy(button, false);
   if (error) {
-    message('ct-session-message', 'No pudimos cerrar la sesión en este dispositivo. Inténtalo de nuevo.', 'error');
+    const texto = error?.code === 'MG_TIEMPO_AGOTADO'
+      ? 'El cierre está tardando más de lo esperado. Si termina, esta pantalla volverá al acceso automáticamente.'
+      : 'No pudimos cerrar la sesión en este dispositivo. Inténtalo de nuevo.';
+    message('ct-session-message', texto, 'error');
     return;
   }
   initializePromise = null;
@@ -660,6 +781,60 @@ async function signOutLocal() {
   setTab('login');
   showView('auth');
   message('ct-login-message', 'La sesión se cerró en este dispositivo.', 'success');
+}
+
+function mostrarSinSesionTrasComprobacion() {
+  const params = new URLSearchParams(window.location.search);
+  if (params.get('mode') === 'password') {
+    history.replaceState(null, '', window.location.pathname);
+    showView('recovery');
+    message('ct-recovery-message', 'El enlace ya no es válido. Solicita uno nuevo.', 'error');
+    return;
+  }
+  setTab('login');
+  showView('auth');
+  setupGoogleButton();
+  message('ct-login-message', 'No hay una sesión activa. Puedes iniciar sesión para continuar.', 'info');
+}
+
+async function continuarTrasComprobarSesion(session) {
+  const params = new URLSearchParams(window.location.search);
+  if (params.get('mode') === 'password') {
+    history.replaceState(null, '', window.location.pathname);
+    if (consumeRecoveryProof(session)) {
+      showView('password');
+      return;
+    }
+  }
+  await showSession(session, 'session-warning', false);
+}
+
+async function reintentarComprobacionSesion() {
+  const cicloSesion = generacionSesion;
+  recuperarSesionInicial = false;
+  const button = byId('ct-session-retry');
+  setBusy(button, true, 'Comprobando…');
+  presentarEstadoSesion('Comprobando tu sesión', '…');
+  message('ct-session-message', 'Volviendo a comprobar la conexión…', 'info');
+  try {
+    const { data, error } = await leerSesionAcotada();
+    if (cicloSesion !== generacionSesion) return;
+    if (error) throw error;
+    if (!data.session) {
+      mostrarSinSesionTrasComprobacion();
+      return;
+    }
+    await continuarTrasComprobarSesion(data.session);
+  } catch {
+    presentarEstadoSesion('No pudimos comprobar tu sesión', '!', 'error', true);
+    message(
+      'ct-session-message',
+      'La comprobación volvió a fallar. Revisa tu conexión y vuelve a intentarlo.',
+      'error',
+    );
+  } finally {
+    setBusy(button, false);
+  }
 }
 
 function wireEvents() {
@@ -671,6 +846,7 @@ function wireEvents() {
   byId('ct-recovery-back').addEventListener('click', () => showView('auth'));
   byId('ct-recovery-form').addEventListener('submit', submitRecovery);
   byId('ct-password-form').addEventListener('submit', submitNewPassword);
+  byId('ct-session-retry').addEventListener('click', reintentarComprobacionSesion);
   byId('ct-signout').addEventListener('click', signOutLocal);
   document.querySelector('.ct-tabs').addEventListener('keydown', (event) => {
     if (!['ArrowLeft', 'ArrowRight'].includes(event.key)) return;
@@ -685,13 +861,23 @@ async function boot() {
   const params = new URLSearchParams(window.location.search);
   const mode = params.get('mode');
   const status = params.get('status');
-  const { data, error } = await supabase.auth.getSession();
+  const cicloSesion = generacionSesion;
+  const { data, error } = await leerSesionAcotada();
   authReady = true;
+  if (cicloSesion !== generacionSesion) {
+    mostrarSinSesionTrasComprobacion();
+    return;
+  }
   if (error) {
-    setTab('login');
-    showView('auth');
-    setupGoogleButton();
-    message('ct-login-message', 'No pudimos comprobar tu sesión. Recarga la página e inténtalo de nuevo.', 'error');
+    recuperarSesionInicial = true;
+    showView('session');
+    byId('ct-session-email').textContent = '';
+    presentarEstadoSesion('No pudimos comprobar tu sesión', '!', 'error', true);
+    message(
+      'ct-session-message',
+      'La comprobación está tardando más de lo esperado. Revisa tu conexión y vuelve a intentarlo.',
+      'error',
+    );
     return;
   }
   if (mode === 'password') {
@@ -716,18 +902,29 @@ async function boot() {
   }
 }
 
-supabase.auth.onAuthStateChange((event) => {
-  if (!authReady) return;
+supabase.auth.onAuthStateChange((event, session) => {
   if (event === 'SIGNED_OUT') {
+    generacionSesion += 1;
+    recuperarSesionInicial = false;
     initializePromise = null;
     initializeUserId = null;
-    if (preserveAuthViewOnSignOut) return;
+    if (!authReady || preserveAuthViewOnSignOut) return;
     googleButtonGeneration += 1;
     googleCredentialGeneration = null;
     if (!new URLSearchParams(location.search).has('mode')) {
       setTab('login');
       showView('auth');
       setupGoogleButton();
+    }
+    return;
+  }
+  if (!authReady) return;
+  if (recuperarSesionInicial && ['INITIAL_SESSION', 'SIGNED_IN', 'TOKEN_REFRESHED'].includes(event)) {
+    recuperarSesionInicial = false;
+    if (session) {
+      queueMicrotask(() => { void continuarTrasComprobarSesion(session); });
+    } else {
+      mostrarSinSesionTrasComprobacion();
     }
   }
 });

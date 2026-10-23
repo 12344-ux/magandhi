@@ -4,7 +4,7 @@ import {
   cargarCategoriasPublicas,
   enlaceCategoria,
   iconoCategoria,
-} from './categorias.js?v=3';
+} from './categorias.js?v=4';
 import { aplicarFotoCategoria } from './categorias-fotos.js?v=1';
 
 const contenedor = document.querySelector('[data-categorias-inicio]');
@@ -111,8 +111,8 @@ function pintarCategoriasInicio(categorias) {
 pintarEspera();
 
 async function obtenerCategorias() {
-  const { supabase } = await import('../supabase-config.js');
-  return cargarCategoriasPublicas(supabase);
+  const { supabasePublico } = await import('../supabase-publico.js?v=1');
+  return cargarCategoriasPublicas(supabasePublico);
 }
 
 if (contenedor) {

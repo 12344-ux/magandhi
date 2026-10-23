@@ -1,4 +1,6 @@
 import { supabase, SUPABASE_URL } from '../supabase-config.js';
+import { supabasePublico } from '../supabase-publico.js?v=1';
+import { resolverSolicitudAcotada } from '../componentes/solicitud-acotada.js?v=1';
 import { listarCarrito } from '../carrito/carrito-core.js?v=3';
 import { observarSesionCliente, obtenerSesionCliente } from '../cliente/cliente-sesion.js';
 import { codigoAtribucionParaIntencion } from '../scripts/atribucion-promocional.js?v=1';
@@ -235,9 +237,13 @@ async function consultarProducto(identificador) {
   if (!esSlug && !esUuid) throw new ErrorCompra('PRODUCTO_INVALIDO', 'No pudimos identificar el producto seleccionado.');
   const campo = esSlug ? 'slug' : 'id';
   const base = ['id', 'nombre', 'slug', 'precio_venta', 'agotado', 'imagenes', 'imagen_banner_path'];
-  let resultado = await supabase.from('catalogo_publico').select(base.concat('max_comprable').join(',')).eq(campo, identificador).maybeSingle();
+  const consultar = (campos) => resolverSolicitudAcotada(
+    supabasePublico.from('catalogo_publico').select(campos.join(',')).eq(campo, identificador).maybeSingle(),
+    { tiempoMaximoMs: 8000 },
+  );
+  let resultado = await consultar(base.concat('max_comprable'));
   if (resultado.error && errorColumnaMaximo(resultado.error)) {
-    resultado = await supabase.from('catalogo_publico').select(base.join(',')).eq(campo, identificador).maybeSingle();
+    resultado = await consultar(base);
   }
   if (resultado.error) throw new ErrorCompra('PRODUCTO_CONSULTA', 'No pudimos confirmar el producto. Revisa tu conexión e inténtalo de nuevo.', { causa: resultado.error });
   if (!resultado.data) throw new ErrorCompra('PRODUCTO_NO_DISPONIBLE', 'Este producto ya no está disponible.');
