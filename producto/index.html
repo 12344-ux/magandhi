@@ -1812,7 +1812,7 @@
        "Sobre este producto", la ficha y la GALERIA, aplicando el acento de la
        categoria.
      · GALERIA: resuelve las URLs publicas de las imagenes con
-       supabase.storage.from('campanas').getPublicUrl(path). Foto principal =
+       supabasePublico.storage.from('campanas').getPublicUrl(path). Foto principal =
        primer elemento del arreglo imagenes (o imagen_banner_path); miniaturas =
        el resto en orden. Las miniaturas seleccionan directamente; en PC hay
        flechas discretas y en movil swipe. Toda navegacion es circular/infinita.
@@ -1832,17 +1832,19 @@
      ============================================================ -->
 <script type="module">
   import { supabase, SUPABASE_URL } from '../supabase-config.js';
+  import { supabasePublico } from '../supabase-publico.js?v=1';
+  import { resolverSolicitudAcotada } from '../componentes/solicitud-acotada.js?v=1';
   import { agregarAlCarrito, quitarDelCarrito, mensajeErrorCarrito } from '../carrito/carrito-core.js?v=3';
-  import '../componentes/motor-tienda.js?v=2';
+  import '../componentes/motor-tienda.js?v=3';
   import {
     observarEstadoCarrito,
     sincronizarCuentaCarrito,
     refrescarCuentaCarrito,
     ocultarCuentaCarrito,
-  } from '../componentes/cuenta-carrito.js?v=10';
+  } from '../componentes/cuenta-carrito.js?v=11';
   import { revalidarSesionCliente } from '../cliente/cliente-sesion.js';
   import { codigoAtribucionParaIntencion } from '../scripts/atribucion-promocional.js?v=1';
-  import { iniciarCompraDirecta } from '../compra/compra-core.js?v=1';
+  import { iniciarCompraDirecta } from '../compra/compra-core.js?v=2';
 
   // Nombre del bucket publico de Campanas donde viven las imagenes de producto.
   const BUCKET_CAMPANAS = 'campanas';
@@ -2311,7 +2313,7 @@
   function urlPublica(path){
     if(!path) return '';
     if(/^https?:\/\//i.test(path)) return path;
-    const { data } = supabase.storage.from(BUCKET_CAMPANAS).getPublicUrl(path);
+    const { data } = supabasePublico.storage.from(BUCKET_CAMPANAS).getPublicUrl(path);
     return (data && data.publicUrl) || '';
   }
 
@@ -2804,9 +2806,9 @@
   }
 
   async function consultarProducto(campos, slug, id){
-    let consulta = supabase.from('catalogo_publico').select(campos.join(','));
+    let consulta = supabasePublico.from('catalogo_publico').select(campos.join(','));
     consulta = slug ? consulta.eq('slug', slug) : consulta.eq('id', id);
-    return consulta.maybeSingle();
+    return resolverSolicitudAcotada(consulta.maybeSingle(), { tiempoMaximoMs: 8000 });
   }
 
   async function cargarProducto(){
@@ -3871,10 +3873,16 @@
     if(!slug) return; // sin slug publico no hay como consultar las vistas
     try{
       const [ratingRes, opsRes] = await Promise.all([
-        supabase.from('producto_rating_publico').select('total,promedio').eq('slug', slug).maybeSingle(),
-        supabase.from('opiniones_publicas')
-          .select('estrellas,comentario,autor_nombre,respuesta,respuesta_en,creado')
-          .eq('slug', slug).order('creado', { ascending:false }).limit(60)
+        resolverSolicitudAcotada(
+          supabasePublico.from('producto_rating_publico').select('total,promedio').eq('slug', slug).maybeSingle(),
+          { tiempoMaximoMs: 8000 },
+        ),
+        resolverSolicitudAcotada(
+          supabasePublico.from('opiniones_publicas')
+            .select('estrellas,comentario,autor_nombre,respuesta,respuesta_en,creado')
+            .eq('slug', slug).order('creado', { ascending:false }).limit(60),
+          { tiempoMaximoMs: 8000 },
+        ),
       ]);
       const rating = ratingRes.data;
       const total = rating ? (Number(rating.total)||0) : 0;

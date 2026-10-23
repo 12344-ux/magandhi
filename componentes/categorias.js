@@ -1,4 +1,7 @@
+import { resolverSolicitudAcotada } from './solicitud-acotada.js?v=1';
+
 const TRAZO = 'fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"';
+const TIEMPO_MAXIMO_CATEGORIAS_MS = 8000;
 
 // Biblioteca cerrada de iconos. El back-office solo aporta una clave; nunca
 // se interpreta HTML, SVG, URL ni estilos recibidos desde datos públicos.
@@ -146,24 +149,33 @@ function esColumnaTipoAusente(error) {
     /\btipo\b/.test(texto) && /(column|columna|field|campo|schema cache)/.test(texto);
 }
 
+async function consultarCategorias(clienteSupabase, campos) {
+  const peticion = clienteSupabase
+    .from('categorias_publicas')
+    .select(campos)
+    .order('orden', { ascending: true })
+    .order('codigo', { ascending: true });
+  return resolverSolicitudAcotada(peticion, {
+    tiempoMaximoMs: TIEMPO_MAXIMO_CATEGORIAS_MS,
+  });
+}
+
 /**
  * Fallback deliberadamente estrecho: si solo falta la columna aditiva `tipo`,
  * repite el contrato anterior y trata esas filas como permanentes. Los datos
  * fijos se usan únicamente cuando la vista completa todavía no existe.
  */
 export async function cargarCategoriasPublicas(clienteSupabase) {
-  let resultado = await clienteSupabase
-    .from('categorias_publicas')
-    .select('codigo,nombre,icono_codigo,descripcion,orden,tipo')
-    .order('orden', { ascending: true })
-    .order('codigo', { ascending: true });
+  let resultado = await consultarCategorias(
+    clienteSupabase,
+    'codigo,nombre,icono_codigo,descripcion,orden,tipo',
+  );
 
   if (resultado.error && esColumnaTipoAusente(resultado.error)) {
-    resultado = await clienteSupabase
-      .from('categorias_publicas')
-      .select('codigo,nombre,icono_codigo,descripcion,orden')
-      .order('orden', { ascending: true })
-      .order('codigo', { ascending: true });
+    resultado = await consultarCategorias(
+      clienteSupabase,
+      'codigo,nombre,icono_codigo,descripcion,orden',
+    );
     if (!resultado.error) {
       return Object.freeze({
         categorias: fusionarCategoriasPublicas(resultado.data || []),

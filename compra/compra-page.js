@@ -12,7 +12,7 @@ import {
   guardarEntrega,
   crearPagoDesdeBorrador,
   moneda,
-} from './compra-core.js?v=1';
+} from './compra-core.js?v=2';
 
 const paso = document.body.dataset.compraPaso;
 const porId = (id) => document.getElementById(id);

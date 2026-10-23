@@ -1,18 +1,19 @@
-import '../componentes/cuenta-carrito.js?v=10';
+import '../componentes/cuenta-carrito.js?v=11';
 import {
   buscarProductos,
   crearTarjetaProducto,
   montarSlots,
-} from '../componentes/motor-tienda.js?v=2';
-import { supabase } from '../supabase-config.js';
+} from '../componentes/motor-tienda.js?v=3';
+import { supabasePublico } from '../supabase-publico.js?v=1';
 import {
   cargarCategoriasPublicas,
   categoriaPorCodigo,
-} from '../componentes/categorias.js?v=2';
+} from '../componentes/categorias.js?v=4';
 
 const TAMANO_PAGINA = 12;
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 const MODELO_RE = /^[a-z0-9][a-z0-9._-]{0,59}$/;
+const FUENTES_BUSQUEDA = new Set(['sesion', 'publica', 'catalogo']);
 const paginaBuscar = new URL('./', import.meta.url);
 const parametros = new URLSearchParams(window.location.search);
 const consulta = normalizarConsulta(parametros.get('q'));
@@ -265,6 +266,8 @@ async function cargarPagina(agregar) {
       limite: TAMANO_PAGINA,
       desde: desplazamiento,
       signal: controlador.signal,
+      fuenteCliente: agregar ? fuenteBusqueda?.fuenteCliente || 'auto' : 'auto',
+      sesionUid: agregar ? fuenteBusqueda?.sesionUid || '' : '',
       productoActual: null,
     });
     if (token !== generacion) return;
@@ -272,11 +275,21 @@ async function cargarPagina(agregar) {
       modo: String(respuesta.modo || ''),
       modelo: String(respuesta.modelo_version || ''),
       total: respuesta.total,
+      fuenteCliente: String(respuesta.fuente_cliente || ''),
+      sesionUid: String(respuesta.sesion_uid || ''),
     };
+    const identidadCoherente = fuenteActual.fuenteCliente === 'sesion'
+      ? UUID_RE.test(fuenteActual.sesionUid)
+      : fuenteActual.sesionUid === '';
+    if (!FUENTES_BUSQUEDA.has(fuenteActual.fuenteCliente) || !identidadCoherente) {
+      throw new Error('La búsqueda no identificó su fuente de datos.');
+    }
     if (agregar && fuenteBusqueda && (
       fuenteBusqueda.modo !== fuenteActual.modo ||
       fuenteBusqueda.modelo !== fuenteActual.modelo ||
-      fuenteBusqueda.total !== fuenteActual.total
+      fuenteBusqueda.total !== fuenteActual.total ||
+      fuenteBusqueda.fuenteCliente !== fuenteActual.fuenteCliente ||
+      fuenteBusqueda.sesionUid !== fuenteActual.sesionUid
     )) {
       throw new Error('La fuente de búsqueda cambió durante la paginación.');
     }
@@ -329,7 +342,7 @@ async function cargarCategorias() {
   botonReintentarCategorias.disabled = true;
   botonReintentarCategorias.textContent = 'Reintentando…';
   try {
-    const resultado = await cargarCategoriasPublicas(supabase);
+    const resultado = await cargarCategoriasPublicas(supabasePublico);
     const categorias = resultado.categorias;
     selectorCategoria.replaceChildren();
     const todas = document.createElement('option');

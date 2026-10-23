@@ -12,7 +12,7 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="../marca.css?v=3">
-<link rel="stylesheet" href="cuenta.css?v=3">
+<link rel="stylesheet" href="cuenta.css?v=4">
 </head>
 <body>
 <header class="ct-head">
@@ -125,11 +125,12 @@
       </form>
     </div>
 
-    <div class="ct-card ct-session" id="ct-session" hidden>
+    <div class="ct-card ct-session" id="ct-session" data-estado="comprobando" hidden>
       <span class="ct-session-icon" aria-hidden="true">✓</span>
       <h2 id="ct-session-title" tabindex="-1">Tu sesión está activa</h2>
       <p class="ct-session-email" id="ct-session-email"></p>
       <p class="ct-message" id="ct-session-message" role="status" aria-live="polite"></p>
+      <button type="button" class="ct-secondary" id="ct-session-retry" hidden>Reintentar comprobación</button>
       <a class="ct-primary ct-primary-link" href="../">Seguir comprando</a>
       <button type="button" class="ct-secondary" id="ct-signout">Cerrar sesión en este dispositivo</button>
       <p class="ct-fineprint">Tu cuenta es opcional. La compra como invitado sigue disponible.</p>
@@ -142,6 +143,6 @@
   <a href="../politicas/">Políticas</a>
   <a href="mailto:contacto@magandhi.com">Contacto</a>
 </footer>
-<script type="module" src="cuenta.js?v=6"></script>
+<script type="module" src="cuenta.js?v=7"></script>
 </body>
 </html>

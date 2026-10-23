@@ -1,21 +1,24 @@
-import { supabase, SUPABASE_URL } from '../supabase-config.js';
+import { SUPABASE_URL } from '../supabase-config.js';
+import { supabasePublico } from '../supabase-publico.js?v=1';
 import {
   buscarProductos,
   extraerProductos,
   montarSlots,
-} from '../componentes/motor-tienda.js?v=2';
+} from '../componentes/motor-tienda.js?v=3';
 import {
   cargarCategoriasPublicas,
   categoriaPorCodigo,
   enlaceCategoria,
   filaPerteneceACategoria,
   iconoCategoria,
-} from '../componentes/categorias.js?v=2';
+} from '../componentes/categorias.js?v=4';
 import { aplicarFotoCategoria } from '../componentes/categorias-fotos.js?v=1';
 
 const BUCKET_CAMPANAS = 'campanas';
 const TAMANO_PAGINA_CATALOGO = 60;
 const MAX_TOTAL_CATALOGO = 10000;
+const FUENTES_CATALOGO = new Set(['sesion', 'publica', 'catalogo']);
+const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 const parametros = new URLSearchParams(window.location.search);
 const codigoSolicitado = parametros.get('categoria') || '';
 const hayFiltroSolicitado = Boolean(codigoSolicitado.trim());
@@ -36,7 +39,7 @@ function esc(valor) {
 }
 
 function obtenerCategorias({ recargar = false } = {}) {
-  if (!solicitudCategorias || recargar) solicitudCategorias = cargarCategoriasPublicas(supabase);
+  if (!solicitudCategorias || recargar) solicitudCategorias = cargarCategoriasPublicas(supabasePublico);
   return solicitudCategorias;
 }
 
@@ -59,7 +62,7 @@ function urlPublica(path) {
     try { decodificado = decodeURIComponent(segmento); } catch { return ''; }
     if (!segmento || decodificado === '.' || decodificado === '..' || /[\\/]/.test(decodificado)) return '';
   }
-  const { data } = supabase.storage.from(BUCKET_CAMPANAS).getPublicUrl(path);
+  const { data } = supabasePublico.storage.from(BUCKET_CAMPANAS).getPublicUrl(path);
   return data?.publicUrl || '';
 }
 
@@ -169,11 +172,20 @@ function validarPaginaCatalogo(respuesta, desde, estadoAnterior = null, categori
   }
   const modo = String(respuesta.modo || '');
   const modelo = String(respuesta.modelo_version || '');
-  if (!modo || !modelo) throw new Error('SN1 no identificó la fuente del catálogo.');
+  const fuenteCliente = String(respuesta.fuente_cliente || '');
+  const sesionUid = String(respuesta.sesion_uid || '');
+  const identidadCoherente = fuenteCliente === 'sesion'
+    ? UUID_RE.test(sesionUid)
+    : sesionUid === '';
+  if (!modo || !modelo || !FUENTES_CATALOGO.has(fuenteCliente) || !identidadCoherente) {
+    throw new Error('SN1 no identificó la fuente del catálogo.');
+  }
   if (estadoAnterior && (
     estadoAnterior.total !== respuesta.total ||
     estadoAnterior.modo !== modo ||
     estadoAnterior.modelo !== modelo ||
+    estadoAnterior.fuenteCliente !== fuenteCliente ||
+    estadoAnterior.sesionUid !== sesionUid ||
     estadoAnterior.desde !== desde
   )) {
     throw new Error('El total o la fuente del catálogo cambió durante la paginación.');
@@ -213,6 +225,8 @@ function validarPaginaCatalogo(respuesta, desde, estadoAnterior = null, categori
       total: respuesta.total,
       modo,
       modelo,
+      fuenteCliente,
+      sesionUid,
       desde: siguienteDesde,
       cantidad,
       claves,
@@ -220,13 +234,21 @@ function validarPaginaCatalogo(respuesta, desde, estadoAnterior = null, categori
   };
 }
 
-async function consultarPaginaCatalogo(categoriaSeleccionada, desde, signal) {
+async function consultarPaginaCatalogo(
+  categoriaSeleccionada,
+  desde,
+  signal,
+  fuenteCliente = 'auto',
+  sesionUid = '',
+) {
   return buscarProductos({
     consulta: '',
     categoria: categoriaSeleccionada?.codigo || null,
     limite: TAMANO_PAGINA_CATALOGO,
     desde,
     signal,
+    fuenteCliente,
+    sesionUid,
     productoActual: null,
   });
 }
@@ -473,7 +495,13 @@ async function cargarMasProductos() {
   actualizarBotonMas();
   let renderExitoso = false;
   try {
-    const respuesta = await consultarPaginaCatalogo(categoriaSeleccionada, desde, controlador.signal);
+    const respuesta = await consultarPaginaCatalogo(
+      categoriaSeleccionada,
+      desde,
+      controlador.signal,
+      estadoAnterior.fuenteCliente,
+      estadoAnterior.sesionUid,
+    );
     if (token !== generacionCatalogo || paginacionCatalogo !== estadoAnterior) return;
     const pagina = validarPaginaCatalogo(respuesta, desde, estadoAnterior, categoriaSeleccionada);
     const markup = markupProductos(pagina.filas, categoriaSeleccionada);
