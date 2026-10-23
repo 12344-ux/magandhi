@@ -25,6 +25,9 @@ const hayFiltroSolicitado = Boolean(codigoSolicitado.trim());
 const gridProductos = document.getElementById('cp-product-grid');
 const botonMasProductos = document.getElementById('cp-products-more');
 const estadoMasProductos = document.getElementById('cp-products-more-status');
+const seccionCategorias = document.querySelector('.mg-category-section');
+const bannerCategorias = document.querySelector('.cp-banner');
+const slotDescubrimiento = document.querySelector('[data-sn-slot="categoria-descubrimiento"]');
 let categoriasDisponibles = [];
 let solicitudCategorias = null;
 let cicloInicio = 0;
@@ -37,6 +40,15 @@ function esc(valor) {
   return String(valor ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;')
     .replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;');
 }
+
+function posicionarNavegacionCategorias(alFinal) {
+  if (!seccionCategorias || !bannerCategorias || !slotDescubrimiento) return;
+  const referencia = alFinal ? slotDescubrimiento : bannerCategorias;
+  referencia.insertAdjacentElement('afterend', seccionCategorias);
+}
+
+// Evita mostrar arriba el selector mientras se resuelve una categoría individual.
+if (hayFiltroSolicitado) posicionarNavegacionCategorias(true);
 
 function obtenerCategorias({ recargar = false } = {}) {
   if (!solicitudCategorias || recargar) solicitudCategorias = cargarCategoriasPublicas(supabasePublico);
@@ -362,7 +374,6 @@ function markupEstadoVacio(categoriaSeleccionada) {
     <span>${esc(detalle)}</span>
     <div class="cp-state__actions">
       <a class="cp-state__primary" href="../#descubrir">Ver todos los productos</a>
-      <a class="cp-state__secondary" href="#cp-category-title">Elegir otra categoría</a>
     </div>
   </div>`;
 }
@@ -561,6 +572,7 @@ async function iniciar(recargar = false) {
     if (ciclo !== cicloInicio) return;
     categoriasDisponibles = resultado.categorias;
     const categoriaSeleccionada = categoriaPorCodigo(codigoSolicitado, categoriasDisponibles);
+    posicionarNavegacionCategorias(Boolean(categoriaSeleccionada));
     pintarNavegacion(categoriasDisponibles, categoriaSeleccionada);
     if (hayFiltroSolicitado && !categoriaSeleccionada) {
       actualizarContenidoNoDisponible();
