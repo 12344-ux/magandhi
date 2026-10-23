@@ -28,7 +28,17 @@ const estadoMasProductos = document.getElementById('cp-products-more-status');
 const seccionCategorias = document.querySelector('.mg-category-section');
 const bannerCategorias = document.querySelector('.cp-banner');
 const slotDescubrimiento = document.querySelector('[data-sn-slot="categoria-descubrimiento"]');
-const CODIGOS_CON_CABECERA_PROPIA = new Set(['navidad', 'tecnologia']);
+const CODIGOS_CON_CABECERA_PROPIA = new Set([
+  'navidad',
+  'tecnologia',
+  'moda',
+  'hogar',
+  'deportes',
+  'belleza',
+  'accesorios',
+  'mascotas',
+  'jugueteria',
+]);
 let categoriasDisponibles = [];
 let solicitudCategorias = null;
 let cicloInicio = 0;
