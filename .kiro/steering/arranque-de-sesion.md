@@ -80,6 +80,10 @@ ver” salvo diagnóstico necesario.
 
 Reglas: compra invitada intacta; `clientes.id` no se reemplaza; precio/monto/UID/
 `customer_id` nunca son autoridad del navegador; secretos nunca en Git/chat;
-rama + PR por cambio; medir producción antes de afirmar cierre. Si se necesita
-apagar carrito usar `comercial-c5-desactivar.sql`; si se necesita apagar P4 usar
+rama + PR por cambio; medir producción antes de afirmar cierre. **Este repositorio
+no tiene vistas previas por rama:** cuando el dueño pida crear o publicar una
+rama, completar por defecto rama → PR → merge a `main` → GitHub Pages →
+verificación en `https://magandhi.com`, salvo que pida expresamente detenerse
+antes del merge. Si se necesita apagar carrito usar
+`comercial-c5-desactivar.sql`; si se necesita apagar P4 usar
 `promocionar-p4-desactivar.sql` del back-office.
