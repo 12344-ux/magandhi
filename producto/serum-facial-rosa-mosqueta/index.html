@@ -526,6 +526,8 @@
     transition:border-color .15s, color .15s;
   }
   .mg-vuelta__btn:hover{border-color:var(--acento);color:var(--tinta)}
+  .mg-vuelta__btn--primary{background:var(--rojo);border-color:var(--rojo);color:#fff}
+  .mg-vuelta__btn--primary:hover{background:var(--rojo-osc);border-color:var(--rojo-osc);color:#fff}
   .mg-vuelta__btn[hidden]{display:none}
   .mg-vuelta__btn:disabled{opacity:.55;cursor:default}
 
@@ -1279,6 +1281,8 @@
       <h2 class="mg-vuelta__tit" id="mg-vuelta-tit">Estamos confirmando tu pago</h2>
       <p class="mg-vuelta__msg" id="mg-vuelta-msg">Dale un momento: en cuanto tengamos la confirmación te escribimos a tu correo.</p>
       <div class="mg-vuelta__acciones">
+        <button type="button" class="mg-vuelta__btn mg-vuelta__btn--primary" id="mg-vuelta-continuar" hidden>Continuar pago</button>
+        <button type="button" class="mg-vuelta__btn mg-vuelta__btn--primary" id="mg-vuelta-compras" hidden>Ver en Mis compras</button>
         <button type="button" class="mg-vuelta__btn" id="mg-vuelta-refrescar">Consultar de nuevo</button>
         <button type="button" class="mg-vuelta__btn" id="mg-vuelta-wa" hidden>Escribirnos por WhatsApp</button>
       </div>
@@ -1838,10 +1842,15 @@
     sincronizarCuentaCarrito,
     refrescarCuentaCarrito,
     ocultarCuentaCarrito,
-  } from '../componentes/cuenta-carrito.js?v=11';
+    abrirCentroCuenta,
+  } from '../componentes/cuenta-carrito.js?v=12';
   import { revalidarSesionCliente } from '../cliente/cliente-sesion.js';
   import { codigoAtribucionParaIntencion } from '../scripts/atribucion-promocional.js?v=1';
-  import { iniciarCompraDirecta } from '../compra/compra-core.js?v=2';
+  import {
+    iniciarCompraDirecta,
+    reabrirPagoDirecto,
+    hayPagoDirectoLocalActivo,
+  } from '../compra/compra-core.js?v=3';
 
   // Nombre del bucket publico de Campanas donde viven las imagenes de producto.
   const BUCKET_CAMPANAS = 'campanas';
@@ -2927,21 +2936,25 @@
   //  historial, en un marcador ni en un enlace compartido.
   // ==========================================================================
 
-  // Bandera de modulo: hay un pago de ESTE producto esperando confirmacion.
-  // La lee pintarAgotado() para no reactivar el boton cuando el producto carga.
+  // Bandera de módulo: una referencia local o una compra directa de la cuenta
+  // mantiene bloqueado Comprar ahora para este producto.
   let pagoEnCurso = false;
+  let pagoDirectoCuentaEnCurso = false;
+  let comprasCuentaActuales = [];
 
   // API que usa configurarCompra(). Se declaran aqui, con una version vacia por
   // defecto, para que la compra funcione aunque el aviso no se pueda montar.
   let marcarPagoIniciado   = function(){};
   let revisarPagoPendiente = function(){};
   let normalizarPagoPendiente = function(){};
+  let restaurarAccionesPago = function(){};
 
   function configurarVueltaDelPago(){
     // sessionStorage y NO localStorage: el recuerdo muere con la pestaña, que es
     // exactamente el alcance del viaje a Wompi. Esto no debe sobrevivir a cerrar
     // el navegador.
     const CLAVE = 'mg_pago_en_curso';
+    const CAPACIDAD = /^[A-Za-z0-9_-]{43}$/;
     // Un pago mas viejo que esto ya no se consulta: si algo quedo colgado, no
     // tiene sentido avisar de un pago de anteayer.
     const VENTANA_MS = 6 * 60 * 60 * 1000;
@@ -2956,6 +2969,8 @@
     const msg     = document.getElementById('mg-vuelta-msg');
     const btnRef  = document.getElementById('mg-vuelta-refrescar');
     const btnWa   = document.getElementById('mg-vuelta-wa');
+    const btnContinuar = document.getElementById('mg-vuelta-continuar');
+    const btnCompras = document.getElementById('mg-vuelta-compras');
     if(!seccion || !card || !tit || !msg) return;
 
     const ICONOS = {
@@ -2983,6 +2998,11 @@
         tit: 'Recibimos tu pago',
         msg: 'Estamos terminando de preparar tu pedido. Te escribimos a tu correo muy pronto; si algo no cuadra, te contactamos nosotros.'
       },
+      cuenta: {
+        estilo: 'pendiente',
+        tit: 'Tienes una compra en proceso',
+        msg: 'Puedes continuar el pago o consultar su estado en Mis compras desde cualquiera de tus dispositivos.'
+      },
       rechazado: {
         estilo: 'rechazado',
         tit: 'El pago no se completó',
@@ -3003,12 +3023,19 @@
     // --- Memoria de la pestaña ----------------------------------------------
     function recordar(ref){
       try{
+        let anterior = null;
+        try{ anterior = JSON.parse(sessionStorage.getItem(CLAVE) || 'null'); }catch(_){ anterior = null; }
+        const coincide = anterior && anterior.ref === ref;
+        const capacidad = coincide && CAPACIDAD.test(anterior.capacidad || '') ? anterior.capacidad : '';
+        const expiraEn = coincide && typeof anterior.expira_en === 'string' &&
+          Number.isFinite(Date.parse(anterior.expira_en)) ? anterior.expira_en : '';
         sessionStorage.setItem(CLAVE, JSON.stringify({
-          ref: ref, prod: claveProducto(), ts: Date.now()
+          ref: ref, prod: coincide && anterior.prod ? anterior.prod : claveProducto(), ts: Date.now(),
+          ...(capacidad ? { capacidad: capacidad, expira_en: expiraEn, cuenta: anterior.cuenta === true } : {})
         }));
       }catch(_){
-        // Navegacion privada o storage lleno: no es grave. El ?ref= de la URL
-        // sigue siendo el camino principal.
+        // Navegacion privada o storage lleno: el ?ref= de la URL
+        // sigue siendo el camino principal para consultar.
       }
     }
     function recordado(){
@@ -3018,11 +3045,30 @@
         const d = JSON.parse(crudo);
         if(!d || typeof d.ref !== 'string' || !d.ref) return null;
         if(!d.ts || (Date.now() - d.ts) > VENTANA_MS){ olvidar(); return null; }
+        const tieneCapacidad = Object.prototype.hasOwnProperty.call(d, 'capacidad');
+        if(tieneCapacidad && (!CAPACIDAD.test(d.capacidad || '') ||
+          typeof d.expira_en !== 'string' || !Number.isFinite(Date.parse(d.expira_en)) ||
+          typeof d.cuenta !== 'boolean')){
+          olvidar();
+          return null;
+        }
+        if(tieneCapacidad && Date.parse(d.expira_en) <= Date.now()){
+          olvidarCapacidad(d);
+          return { ref: d.ref, prod: d.prod, ts: d.ts };
+        }
         return d;
       }catch(_){ return null; }
     }
     function olvidar(){
       try{ sessionStorage.removeItem(CLAVE); }catch(_){}
+    }
+    function olvidarCapacidad(dato){
+      if(!dato) return;
+      try{
+        sessionStorage.setItem(CLAVE, JSON.stringify({
+          ref: dato.ref, prod: dato.prod || claveProducto(), ts: dato.ts || Date.now()
+        }));
+      }catch(_){ olvidar(); }
     }
 
     // --- Candado de la compra ------------------------------------------------
@@ -3032,46 +3078,61 @@
       if(btn) btn.disabled = true;
     }
     function liberarCompra(){
-      pagoEnCurso = false;
+      pagoEnCurso = pagoDirectoCuentaEnCurso;
       const btn = document.getElementById('mg-comprar');
       if(!btn) return;
-      // Se respeta la realidad del producto: si esta agotado, no cargo o se
-      // despublico, el boton sigue apagado. Solo se devuelve la compra cuando de
-      // verdad hay algo que comprar.
+      // Se respeta la realidad del producto y cualquier compra directa activa
+      // de la misma cuenta, incluso si se inició en otro dispositivo.
       const hayProducto = !!filaProducto &&
         !document.body.classList.contains('mg-sin-producto');
       const agotado = productoAgotado(filaProducto);
-      btn.disabled = !hayProducto || agotado;
+      btn.disabled = !hayProducto || agotado || pagoDirectoCuentaEnCurso;
     }
 
     // --- Pintado --------------------------------------------------------------
-    function pintar(estado){
-      const t = TEXTOS[estado] || TEXTOS.pendiente;
+    function pintar(estado, checkout){
+      const gestionCuenta = checkout && checkout.origen === 'directo' && checkout.gestion === 'mis_compras';
+      const t = gestionCuenta && estado === 'pendiente' ? TEXTOS.cuenta : (TEXTOS[estado] || TEXTOS.pendiente);
       card.setAttribute('data-estado', t.estilo);
       if(ico) ico.innerHTML = ICONOS[t.estilo] || ICONOS.pendiente;
       tit.textContent = t.tit;
       msg.textContent = t.msg;
       seccion.hidden = false;
 
-      // Sin veredicto (pendiente / revision) la compra queda bloqueada: es la
-      // ventana peligrosa, la persona no sabe si pago. Con veredicto se libera.
       if(estado === 'aprobado' || estado === 'rechazado') liberarCompra();
       else bloquearCompra();
-
-      // Rechazado: no hubo cobro, no hay nada que recordar y reintentar es lo
-      // esperado. Aprobado SI se recuerda, para que un refresco de la pagina
-      // siga mostrando la confirmacion aunque la barra ya este limpia.
+      const recuerdoAnterior = recordado();
       if(estado === 'rechazado') olvidar();
+      else if(estado === 'aprobado' || estado === 'revision') olvidarCapacidad(recuerdoAnterior);
 
-      // 'Consultar de nuevo' solo tiene sentido mientras no haya veredicto.
-      if(btnRef) btnRef.hidden = (estado === 'aprobado' || estado === 'rechazado');
-      // WhatsApp se ofrece cuando la persona puede necesitar ayuda humana.
-      if(btnWa) btnWa.hidden = (estado === 'aprobado');
+      const memoria = recordado();
+      const puedeContinuarLocal = estado === 'pendiente' && checkout &&
+        checkout.origen === 'directo' && checkout.gestion === 'local' &&
+        checkout.puede_continuar === true && memoria &&
+        CAPACIDAD.test(memoria.capacidad || '') && Date.parse(memoria.expira_en) > Date.now();
+      if(btnContinuar) btnContinuar.hidden = !puedeContinuarLocal;
+      if(btnCompras) btnCompras.hidden = !gestionCuenta || estado === 'aprobado' || estado === 'rechazado';
+      if(btnRef) btnRef.hidden = gestionCuenta || estado === 'aprobado' || estado === 'rechazado';
+      if(btnWa) btnWa.hidden = gestionCuenta || estado === 'aprobado';
     }
 
     // --- Consulta al servidor -------------------------------------------------
     let consultando = false;
     let reintentos  = 0;
+
+    function checkoutConsultaSeguro(valor, referencia){
+      if(!valor || typeof valor !== 'object' || Array.isArray(valor) ||
+        valor.tipo !== 'compra' || valor.origen !== 'directo' ||
+        !['local', 'mis_compras'].includes(valor.gestion) ||
+        valor.recargar !== true || valor.referencia !== referencia ||
+        !/^[A-Za-z0-9_-]{6,64}$/.test(valor.referencia) ||
+        typeof valor.puede_continuar !== 'boolean') return null;
+      return {
+        tipo: 'compra', origen: 'directo', gestion: valor.gestion,
+        recargar: true, referencia: valor.referencia,
+        puede_continuar: valor.puede_continuar
+      };
+    }
 
     async function consultar(ref){
       if(consultando || !ref) return;
@@ -3079,19 +3140,19 @@
       if(btnRef){ btnRef.disabled = true; btnRef.textContent = 'Consultando…'; }
 
       let estado = '';
+      let checkout = null;
       try{
         const { data, error } = await supabase.functions.invoke(
           'estado-pago', { body: { referencia: ref } }
         );
         if(error){
-          // El motivo real viaja en el CUERPO de la respuesta, no en
-          // error.message (ver mensajeDeError mas abajo). Un 404 no trae estado:
-          // queda '' y se muestra el mensaje prudente.
           let j = null;
-          try{ j = await error.context.json(); }catch(_){}
-          estado = (j && typeof j.estado === 'string') ? j.estado : '';
-        }else if(data && typeof data.estado === 'string'){
+          try{ j = await error.context.json(); }catch(_){ }
+          estado = (j && ['pendiente','aprobado','revision','rechazado'].includes(j.estado)) ? j.estado : '';
+          checkout = checkoutConsultaSeguro(j && j.checkout, ref);
+        }else if(data && ['pendiente','aprobado','revision','rechazado'].includes(data.estado)){
           estado = data.estado;
+          checkout = checkoutConsultaSeguro(data.checkout, ref);
         }
       }catch(_){
         estado = '';
@@ -3100,8 +3161,7 @@
       consultando = false;
       if(btnRef){ btnRef.disabled = false; btnRef.textContent = 'Consultar de nuevo'; }
 
-      // Sin respuesta: estado prudente. NUNCA se afirma que el pago quedo listo.
-      pintar(estado || 'pendiente');
+      pintar(estado || 'pendiente', checkout);
 
       if((estado === 'pendiente' || estado === '') && reintentos < ESPERAS_MS.length){
         const espera = ESPERAS_MS[reintentos];
@@ -3135,13 +3195,21 @@
     };
     normalizarPagoPendiente = function(fila){
       const d = recordado();
-      if(!d || !fila) return;
-      const slug = String(fila.slug || '').trim().toLowerCase();
-      const id = String(fila.id || '').trim().toLowerCase();
-      if(!FORMATO_SLUG.test(slug) || (d.prod !== slug && d.prod !== id)) return;
-      try{
-        sessionStorage.setItem(CLAVE, JSON.stringify({ ref: d.ref, prod: slug, ts: d.ts }));
-      }catch(_){ /* El aviso actual sigue visible aunque no se pueda normalizar. */ }
+      if(d && fila){
+        const slug = String(fila.slug || '').trim().toLowerCase();
+        const id = String(fila.id || '').trim().toLowerCase();
+        if(FORMATO_SLUG.test(slug) && (d.prod === slug || d.prod === id)){
+          try{
+            sessionStorage.setItem(CLAVE, JSON.stringify({
+              ref: d.ref, prod: slug, ts: d.ts,
+              ...(d.capacidad ? {
+                capacidad: d.capacidad, expira_en: d.expira_en, cuenta: d.cuenta === true
+              } : {})
+            }));
+          }catch(_){ /* El aviso actual sigue visible aunque no se pueda normalizar. */ }
+        }
+      }
+      sincronizarCompraCuenta();
     };
     revisarPagoPendiente = function(){
       const d = recordado();
@@ -3154,6 +3222,65 @@
       consultar(d.ref);
     };
 
+    function sincronizarCompraCuenta(){
+      const productoId = filaProducto && String(filaProducto.id || '');
+      const compra = productoId ? comprasCuentaActuales.find(function(item){
+        return item && item.origen === 'directo' && item.grupo === 'proceso' &&
+          Array.isArray(item.lineas) && item.lineas.some(function(linea){ return linea.id === productoId; });
+      }) : null;
+      const estabaActiva = pagoDirectoCuentaEnCurso;
+      pagoDirectoCuentaEnCurso = !!compra;
+      if(compra){
+        const estado = compra.en_verificacion ? 'revision' : 'pendiente';
+        pintar(estado, {
+          tipo: 'compra', origen: 'directo', gestion: 'mis_compras',
+          referencia: compra.referencia, puede_continuar: compra.puede_continuar === true
+        });
+        return;
+      }
+      if(estabaActiva){
+        const memoria = recordado();
+        if(memoria) revisarPagoPendiente();
+        else{
+          seccion.hidden = true;
+          liberarCompra();
+        }
+      }
+    }
+
+    window.addEventListener('magandhi:compras', function(evento){
+      const detalle = evento && evento.detail;
+      comprasCuentaActuales = detalle && Array.isArray(detalle.compras) ? detalle.compras : [];
+      sincronizarCompraCuenta();
+    });
+
+    restaurarAccionesPago = function(){
+      if(!btnContinuar) return;
+      btnContinuar.disabled = false;
+      btnContinuar.textContent = 'Continuar pago';
+    };
+
+    if(btnContinuar){
+      btnContinuar.addEventListener('click', async function(){
+        const memoria = recordado();
+        if(!memoria || !CAPACIDAD.test(memoria.capacidad || '')) return;
+        btnContinuar.disabled = true;
+        btnContinuar.textContent = 'Abriendo pago…';
+        try{
+          await reabrirPagoDirecto({ referencia: memoria.ref, capacidad: memoria.capacidad });
+        }catch(error){
+          btnContinuar.disabled = false;
+          btnContinuar.textContent = 'Continuar pago';
+          msg.textContent = error && error.message
+            ? error.message
+            : 'No pudimos abrir el pago. Consulta de nuevo su estado.';
+          consultar(memoria.ref);
+        }
+      });
+    }
+    if(btnCompras){
+      btnCompras.addEventListener('click', function(){ abrirCentroCuenta('compras'); });
+    }
     if(btnRef){
       btnRef.addEventListener('click', function(){
         const d = recordado();
@@ -3260,7 +3387,9 @@
         retorno: window.location.href,
       });
       if(!preparada){
-        mostrarAvisoCantidad('No pudimos preparar la compra en este navegador. Recarga la página e inténtalo de nuevo.');
+        mostrarAvisoCantidad(hayPagoDirectoLocalActivo()
+          ? 'Ya tienes un pago en proceso en esta pestaña. Termínalo o espera su vencimiento antes de iniciar otra compra.'
+          : 'No pudimos preparar la compra en este navegador. Recarga la página e inténtalo de nuevo.');
         return;
       }
       window.location.assign('/compra/');
@@ -3311,6 +3440,7 @@
       // que saltarle el cursor a ningun lado.
       modal.setAttribute('aria-hidden', 'true');
       restaurarBoton();
+      restaurarAccionesPago();
       revisarPagoPendiente();
     });
 

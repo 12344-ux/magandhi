@@ -1,5 +1,5 @@
 import { supabase } from '../supabase-config.js';
-import { abrirCentroCuenta, invalidarComprasCuenta } from '../componentes/cuenta-carrito.js?v=11';
+import { abrirCentroCuenta, invalidarComprasCuenta } from '../componentes/cuenta-carrito.js?v=12';
 import { codigoAtribucionParaIntencion } from '../scripts/atribucion-promocional.js?v=1';
 
 const WOMPI_CHECKOUT_URL = 'https://checkout.wompi.co/p/';

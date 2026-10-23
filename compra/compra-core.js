@@ -5,7 +5,7 @@ import { listarCarrito } from '../carrito/carrito-core.js?v=3';
 import { observarSesionCliente, obtenerSesionCliente } from '../cliente/cliente-sesion.js';
 import { codigoAtribucionParaIntencion } from '../scripts/atribucion-promocional.js?v=1';
 
-export const VERSION_COMPRA = 1;
+export const VERSION_COMPRA = 2;
 const CLAVE_BORRADOR = 'mg_compra_borrador_v1';
 const CLAVE_PAGO_DIRECTO = 'mg_pago_en_curso';
 const CLAVE_PAGO_CARRITO = 'mg_pago_carrito_en_curso';
@@ -14,6 +14,7 @@ const MAX_FUTURO = 60 * 1000;
 const WOMPI_CHECKOUT_URL = 'https://checkout.wompi.co/p/';
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 const REFERENCIA = /^[A-Za-z0-9_-]{6,64}$/;
+const CAPACIDAD_REANUDACION = /^[A-Za-z0-9_-]{43}$/;
 const SLUG = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
 
 export class ErrorCompra extends Error {
@@ -47,10 +48,23 @@ function origenValido(origen) {
   if (!origen || typeof origen !== 'object') return false;
   if (origen.tipo === 'directo') {
     return typeof origen.producto === 'string' && origen.producto.length > 0 && origen.producto.length <= 200 &&
-      entero(origen.cantidad, 1, 20) && typeof origen.retorno === 'string';
+      entero(origen.cantidad, 1, 20) && typeof origen.retorno === 'string' &&
+      CAPACIDAD_REANUDACION.test(origen.reanudacion || '');
   }
   return origen.tipo === 'carrito' && UUID.test(origen.uid || '') && UUID.test(origen.carritoId || '') &&
     entero(origen.version, 0) && typeof origen.retorno === 'string';
+}
+
+function generarCapacidadReanudacion() {
+  try {
+    const bytes = crypto.getRandomValues(new Uint8Array(32));
+    let binario = '';
+    for (const byte of bytes) binario += String.fromCharCode(byte);
+    const capacidad = btoa(binario).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/g, '');
+    return CAPACIDAD_REANUDACION.test(capacidad) ? capacidad : '';
+  } catch {
+    return '';
+  }
 }
 
 function datosPersonalesGuardadosValidos(datos) {
@@ -122,12 +136,28 @@ function crearBorrador(origen) {
   });
 }
 
+export function hayPagoDirectoLocalActivo() {
+  try {
+    const memoria = JSON.parse(sessionStorage.getItem(CLAVE_PAGO_DIRECTO) || 'null');
+    return !!memoria && memoria.cuenta === false && REFERENCIA.test(memoria.ref || '') &&
+      CAPACIDAD_REANUDACION.test(memoria.capacidad || '') &&
+      typeof memoria.expira_en === 'string' && Date.parse(memoria.expira_en) > Date.now();
+  } catch {
+    return false;
+  }
+}
+
 export function iniciarCompraDirecta({ producto, cantidad, retorno = '/' }) {
   const identificador = String(producto || '').trim();
   const unidades = Number(cantidad);
-  if (!identificador || identificador.length > 200 || !entero(unidades, 1, 20)) return false;
+  if (hayPagoDirectoLocalActivo()) return false;
+  const reanudacion = generarCapacidadReanudacion();
+  if (!identificador || identificador.length > 200 || !entero(unidades, 1, 20) || !reanudacion) return false;
   try {
-    crearBorrador({ tipo: 'directo', producto: identificador, cantidad: unidades, retorno: rutaRetornoSegura(retorno) });
+    crearBorrador({
+      tipo: 'directo', producto: identificador, cantidad: unidades,
+      retorno: rutaRetornoSegura(retorno), reanudacion,
+    });
     return true;
   } catch {
     return false;
@@ -303,7 +333,11 @@ export async function cargarResumen(borrador = leerBorrador()) {
       subtotal: precio * cantidad,
       imagen: imagenPublica(fila),
     };
-    const meta = { producto: String(fila.slug || fila.id), productoId: fila.id };
+    const meta = {
+      producto: String(fila.slug || fila.id),
+      productoId: fila.id,
+      reanudacion: borrador.origen.reanudacion,
+    };
     return {
       tipo: 'directo',
       titulo: 'Compra directa',
@@ -384,6 +418,9 @@ function codigoRespuesta(error, cuerpo) {
 }
 
 function mensajePago(codigo) {
+  if (/COMPRA_DIRECTA_EN_PROCESO|DIRECTA_C6_ACTIVA/.test(codigo)) {
+    return 'Ya tienes un pago de este producto en proceso. Ábrelo desde Mis compras antes de iniciar otro.';
+  }
   if (/MAX_COMPRABLE|AGOTAD|NO_DISPONIBLE|RETIRAD|PRECIO|VERSION|DESACTUALIZ|CARRITO.*CAMBI/.test(codigo)) {
     return 'La disponibilidad o el precio cambió. Vuelve al resumen para revisar la compra actualizada.';
   }
@@ -402,9 +439,10 @@ function pagoValido(pago, tipo) {
   const expiracionValida = pago.expira_en === undefined || (
     typeof pago.expira_en === 'string' && Number.isFinite(Date.parse(pago.expira_en)) && Date.parse(pago.expira_en) > Date.now()
   );
-  const rutaValida = tipo === 'carrito'
-    ? retorno.pathname === '/carrito/'
-    : /^\/producto\/(?:index\.html|[^/]+\/)?$/.test(retorno.pathname);
+  const rutaProducto = /^\/producto\/(?:index\.html|[^/]+\/)?$/.test(retorno.pathname);
+  const rutaCarrito = retorno.pathname === '/carrito/';
+  const rutaCuenta = rutaCarrito && retorno.searchParams.get('cuenta') === 'compras';
+  const rutaValida = tipo === 'carrito' ? rutaCarrito : (rutaProducto || rutaCuenta);
   return typeof pago.llave_publica === 'string' && pago.llave_publica.trim() && pago.moneda === 'COP' &&
     typeof pago.monto_en_centavos === 'string' && /^(?!0)\d{1,18}$/.test(pago.monto_en_centavos) &&
     typeof pago.referencia === 'string' && REFERENCIA.test(pago.referencia) &&
@@ -440,7 +478,19 @@ function datosWompi(borrador) {
 function guardarMemoriaPago(tipo, pago, resumen, datos, descriptor) {
   try {
     if (tipo === 'directo') {
-      sessionStorage.setItem(CLAVE_PAGO_DIRECTO, JSON.stringify({ ref: pago.referencia, prod: resumen.meta.producto.toLowerCase(), ts: Date.now() }));
+      const recuperableInvitado = CAPACIDAD_REANUDACION.test(resumen.meta.reanudacion || '') &&
+        typeof pago.expira_en === 'string' && Number.isFinite(Date.parse(pago.expira_en)) &&
+        pago.recuperacion_cuenta !== true;
+      sessionStorage.setItem(CLAVE_PAGO_DIRECTO, JSON.stringify({
+        ref: pago.referencia,
+        prod: resumen.meta.producto.toLowerCase(),
+        ts: Date.now(),
+        ...(recuperableInvitado ? {
+          capacidad: resumen.meta.reanudacion,
+          expira_en: pago.expira_en,
+          cuenta: false,
+        } : {}),
+      }));
       return true;
     }
     const memoria = {
@@ -496,6 +546,63 @@ function enviarAWompi(pago, datos) {
   formulario.submit();
 }
 
+function compradorReaperturaValido(valor) {
+  if (!valor || typeof valor !== 'object') return null;
+  const comprador = {
+    nombre: String(valor.nombre || '').trim(),
+    correo: String(valor.correo || '').trim(),
+    telefono: String(valor.telefono || '').trim(),
+    direccion: String(valor.direccion || '').trim(),
+    ciudad: String(valor.ciudad || '').trim(),
+    departamento: String(valor.departamento || '').trim(),
+    pais: String(valor.pais || '').trim(),
+    detalles: '',
+  };
+  return comprador.nombre.length >= 2 && comprador.nombre.length <= 120 &&
+    comprador.correo.length <= 160 && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(comprador.correo) &&
+    /^\d{10}$/.test(comprador.telefono) &&
+    comprador.direccion.length >= 3 && comprador.direccion.length <= 220 &&
+    comprador.ciudad.length >= 2 && comprador.ciudad.length <= 80 &&
+    comprador.departamento.length > 0 && comprador.departamento.length <= 80 &&
+    comprador.pais === 'CO' ? comprador : null;
+}
+
+export async function reabrirPagoDirecto({ referencia, capacidad }) {
+  const ref = String(referencia || '').trim();
+  const token = String(capacidad || '').trim();
+  if (!REFERENCIA.test(ref) || !CAPACIDAD_REANUDACION.test(token)) {
+    throw new ErrorCompra('REANUDACION_INVALIDA', 'Este pago no se puede recuperar desde esta pestaña.');
+  }
+  let respuesta;
+  try {
+    respuesta = await supabase.functions.invoke('crear-intencion-pago', {
+      body: { intencion: { referencia: ref, capacidad: token } },
+    });
+  } catch (error) {
+    throw new ErrorCompra('RED_PAGO', 'No pudimos conectar para continuar el pago. Revisa tu conexión e inténtalo de nuevo.', { causa: error });
+  }
+  const cuerpo = await cuerpoRespuesta(respuesta.error, respuesta.data);
+  if (respuesta.error || cuerpo.error) {
+    const codigo = codigoRespuesta(respuesta.error, cuerpo);
+    throw new ErrorCompra(codigo || 'PAGO_ERROR', mensajePago(codigo), { causa: respuesta.error });
+  }
+  const checkout = cuerpo.checkout;
+  const comprador = compradorReaperturaValido(cuerpo.comprador);
+  let retornoLocal = false;
+  try {
+    const retorno = new URL(cuerpo.url_redireccion);
+    retornoLocal = /^\/producto\/(?:index\.html|[^/]+\/)?$/.test(retorno.pathname) &&
+      retorno.searchParams.get('ref') === ref;
+  } catch { /* La validación conjunta falla abajo. */ }
+  if (!pagoValido(cuerpo, 'directo') || cuerpo.referencia !== ref || !comprador || !retornoLocal ||
+      checkout?.tipo !== 'compra' || checkout?.origen !== 'directo' || checkout?.gestion !== 'local' ||
+      checkout?.referencia !== ref || checkout?.recargar !== true) {
+    throw new ErrorCompra('RESPUESTA_PAGO_INVALIDA', 'No pudimos validar la recuperación del pago. Consulta su estado antes de intentarlo otra vez.');
+  }
+  enviarAWompi(cuerpo, comprador);
+  return true;
+}
+
 export async function crearPagoDesdeBorrador() {
   const borrador = leerBorrador();
   if (!borrador?.resumen || !validarDatosPersonales(borrador.datos).valido || !validarEntrega(borrador.entrega).valido) {
@@ -513,7 +620,11 @@ export async function crearPagoDesdeBorrador() {
   const cuerpoSolicitud = {
     ...(resumen.tipo === 'carrito'
       ? { carrito: { id: resumen.meta.carritoId, version: resumen.meta.version } }
-      : { producto: resumen.meta.producto, cantidad: resumen.unidades }),
+      : {
+        producto: resumen.meta.producto,
+        cantidad: resumen.unidades,
+        reanudacion: borrador.origen.reanudacion,
+      }),
     comprador: {
       nombre: datos.nombre,
       correo: datos.correo,
@@ -542,15 +653,33 @@ export async function crearPagoDesdeBorrador() {
   if (!pagoValido(cuerpo, resumen.tipo)) {
     throw new ErrorCompra('RESPUESTA_PAGO_INVALIDA', 'No pudimos validar la respuesta del pago. No se abrió ningún cobro; inténtalo de nuevo.');
   }
+  let datosPago = datos;
+  if (resumen.tipo === 'directo' && cuerpo.checkout?.origen === 'directo') {
+    const checkout = cuerpo.checkout;
+    const comprador = compradorReaperturaValido(cuerpo.comprador);
+    let rutaCoherente = false;
+    try {
+      const retorno = new URL(cuerpo.url_redireccion);
+      rutaCoherente = checkout.gestion === 'mis_compras'
+        ? retorno.pathname === '/carrito/' && retorno.searchParams.get('cuenta') === 'compras'
+        : checkout.gestion === 'local' && /^\/producto\/(?:index\.html|[^/]+\/)?$/.test(retorno.pathname);
+    } catch { /* La respuesta se rechaza abajo. */ }
+    if (!comprador || checkout.tipo !== 'compra' || checkout.recargar !== true ||
+        checkout.referencia !== cuerpo.referencia || !['local', 'mis_compras'].includes(checkout.gestion) ||
+        !rutaCoherente) {
+      throw new ErrorCompra('RESPUESTA_PAGO_INVALIDA', 'No pudimos validar la compra recuperable. No se abrió ningún cobro; inténtalo de nuevo.');
+    }
+    datosPago = comprador;
+  }
   const descriptor = resumen.tipo === 'carrito' ? descriptorCarrito(cuerpo, resumen) : null;
   if (resumen.tipo === 'carrito' && !descriptor) {
     throw new ErrorCompra('CHECKOUT_INVALIDO', 'No pudimos validar la compra creada. No se abrió ningún cobro; revisa Mis compras.');
   }
-  if (!guardarMemoriaPago(resumen.tipo, cuerpo, resumen, datos, descriptor)) {
+  if (!guardarMemoriaPago(resumen.tipo, cuerpo, resumen, datosPago, descriptor)) {
     throw new ErrorCompra('MEMORIA_PAGO', 'No pudimos preparar un retorno seguro desde Wompi. No se abrió ningún cobro; inténtalo de nuevo.');
   }
   if (window.mgEvento) window.mgEvento('checkout_iniciado', resumen.tipo === 'directo' ? { slug: resumen.meta.producto } : {});
   olvidarBorrador();
-  enviarAWompi(cuerpo, datos);
+  enviarAWompi(cuerpo, datosPago);
   return true;
 }

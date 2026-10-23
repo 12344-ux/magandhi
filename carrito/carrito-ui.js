@@ -5,9 +5,9 @@ import {
   quitarDelCarrito,
   mensajeErrorCarrito,
 } from './carrito-core.js?v=3';
-import { configurarCheckoutCarrito } from './checkout-carrito.js?v=12';
-import { sincronizarCuentaCarrito } from '../componentes/cuenta-carrito.js?v=11';
-import { iniciarCompraCarrito } from '../compra/compra-core.js?v=2';
+import { configurarCheckoutCarrito } from './checkout-carrito.js?v=13';
+import { sincronizarCuentaCarrito } from '../componentes/cuenta-carrito.js?v=12';
+import { iniciarCompraCarrito } from '../compra/compra-core.js?v=3';
 
 const vistas = ['loading', 'session', 'disabled', 'error', 'empty', 'content'];
 let uidActual = null;
