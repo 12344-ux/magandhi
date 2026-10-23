@@ -28,7 +28,7 @@ const estadoMasProductos = document.getElementById('cp-products-more-status');
 const seccionCategorias = document.querySelector('.mg-category-section');
 const bannerCategorias = document.querySelector('.cp-banner');
 const slotDescubrimiento = document.querySelector('[data-sn-slot="categoria-descubrimiento"]');
-const CODIGOS_CON_CABECERA_PROPIA = new Set(['navidad']);
+const CODIGOS_CON_CABECERA_PROPIA = new Set(['navidad', 'tecnologia']);
 let categoriasDisponibles = [];
 let solicitudCategorias = null;
 let cicloInicio = 0;
