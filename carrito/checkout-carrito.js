@@ -38,7 +38,7 @@ function aptitudCheckout(estado, pagoBloqueado, sesionInvalidada) {
   if (pagoBloqueado) return { valida: false, mensaje: 'Hay un pago pendiente o en revisión. Espera la confirmación antes de cambiar el carrito o iniciar otro pago.' };
   if (estado?.operacion) return { valida: false, mensaje: 'Espera a que termine la actualización del carrito.' };
   const snapshot = estado?.snapshot;
-  if (!snapshot) return { valida: false, mensaje: 'Estamos comprobando el estado actual del carrito.' };
+  if (!snapshot) return { valida: false, mensaje: 'Estamos revisando tu carrito.' };
   if (!snapshot.habilitado) return { valida: false, mensaje: 'El carrito no está habilitado en este momento.' };
   if (!snapshot.carrito_id || snapshot.cantidad_lineas === 0 || snapshot.items.length === 0) {
     return { valida: false, mensaje: 'Agrega al menos un producto para continuar.' };
@@ -48,7 +48,7 @@ function aptitudCheckout(estado, pagoBloqueado, sesionInvalidada) {
     item.max_comprable < 1 || item.cantidad > item.max_comprable
   );
   if (lineaInvalida) return { valida: false, mensaje: 'Revisa las líneas marcadas antes de continuar.' };
-  return { valida: true, mensaje: 'El total final se confirmará de forma segura en el servidor.' };
+  return { valida: true, mensaje: '' };
 }
 
 function correoValido(valor) {
@@ -276,7 +276,7 @@ function errorExigeRecarga(codigo) {
 
 function mensajeErrorPago(codigo, cuerpo) {
   const maximo = typeof cuerpo?.max_comprable === 'number' ? cuerpo.max_comprable : NaN;
-  if (codigo === 'CO_CARRITO_BLOQUEADO') return 'Hay un pago pendiente o en revisión. Actualizamos el carrito para mostrar su estado autoritativo.';
+  if (codigo === 'CO_CARRITO_BLOQUEADO') return 'Hay un pago pendiente o en revisión. Actualizamos el carrito para que veas en qué va.';
   if (/MAX_COMPRABLE/.test(codigo)) {
     if (Number.isSafeInteger(maximo) && maximo === 0) return 'Un producto se agotó mientras completabas tus datos. Revisa el carrito antes de continuar.';
     if (Number.isSafeInteger(maximo) && maximo > 0) return `La disponibilidad cambió: ahora una línea admite máximo ${maximo} ${maximo === 1 ? 'unidad' : 'unidades'}. Revisa el carrito.`;
@@ -288,7 +288,7 @@ function mensajeErrorPago(codigo, cuerpo) {
   if (/NO_DISPONIBLE|RETIRAD|AGOTAD|PRECIO/.test(codigo)) {
     return 'Una línea ya no se puede comprar como estaba. Ya cargamos el carrito actualizado para que la revises.';
   }
-  if (/VACIO|NO_ENCONTRAD/.test(codigo)) return 'El carrito ya no tiene líneas disponibles para pagar. Revisa su estado actual.';
+  if (/VACIO|NO_ENCONTRAD/.test(codigo)) return 'El carrito ya no tiene productos disponibles para pagar. Revísalo antes de continuar.';
   if (/DESHABILIT|NO_HABILIT/.test(codigo)) return 'El carrito no está disponible para pagos en este momento.';
   if (/NO_AUTENTIC|SESION|CUENTA|JWT/.test(codigo)) return 'Tu sesión cambió. Vuelve a iniciar sesión antes de continuar al pago.';
   if (/LIMITE.*MONTO|MONTO.*MAX|EXCEDE.*MONTO/.test(codigo)) return 'El total supera el máximo permitido para un solo pago. Escríbenos y te ayudamos a completar la compra.';
@@ -434,7 +434,7 @@ export function configurarCheckoutCarrito({ obtenerEstado, recargarCarrito, reva
       resumen.textContent = 'Estamos actualizando el total del carrito.';
       return;
     }
-    resumen.textContent = `${snapshot.cantidad_unidades} ${snapshot.cantidad_unidades === 1 ? 'unidad' : 'unidades'} · Total actual ${moneda(totalActual(snapshot))}. El servidor lo confirmará antes del pago.`;
+    resumen.textContent = `${snapshot.cantidad_unidades} ${snapshot.cantidad_unidades === 1 ? 'unidad' : 'unidades'} · Total ${moneda(totalActual(snapshot))}`;
   }
 
   function restaurarEnvio(actualizarAhora = true) {
@@ -514,7 +514,7 @@ export function configurarCheckoutCarrito({ obtenerEstado, recargarCarrito, reva
     } : {
       pendiente: ['Estamos confirmando tu pago', 'Dale un momento. No inicies otro pago para este carrito; si esta pestaña conserva la intención, puedes volver al mismo pago seguro.'],
       revision: ['Tu pago está en revisión', 'No puedes cambiar el carrito ni iniciar otro pago mientras terminamos la confirmación. Te contactaremos si hace falta algo.'],
-      aprobado: ['¡Recibimos tu pago!', 'Tu pedido quedó registrado. Actualizamos el carrito con el estado confirmado por el servidor.'],
+      aprobado: ['¡Recibimos tu pago!', 'Tu pedido quedó registrado y tu carrito ya está al día.'],
       rechazado: ['El pago no se completó', 'Actualizamos el carrito. Puedes editarlo o iniciar un pago nuevo; esta referencia rechazada no volverá a abrirse.'],
     };
     const solicitado = ESTADOS_PAGO.has(estado) ? estado : 'pendiente';
@@ -618,7 +618,7 @@ export function configurarCheckoutCarrito({ obtenerEstado, recargarCarrito, reva
       if (!retornoUrl.presente && !referenciaRetornoPendiente) {
         pintarTerminal(
           'No pudimos identificar el pago guardado',
-          'La intención guardada venció o sus datos no eran válidos. El servidor conserva la autoridad sobre el estado del carrito.'
+          'El pago guardado venció o sus datos no eran válidos. Tu carrito sigue a salvo; puedes iniciar el pago de nuevo.'
         );
         return;
       }
@@ -634,7 +634,7 @@ export function configurarCheckoutCarrito({ obtenerEstado, recargarCarrito, reva
       if (!retorno.valida) {
         limpiarMemoriaConTerminal(
           'No pudimos identificar el pago',
-          'La referencia de retorno no es válida. Revisa el estado actual del carrito antes de continuar.'
+          'La referencia de retorno no es válida. Revisa tu carrito antes de continuar.'
         );
         return;
       }
@@ -747,7 +747,7 @@ export function configurarCheckoutCarrito({ obtenerEstado, recargarCarrito, reva
     if (consultandoPago || !FORMATO_REFERENCIA.test(ref) || ref !== referenciaActiva ||
         !sesionValida(obtenerEstado()?.sesion) || sesionInvalidada()) {
       if (ref && !FORMATO_REFERENCIA.test(ref)) {
-        limpiarMemoriaConTerminal('No pudimos identificar el pago', 'La referencia guardada no es válida. Revisa el estado actual del carrito.');
+        limpiarMemoriaConTerminal('No pudimos identificar el pago', 'La referencia guardada no es válida. Revisa tu carrito.');
       }
       return;
     }
@@ -805,7 +805,7 @@ export function configurarCheckoutCarrito({ obtenerEstado, recargarCarrito, reva
       }
       limpiarMemoriaConTerminal(
         'No encontramos esta intención de pago',
-        'La referencia ya no se puede consultar. Revisa el estado actual del carrito antes de iniciar otro pago.',
+        'La referencia ya no se puede consultar. Revisa tu carrito antes de iniciar otro pago.',
         ref
       );
       return;
@@ -957,7 +957,7 @@ export function configurarCheckoutCarrito({ obtenerEstado, recargarCarrito, reva
     } else {
       pintarTerminal(
         'La recuperación local del pago venció',
-        'Eliminamos los datos temporales y estamos consultando el estado autoritativo del carrito antes de permitir otro pago.'
+        'Eliminamos los datos temporales y estamos revisando tu carrito antes de permitir otro pago.'
       );
     }
     actualizar();

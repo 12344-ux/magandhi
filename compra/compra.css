@@ -107,3 +107,41 @@ a:focus-visible,button:focus-visible,input:focus-visible,select:focus-visible{ou
   .cp-progress li b{font-size:10px}.cp-assurance ul{grid-template-columns:1fr 1fr}.cp-assurance li:last-child{grid-column:1/-1}
 }
 @media(prefers-reduced-motion:reduce){.cp-spinner{animation:none}.cp-primary,.cp-back,.cp-field input,.cp-field select,.cp-phone{transition:none}}
+
+/* Móvil · zona de pago en blanco. Una línea terracota arriba identifica el
+   pago sin cubrir la pantalla de rojo. */
+@media(max-width:720px){
+  html,body{background:#fff}
+  body::before{content:"";position:absolute;top:0;left:0;right:0;z-index:3;height:4px;background:var(--rojo)}
+  a:focus-visible,button:focus-visible,input:focus-visible,select:focus-visible{outline-color:rgba(194,138,58,.55)}
+
+  .cp-header{min-height:0;padding:18px 16px 4px;color:var(--tinta)}
+  .cp-back{min-height:40px;padding:8px 12px 8px 9px;border:1px solid var(--linea);background:#fff;box-shadow:none;backdrop-filter:none;color:var(--tinta)}
+  .cp-back:hover,.cp-back:active{border-color:rgba(166,51,46,.24);background:var(--red-50);color:var(--rojo)}
+  .cp-brand__mark{width:40px;height:40px;border:0;border-radius:0;background:transparent;box-shadow:none}
+  .cp-brand__mark img{width:38px;height:38px}
+  /* Distintivo informativo, no botón: candado y texto alineados a la derecha. */
+  .cp-secure{width:auto;min-height:40px;padding:0;border:0;background:transparent;box-shadow:none;backdrop-filter:none;color:var(--gris);font-size:10.5px;font-weight:600;gap:5px;justify-content:flex-end}
+  .cp-secure svg{width:15px;height:15px;color:var(--rojo)}
+
+  .cp-main{width:100%;margin:0;padding:10px 16px 18px;border:0;border-radius:0;background:#fff;box-shadow:none}
+  .cp-progress li>span,.cp-progress li>a>span{background:#fff}
+
+  .cp-card{border:1px solid var(--linea);border-radius:18px;box-shadow:0 1px 2px rgba(17,17,17,.04)}
+  .cp-order{min-height:0;padding:18px 16px}
+  .cp-order-item__media.has-image{background:#fff;border-color:var(--linea)}
+  .cp-order-item__media.has-image img{object-fit:contain;padding:4px}
+
+  .cp-assurance{padding:18px 16px;display:grid;grid-template-columns:40px minmax(0,1fr);align-items:center;column-gap:12px}
+  .cp-assurance__icon{width:40px;height:40px;border-radius:12px}
+  .cp-assurance__icon svg{width:21px;height:21px}
+  .cp-assurance h2{grid-column:2;align-self:center;margin:0;font-size:16px}
+  .cp-assurance p{grid-column:1/-1;margin-top:10px;font-size:12px;line-height:1.6}
+  .cp-assurance ul{grid-column:1/-1;grid-template-columns:1fr;gap:9px;margin-top:14px;padding-top:14px}
+  .cp-assurance li{padding-left:22px;font-size:11.5px;line-height:1.45}
+  .cp-assurance li::before{content:"";top:3px;left:2px;width:5px;height:9px;border:solid var(--rojo);border-width:0 2px 2px 0;transform:rotate(45deg)}
+
+  .cp-action-bar{border-color:var(--linea);box-shadow:0 -6px 22px rgba(17,17,17,.08)}
+  .cp-footer{border-top:1px solid var(--linea);color:var(--gris)}
+  .cp-footer a:hover{color:var(--rojo)}
+}

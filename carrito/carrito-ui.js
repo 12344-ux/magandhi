@@ -5,7 +5,7 @@ import {
   quitarDelCarrito,
   mensajeErrorCarrito,
 } from './carrito-core.js?v=3';
-import { configurarCheckoutCarrito } from './checkout-carrito.js?v=14';
+import { configurarCheckoutCarrito } from './checkout-carrito.js?v=15';
 import { sincronizarCuentaCarrito } from '../componentes/cuenta-carrito.js?v=14';
 import { iniciarCompraCarrito } from '../compra/compra-core.js?v=3';
 
@@ -64,7 +64,7 @@ function limpiar() {
 
 function mensajeCambio(item) {
   if (!item.disponible || item.max_comprable === 0) return 'Este producto fue retirado o se agotó. Retíralo del carrito para continuar.';
-  if (item.requiere_ajuste) return `Este producto cambió desde que lo agregaste. Revisa el precio actual y elige una cantidad de 1 a ${item.max_comprable}.`;
+  if (item.requiere_ajuste) return `Este producto cambió desde que lo agregaste. Revisa el precio y elige una cantidad de 1 a ${item.max_comprable}.`;
   return '';
 }
 

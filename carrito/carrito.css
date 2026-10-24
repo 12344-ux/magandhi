@@ -51,3 +51,39 @@ input{font:inherit}input:focus-visible{outline:3px solid rgba(194,138,58,.42);ou
 .co-purchases-notice{margin:0 0 18px;padding:13px 15px;border:1px solid rgba(194,138,58,.32);border-radius:13px;background:var(--acento-sombra);display:grid;grid-template-columns:30px minmax(0,1fr) auto;align-items:center;gap:11px;color:var(--tinta)}
 .co-purchases-notice[hidden]{display:none!important}.co-purchases-notice__icon{width:30px;height:30px;border-radius:50%;background:#fff;color:var(--acento);display:flex;align-items:center;justify-content:center;font-weight:700}.co-purchases-notice p{margin:0;font-size:12px;line-height:1.5}.co-purchases-notice button{min-height:34px;padding:7px 11px;border:1px solid var(--rojo);border-radius:9px;background:#fff;color:var(--rojo);font:inherit;font-size:11px;font-weight:700;cursor:pointer}.co-purchases-notice button:hover{background:var(--rojo);color:#fff}
 @media(max-width:520px){.co-purchases-notice{grid-template-columns:30px minmax(0,1fr)}.co-purchases-notice button{grid-column:2;justify-self:start}}
+
+/* Móvil · la navegación vive en la barra inferior (navegacion-movil.css).
+   La cabecera queda como título de página y el total con «Continuar compra»
+   permanece visible sobre la barra mientras se revisa el carrito. */
+.co-head-title{display:none}
+@media(max-width:860px){
+  .co-head.cc-store-header{display:flex;align-items:center;max-width:none;padding:18px 18px 4px}
+  .co-head .cc-store-brand,.co-head .cc-search,.co-head .cc-store-actions{display:none!important}
+  .co-head-title{display:flex;align-items:center;gap:11px;min-width:0}
+  .co-head-title__icon{width:40px;height:40px;flex:none;border-radius:12px;background:var(--red-50);color:var(--rojo);display:flex;align-items:center;justify-content:center}
+  .co-head-title__icon svg{width:21px;height:21px}
+  .co-head-title__text{color:var(--negro);font-size:23px;font-weight:600;line-height:1;letter-spacing:-.4px}
+  /* El h1 se conserva para lectores de pantalla; visualmente lo da la cabecera. */
+  .co-title{position:absolute;width:1px;height:1px;margin:-1px;padding:0;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}
+  .co-main{width:calc(100% - 28px);margin:14px auto 28px}
+
+  .co-summary{
+    position:fixed;left:0;right:0;z-index:69;
+    bottom:max(68px,calc(60px + env(safe-area-inset-bottom)));
+    margin:0;padding:12px max(16px,env(safe-area-inset-right)) 12px max(16px,env(safe-area-inset-left));
+    border:0;border-bottom:1px solid var(--linea);border-radius:20px 20px 0 0;
+    background:#fff;box-shadow:0 -10px 28px rgba(17,17,17,.1);
+    display:grid;grid-template-columns:auto minmax(0,1fr);align-items:center;gap:6px 16px;
+  }
+  .co-summary .co-summary__total{display:flex;flex-direction:column;align-items:flex-start;justify-content:center;gap:1px}
+  .co-summary .co-summary__total span{color:var(--gris);font-size:11px;font-weight:500;line-height:1.2}
+  .co-summary .co-summary__total strong{font-size:19px;line-height:1.15;letter-spacing:-.3px;white-space:nowrap}
+  .co-summary .co-checkout{margin:0;min-height:48px;padding-inline:16px;border-radius:13px;font-size:14.5px;box-shadow:0 8px 18px rgba(166,51,46,.2)}
+  .co-summary .co-checkout:disabled{box-shadow:none}
+  .co-summary .co-checkout-help{grid-column:1/-1;min-height:0!important;margin:0!important;font-size:11px;line-height:1.45}
+  .co-summary .co-checkout-help:empty{display:none}
+
+  /* Total y barra forman una sola hoja inferior. */
+  body:has(#co-content:not([hidden])) .mg-mobile-nav{border-top-color:transparent;border-radius:0;box-shadow:none}
+  html body:has(#co-content:not([hidden])){padding-bottom:calc(max(68px,calc(60px + env(safe-area-inset-bottom))) + 84px)}
+}

@@ -126,6 +126,15 @@
   .sn-module__arrow{width:40px;height:40px}
   .co-lines+[data-sn-slot]{width:100%;margin-top:22px}
   .co-lines+[data-sn-slot] .sn-module__track{grid-template-columns:repeat(2,minmax(0,1fr))}
+  /* Carriles en móvil: título a la izquierda, ancho completo, y tarjetas que
+     dejan asomar la siguiente para invitar al gesto. */
+  .sn-module--carril_derecha .sn-module__header,.sn-module--carril_izquierda .sn-module__header{flex-direction:row;text-align:left}
+  .co-lines+[data-sn-slot] .sn-module--carril_derecha .sn-module__track,
+  .co-lines+[data-sn-slot] .sn-module--carril_izquierda .sn-module__track{grid-template-columns:none;grid-auto-columns:minmax(150px,44vw);gap:10px}
+}
+/* En pantallas táctiles el carril se recorre con el dedo: sin flechas. */
+@media(max-width:760px),(hover:none) and (pointer:coarse){
+  .sn-module__controls{display:none}
 }
 @media(max-width:430px){
   .sn-module__header{gap:10px}

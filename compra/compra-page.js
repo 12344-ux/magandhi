@@ -11,8 +11,9 @@ import {
   guardarDatosPersonales,
   guardarEntrega,
   crearPagoDesdeBorrador,
+  imagenesCatalogo,
   moneda,
-} from './compra-core.js?v=3';
+} from './compra-core.js?v=4';
 
 const paso = document.body.dataset.compraPaso;
 const porId = (id) => document.getElementById(id);
@@ -55,19 +56,27 @@ function iconoProducto() {
   return svg;
 }
 
+function ponerMiniatura(media, url) {
+  const imagen = document.createElement('img');
+  imagen.src = url;
+  imagen.alt = '';
+  imagen.loading = 'eager';
+  imagen.addEventListener('error', () => {
+    media.classList.remove('has-image');
+    media.replaceChildren(iconoProducto());
+  }, { once: true });
+  media.classList.add('has-image');
+  media.replaceChildren(imagen);
+}
+
 function crearItem(item) {
   const articulo = document.createElement('article');
   articulo.className = 'cp-order-item';
+  articulo.dataset.compraItem = item.id || '';
   const media = document.createElement('span');
   media.className = 'cp-order-item__media';
-  if (item.imagen) {
-    const imagen = document.createElement('img');
-    imagen.src = item.imagen;
-    imagen.alt = '';
-    imagen.loading = 'eager';
-    imagen.addEventListener('error', () => media.replaceChildren(iconoProducto()), { once: true });
-    media.appendChild(imagen);
-  } else media.appendChild(iconoProducto());
+  if (item.imagen) ponerMiniatura(media, item.imagen);
+  else media.appendChild(iconoProducto());
 
   const informacion = document.createElement('div');
   informacion.className = 'cp-order-item__info';
@@ -80,6 +89,18 @@ function crearItem(item) {
   subtotal.textContent = moneda(item.subtotal);
   articulo.append(media, informacion, subtotal);
   return articulo;
+}
+
+// Las líneas del carrito no traen foto: se completan desde el catálogo público.
+async function completarMiniaturas(lista, items) {
+  const faltantes = items.filter((item) => !item.imagen && item.id).map((item) => item.id);
+  if (!faltantes.length) return;
+  const imagenes = await imagenesCatalogo(faltantes);
+  lista.querySelectorAll('[data-compra-item]').forEach((articulo) => {
+    const url = imagenes.get(articulo.dataset.compraItem);
+    const media = articulo.querySelector('.cp-order-item__media');
+    if (url && media && !media.classList.contains('has-image')) ponerMiniatura(media, url);
+  });
 }
 
 function pintarMini(resumen) {
@@ -136,7 +157,10 @@ async function montarResumen() {
     const total = document.querySelector('[data-compra-total]');
     if (titulo) titulo.textContent = resumen.titulo;
     if (unidades) unidades.textContent = `${resumen.unidades} ${resumen.unidades === 1 ? 'unidad' : 'unidades'}`;
-    if (lista) lista.replaceChildren(...resumen.items.map(crearItem));
+    if (lista) {
+      lista.replaceChildren(...resumen.items.map(crearItem));
+      completarMiniaturas(lista, resumen.items);
+    }
     if (total) total.textContent = moneda(resumen.total);
     const actualizado = new URLSearchParams(window.location.search).get('actualizado') === '1';
     const aviso = document.querySelector('[data-compra-update]');
