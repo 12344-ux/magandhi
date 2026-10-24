@@ -23,6 +23,7 @@
 <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="marca.css?v=3">
 <link rel="stylesheet" href="componentes/cuenta-carrito.css?v=11">
+<link rel="stylesheet" href="componentes/navegacion-movil.css?v=2">
 <link rel="stylesheet" href="componentes/categorias.css?v=4">
 
 <!--
@@ -657,6 +658,33 @@
   </div>
 </header>
 
+<!-- Barra principal en móvil: anclada abajo desde el inicio.
+     Su script va antes que cuenta-carrito.js para no perder el contador. -->
+<nav class="mg-mobile-nav" id="mg-mobile-nav" aria-label="Navegación principal">
+  <a class="mg-mobile-nav__item" href="./" data-mg-mobile-back aria-label="Volver">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m15 18-6-6 6-6"/></svg>
+    <span>Volver</span>
+  </a>
+  <a class="mg-mobile-nav__item" href="./" aria-label="Ir al inicio" aria-current="page">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m3 11 9-8 9 8"/><path d="M5 10v10h14V10M9 20v-6h6v6"/></svg>
+    <span>Inicio</span>
+  </a>
+  <a class="mg-mobile-nav__item" href="categorias/" aria-label="Ver categorías">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="3" width="7" height="7" rx="2"/><rect x="14" y="3" width="7" height="7" rx="2"/><rect x="3" y="14" width="7" height="7" rx="2"/><rect x="14" y="14" width="7" height="7" rx="2"/></svg>
+    <span>Categorías</span>
+  </a>
+  <a class="mg-mobile-nav__item" href="carrito/" data-mg-mobile-cart aria-label="Carrito, sin productos">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="8" cy="21" r="1"/><circle cx="19" cy="21" r="1"/><path d="M2.05 2.05h2l2.66 12.42a2 2 0 0 0 2 1.58h9.78a2 2 0 0 0 1.95-1.57l1.65-7.43H5.12"/></svg>
+    <span>Carrito</span>
+    <span class="mg-mobile-nav__badge" data-mg-mobile-cart-badge aria-hidden="true" hidden>0</span>
+  </a>
+  <a class="mg-mobile-nav__item" href="cuenta/" data-mg-mobile-account aria-label="Ir a mi cuenta">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M4.5 21a7.5 7.5 0 0 1 15 0"/></svg>
+    <span>Cuenta</span>
+  </a>
+</nav>
+<script type="module" src="componentes/navegacion-movil.js?v=2"></script>
+
 <!-- ============================================================
      CARRUSEL / BANNER HERO
      ------------------------------------------------------------
@@ -1030,7 +1058,7 @@
      ============================================================ -->
 <section id="mg-suscripcion" hidden></section>
 <script type="module" src="suscripcion/suscripcion.js?v=2"></script>
-<script type="module" src="componentes/cuenta-carrito.js?v=13"></script>
+<script type="module" src="componentes/cuenta-carrito.js?v=14"></script>
 <!-- Analitica propia (EM7): solo con el interruptor del back-office encendido y si la persona acepta. -->
 <script type="module" src="analitica/analitica.js?v=4"></script>
 

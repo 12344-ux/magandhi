@@ -1,7 +1,9 @@
-/* MAGANDHI · accesos rápidos inferiores en móvil (Volver, Inicio, Categorías,
-   Carrito, Cuenta). Misma apariencia que la página de producto: aparecen abajo
-   cuando la cabecera sale de la vista. En PC no existen. */
-.mg-mobile-nav{display:none}
+/* MAGANDHI · barra principal inferior en móvil (Volver, Inicio, Categorías,
+   Carrito, Cuenta). Solo se carga en Inicio, Categorías y Producto: ahí queda
+   anclada desde el primer momento y es el control principal de la página.
+   Con sesión iniciada, la cabecera superior conserva solo el símbolo de marca y
+   el buscador; para invitados la cabecera no cambia. En PC no existe. */
+.mg-mobile-nav,.mg-aviso-cuenta{display:none}
 @media(max-width:860px){
   .mg-mobile-nav{
     display:grid;grid-template-columns:repeat(5,minmax(0,1fr));
@@ -12,17 +14,9 @@
     border-radius:18px 18px 0 0;
     box-shadow:0 -8px 28px rgba(17,17,17,.12);
     backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);
-    opacity:0;visibility:hidden;pointer-events:none;
-    transform:translateY(calc(100% + 12px));
-    transition:opacity .2s ease,transform .24s ease,visibility 0s linear .24s;
   }
-  .mg-mobile-nav[data-visible="true"]{
-    opacity:1;visibility:visible;pointer-events:auto;transform:none;
-    transition-delay:0s;
-  }
-  body.mg-mobile-nav-visible{
-    padding-bottom:calc(76px + env(safe-area-inset-bottom));
-  }
+  /* Más específico que el `html,body{padding:0}` propio de cada página. */
+  html body{padding-bottom:calc(76px + env(safe-area-inset-bottom))}
   .mg-mobile-nav__item{
     position:relative;min-width:0;min-height:54px;padding:5px 2px;
     display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;
@@ -32,8 +26,14 @@
     transition:color .15s,transform .12s;
   }
   .mg-mobile-nav__item:hover,.mg-mobile-nav__item:focus-visible,
-  .mg-mobile-nav__item[aria-current="page"]{color:var(--rojo)}
+  .mg-mobile-nav__item[aria-current="page"],
+  .mg-mobile-nav__item[aria-expanded="true"]{color:var(--rojo)}
   .mg-mobile-nav__item[aria-current="page"]{font-weight:600}
+  /* Indicador de página actual: una línea corta terracota sobre el ícono. */
+  .mg-mobile-nav__item[aria-current="page"]::before{
+    content:"";position:absolute;top:-6px;left:50%;width:22px;height:3px;
+    margin-left:-11px;border-radius:0 0 3px 3px;background:var(--rojo);
+  }
   .mg-mobile-nav__item:active{transform:scale(.95)}
   .mg-mobile-nav__item:focus-visible{outline:2px solid var(--acento-cl);outline-offset:-2px;border-radius:10px}
   .mg-mobile-nav__item svg{width:21px;height:21px;flex:none}
@@ -46,7 +46,82 @@
   }
   /* Sin productos no hay contador (no todas las páginas ocultan [hidden]). */
   .mg-mobile-nav__badge[hidden]{display:none}
+
+  /* Con sesión: Carrito y Mi cuenta viven abajo; arriba quedan el símbolo de
+     marca en la esquina y el buscador a todo lo ancho. */
+  html[data-mg-sesion="valida"] body .cc-store-header{grid-template-columns:auto minmax(0,1fr)}
+  html[data-mg-sesion="valida"] body .cc-store-header .cc-store-actions{display:none}
+  html[data-mg-sesion="valida"] body .cc-store-header .cc-store-brand{gap:0}
+  html[data-mg-sesion="valida"] body .cc-store-header .cc-store-brand__text{display:none}
+  html[data-mg-sesion="valida"] body .cc-store-header .cc-store-brand img{width:38px;height:38px}
+
+  /* El aviso de analítica (cuando exista) se apoya sobre la barra, no encima. */
+  .an-aviso{bottom:calc(84px + env(safe-area-inset-bottom))}
+
+  /* Aviso para invitados que tocan Carrito: hoja inferior. */
+  .mg-aviso-cuenta{
+    position:fixed;inset:0;z-index:95;display:flex;align-items:flex-end;justify-content:center;
+  }
+  .mg-aviso-cuenta[hidden]{display:none}
+  .mg-aviso-cuenta__fondo{
+    position:absolute;inset:0;background:rgba(17,17,17,.46);
+    backdrop-filter:blur(3px);-webkit-backdrop-filter:blur(3px);
+    animation:mg-aviso-fondo .2s ease-out;
+  }
+  .mg-aviso-cuenta__hoja{
+    position:relative;width:100%;max-width:560px;
+    padding:12px max(22px,env(safe-area-inset-right)) calc(22px + env(safe-area-inset-bottom)) max(22px,env(safe-area-inset-left));
+    background:#fff;border-radius:24px 24px 0 0;
+    box-shadow:0 -18px 48px rgba(17,17,17,.2);
+    text-align:center;color:var(--tinta);
+    animation:mg-aviso-hoja .26s cubic-bezier(.22,.8,.3,1);
+  }
+  .mg-aviso-cuenta__asa{display:block;width:40px;height:4px;margin:0 auto 14px;border-radius:999px;background:rgba(17,17,17,.14)}
+  .mg-aviso-cuenta__cerrar{
+    position:absolute;top:12px;right:12px;width:40px;height:40px;padding:0;
+    border:1px solid var(--linea);border-radius:11px;background:#fff;color:var(--gris);
+    display:flex;align-items:center;justify-content:center;cursor:pointer;
+    transition:border-color .15s,color .15s,background .15s;
+  }
+  .mg-aviso-cuenta__cerrar:hover{border-color:var(--rojo);background:var(--red-50);color:var(--rojo)}
+  .mg-aviso-cuenta__cerrar:focus-visible{outline:3px solid rgba(194,138,58,.42);outline-offset:2px}
+  .mg-aviso-cuenta__cerrar svg{width:18px;height:18px}
+  .mg-aviso-cuenta__icono{
+    width:60px;height:60px;margin:6px auto 14px;border-radius:18px;
+    background:var(--red-50);color:var(--rojo);
+    display:flex;align-items:center;justify-content:center;
+  }
+  .mg-aviso-cuenta__icono svg{width:28px;height:28px}
+  .mg-aviso-cuenta__sello{
+    display:block;margin-bottom:6px;color:var(--acento);
+    font-size:9.5px;font-weight:700;letter-spacing:.2em;text-transform:uppercase;
+  }
+  .mg-aviso-cuenta h2{margin:0 0 8px;color:var(--negro);font-size:20px;font-weight:600;line-height:1.25;letter-spacing:-.3px}
+  .mg-aviso-cuenta h2:focus{outline:none}
+  .mg-aviso-cuenta__texto{max-width:38ch;margin:0 auto;color:var(--gris);font-size:13px;line-height:1.6}
+  .mg-aviso-cuenta__acciones{display:grid;gap:9px;margin-top:20px}
+  .mg-aviso-cuenta__accion{
+    min-height:48px;padding:12px 16px;border-radius:12px;
+    display:flex;align-items:center;justify-content:center;
+    font:inherit;font-size:14px;font-weight:600;line-height:1;text-decoration:none;
+    transition:background .15s,border-color .15s,color .15s,transform .08s;
+  }
+  .mg-aviso-cuenta__accion:active{transform:scale(.98)}
+  .mg-aviso-cuenta__accion:focus-visible{outline:3px solid rgba(194,138,58,.48);outline-offset:3px}
+  .mg-aviso-cuenta__accion--principal{border:1px solid var(--rojo);background:var(--rojo);color:#fff}
+  .mg-aviso-cuenta__accion--principal:hover{border-color:var(--rojo-osc);background:var(--rojo-osc)}
+  .mg-aviso-cuenta__accion--secundaria{border:1px solid rgba(17,17,17,.14);background:#fff;color:var(--tinta)}
+  .mg-aviso-cuenta__accion--secundaria:hover{border-color:var(--rojo);color:var(--rojo)}
+  .mg-aviso-cuenta__nota{
+    margin:16px auto 0;padding-top:14px;border-top:1px solid var(--linea);
+    max-width:40ch;color:var(--gris-cl);font-size:11.5px;line-height:1.55;
+  }
+  .mg-aviso-cuenta__nota strong{color:var(--gris);font-weight:600}
+  body.mg-aviso-cuenta-abierto{overflow:hidden}
 }
+@keyframes mg-aviso-fondo{from{opacity:0}to{opacity:1}}
+@keyframes mg-aviso-hoja{from{transform:translateY(100%)}to{transform:none}}
 @media(prefers-reduced-motion:reduce){
-  .mg-mobile-nav{transition:none}
+  .mg-mobile-nav__item,.mg-aviso-cuenta__accion{transition:none}
+  .mg-aviso-cuenta__fondo,.mg-aviso-cuenta__hoja{animation:none}
 }

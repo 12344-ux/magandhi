@@ -34,6 +34,7 @@
 <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="../marca.css?v=3">
 <link rel="stylesheet" href="../componentes/cuenta-carrito.css?v=11">
+<link rel="stylesheet" href="../componentes/navegacion-movil.css?v=2">
 
 <!--
   MAGANDHI · Plantilla funcional UNICA de producto. Se llena sola para cualquier
@@ -217,53 +218,10 @@
     .mg-store-header .cc-store-brand img{width:36px;height:36px}
     .mg-store-header .cc-auth-action{padding-inline:6px;font-size:10px}
   }
-  /* Navegación contextual: aparece abajo cuando la cabecera sale de la vista. */
-  .mg-mobile-nav{display:none}
+  /* La barra inferior móvil vive en componentes/navegacion-movil.css; en móvil
+     sustituye al prefooter. */
   @media(max-width:860px){
     .mg-prefooter{display:none}
-    .mg-mobile-nav{
-      display:grid;grid-template-columns:repeat(5,minmax(0,1fr));
-      position:fixed;left:0;right:0;bottom:0;z-index:70;
-      min-height:68px;
-      padding:6px max(8px,env(safe-area-inset-right)) max(6px,env(safe-area-inset-bottom)) max(8px,env(safe-area-inset-left));
-      background:rgba(255,255,255,.98);border-top:1px solid var(--linea);
-      border-radius:18px 18px 0 0;
-      box-shadow:0 -8px 28px rgba(17,17,17,.12);
-      backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);
-      opacity:0;visibility:hidden;pointer-events:none;
-      transform:translateY(calc(100% + 12px));
-      transition:opacity .2s ease,transform .24s ease,visibility 0s linear .24s;
-    }
-    .mg-mobile-nav[data-visible="true"]{
-      opacity:1;visibility:visible;pointer-events:auto;transform:none;
-      transition-delay:0s;
-    }
-    body.mg-mobile-nav-visible{
-      padding-bottom:calc(76px + env(safe-area-inset-bottom));
-    }
-    .mg-mobile-nav__item{
-      position:relative;min-width:0;min-height:54px;padding:5px 2px;
-      display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;
-      border:0;background:transparent;color:var(--gris);text-decoration:none;
-      font-family:inherit;font-size:9px;font-weight:500;line-height:1.15;
-      cursor:pointer;-webkit-tap-highlight-color:transparent;
-      transition:color .15s,transform .12s;
-    }
-    .mg-mobile-nav__item:hover,.mg-mobile-nav__item:focus-visible{color:var(--rojo)}
-    .mg-mobile-nav__item:active{transform:scale(.95)}
-    .mg-mobile-nav__item:focus-visible{outline:2px solid var(--acento-cl);outline-offset:-2px;border-radius:10px}
-    .mg-mobile-nav__item svg{width:21px;height:21px;flex:none}
-    .mg-mobile-nav__badge{
-      position:absolute;top:2px;left:calc(50% + 3px);
-      min-width:16px;height:16px;padding:0 4px;border-radius:999px;
-      display:inline-flex;align-items:center;justify-content:center;
-      background:var(--rojo);color:#fff;border:2px solid #fff;
-      font-size:8px;font-weight:700;line-height:1;font-variant-numeric:tabular-nums;
-    }
-  }
-
-  @media(prefers-reduced-motion:reduce){
-    .mg-mobile-nav{transition:none}
   }
 
   /* ---------- migas ---------- */
@@ -1257,8 +1215,9 @@
   </div>
 </header>
 
-<!-- Accesos persistentes de producto: solo aparecen en móvil cuando la cabecera sale de la vista. -->
-<nav class="mg-mobile-nav" id="mg-mobile-nav" aria-label="Accesos rápidos" aria-hidden="true" data-visible="false">
+<!-- Barra principal en móvil: anclada abajo desde el inicio.
+     Su script va antes que cuenta-carrito.js para no perder el contador. -->
+<nav class="mg-mobile-nav" id="mg-mobile-nav" aria-label="Navegación principal">
   <a class="mg-mobile-nav__item" href="/" data-mg-mobile-back aria-label="Volver">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m15 18-6-6 6-6"/></svg>
     <span>Volver</span>
@@ -1276,67 +1235,12 @@
     <span>Carrito</span>
     <span class="mg-mobile-nav__badge" data-mg-mobile-cart-badge aria-hidden="true" hidden>0</span>
   </a>
-  <a class="mg-mobile-nav__item" href="/cuenta/" aria-label="Ir a mi cuenta">
+  <a class="mg-mobile-nav__item" href="/cuenta/" data-mg-mobile-account aria-label="Ir a mi cuenta">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M4.5 21a7.5 7.5 0 0 1 15 0"/></svg>
     <span>Cuenta</span>
   </a>
 </nav>
-<script>
-  // La navegación básica no depende de sesión ni de red: acompaña el scroll
-  // aunque el catálogo o la cuenta todavía estén cargando.
-  (function(){
-    var nav = document.getElementById('mg-mobile-nav');
-    var cabecera = document.querySelector('header.mg-store-header');
-    if(!nav || !cabecera) return;
-
-    var mediaMovil = window.matchMedia('(max-width:860px)');
-    var framePendiente = 0;
-
-    function mostrarNavegacion(mostrar){
-      var visible = mediaMovil.matches && mostrar;
-      nav.dataset.visible = visible ? 'true' : 'false';
-      nav.setAttribute('aria-hidden', visible ? 'false' : 'true');
-      document.body.classList.toggle('mg-mobile-nav-visible', visible);
-    }
-
-    function evaluarCabecera(){
-      framePendiente = 0;
-      mostrarNavegacion(cabecera.getBoundingClientRect().bottom <= 0);
-    }
-
-    function solicitarEvaluacion(){
-      if(framePendiente) return;
-      framePendiente = requestAnimationFrame(evaluarCabecera);
-    }
-
-    // Mismo «Volver» en la barra inferior móvil y en la cabecera de PC.
-    Array.prototype.forEach.call(document.querySelectorAll('[data-mg-mobile-back]'), function(volver){
-      volver.addEventListener('click', function(evento){
-        if(evento.defaultPrevented || evento.button !== 0 || evento.metaKey ||
-           evento.ctrlKey || evento.shiftKey || evento.altKey) return;
-        var regresoInterno = false;
-        try{
-          regresoInterno = window.history.length > 1 && !!document.referrer &&
-            new URL(document.referrer).origin === window.location.origin;
-        }catch(_){ /* Si no se puede validar, el href lleva al inicio. */ }
-        if(regresoInterno){
-          evento.preventDefault();
-          window.history.back();
-        }
-      });
-    });
-
-    window.addEventListener('scroll', solicitarEvaluacion, { passive:true });
-    window.addEventListener('resize', solicitarEvaluacion, { passive:true });
-    window.addEventListener('pageshow', solicitarEvaluacion);
-    if(typeof mediaMovil.addEventListener === 'function'){
-      mediaMovil.addEventListener('change', solicitarEvaluacion);
-    }else{
-      mediaMovil.addListener(solicitarEvaluacion);
-    }
-    evaluarCabecera();
-  })();
-</script>
+<script type="module" src="../componentes/navegacion-movil.js?v=2"></script>
 
 <!-- migas -->
 <div class="mg-migas"><a href="../index.html">Inicio</a> › <span id="mg-miga-cat">Productos</span> › <span id="mg-miga-nom">Jabón de Coco para el Hogar</span></div>
@@ -1919,7 +1823,7 @@
     refrescarCuentaCarrito,
     ocultarCuentaCarrito,
     abrirCentroCuenta,
-  } from '../componentes/cuenta-carrito.js?v=13';
+  } from '../componentes/cuenta-carrito.js?v=14';
   import { revalidarSesionCliente } from '../cliente/cliente-sesion.js';
   import {
     establecerFavorito,
