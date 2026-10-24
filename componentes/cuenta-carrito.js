@@ -3,6 +3,7 @@ import { configurarBuscadores } from './motor-tienda.js?v=3';
 import { observarSesionCliente } from '../cliente/cliente-sesion.js';
 import { listarCarrito } from '../carrito/carrito-core.js?v=3';
 import { crearControlMisCompras } from './mis-compras.js?v=5';
+import { crearControlFavoritos } from './mis-favoritos.js?v=1';
 import { supabase } from '../supabase-config.js';
 
 const slots = [...document.querySelectorAll('[data-cuenta-carrito]')];
@@ -212,6 +213,7 @@ const controlCompras = crearControlMisCompras({
   obtenerRutas: () => rutasCentro || (slots[0] ? rutasDelSlot(slots[0]) : null),
   alCambiar: actualizarIndicadoresCompras,
 });
+const controlFavoritos = crearControlFavoritos();
 
 function limpiarCarrito(error = false) {
   estado = Object.freeze({ visible: false, uid: uidActual, snapshot: null, error });
@@ -457,6 +459,7 @@ function mostrarHub(enfocarTitulo = true) {
   pantallaCentro = 'hub';
   centro.dataset.ccScreen = 'hub';
   controlCompras.desmontar();
+  controlFavoritos.desmontar();
   centro.querySelectorAll('[data-cc-view]').forEach((boton) => {
     boton.classList.remove('is-active');
     boton.removeAttribute('aria-current');
@@ -483,9 +486,13 @@ function mostrarVista(vista = 'compras', enfocarTitulo = true) {
   });
   const contenido = centro.querySelector('[data-cc-content]');
   controlCompras.desmontar();
+  controlFavoritos.desmontar();
   if (seleccion === 'compras') {
     contenido.replaceChildren();
     controlCompras.montar(contenido);
+  } else if (seleccion === 'favoritos') {
+    contenido.replaceChildren();
+    controlFavoritos.montar(contenido);
   } else {
     contenido.innerHTML = seleccion === 'pqrs'
       ? plantillaPqrs()
@@ -549,6 +556,7 @@ function cerrarCentro({ limpiarHistorial = true } = {}) {
   if (!centro || centro.hidden) return;
   const pasos = limpiarHistorial && historialEsPropio() ? historialCentro.profundidad : 0;
   controlCompras.desmontar();
+  controlFavoritos.desmontar();
   centro.hidden = true;
   centro.removeAttribute('data-cc-screen');
   document.body.classList.remove('cc-center-open');
