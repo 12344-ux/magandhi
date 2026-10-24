@@ -104,6 +104,12 @@ async function completarMiniaturas(lista, items) {
 }
 
 function pintarMini(resumen) {
+  // Recordatorios del total en móvil (botón del paso 2 y encima del pago).
+  if (Number.isFinite(Number(resumen?.total))) {
+    document.querySelectorAll('[data-compra-total-recordatorio]').forEach((el) => {
+      el.textContent = el.classList.contains('cp-submit-total') ? `· ${moneda(resumen.total)}` : moneda(resumen.total);
+    });
+  }
   const contenedor = document.querySelector('[data-compra-mini]');
   if (!contenedor || !resumen?.items?.length) return;
   const filas = contenedor.querySelector('[data-mini-items]');

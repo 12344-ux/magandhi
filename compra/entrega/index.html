@@ -11,7 +11,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="../../marca.css?v=3">
-  <link rel="stylesheet" href="../compra.css?v=2">
+  <link rel="stylesheet" href="../compra.css?v=3">
 </head>
 <body data-compra-paso="entrega">
 <header class="cp-header">
@@ -31,7 +31,7 @@
 
   <div class="cp-layout">
     <form class="cp-card cp-form" id="cp-delivery-form" novalidate>
-      <div class="cp-form__intro"><span class="cp-form__icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0z"/><circle cx="12" cy="10" r="3"/></svg></span><div><h2>Datos de entrega</h2><p>Solo las indicaciones adicionales son opcionales.</p></div></div>
+      <div class="cp-form__intro"><span class="cp-form__icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0z"/><circle cx="12" cy="10" r="3"/></svg></span><div><h2>Datos de entrega</h2><p class="cp-solo-pc">Solo las indicaciones adicionales son opcionales.</p></div></div>
       <div class="cp-form-alert" role="alert" data-form-alert hidden></div>
       <div class="cp-form__row">
         <div class="cp-field">
@@ -55,9 +55,9 @@
       </div>
       <div class="cp-field">
         <label for="cp-detalles">Indicaciones adicionales <small>(opcional)</small></label>
-        <input id="cp-detalles" name="detalles" type="text" autocomplete="address-line2" maxlength="70" placeholder="Apartamento, torre, barrio o referencia" aria-describedby="cp-detalles-help">
-        <span class="cp-field__help" id="cp-detalles-help">Ayuda a encontrar tu dirección sin llamadas de más.</span>
+        <input id="cp-detalles" name="detalles" type="text" autocomplete="address-line2" maxlength="70" placeholder="Apartamento, torre, barrio o referencia">
       </div>
+      <div class="cp-pay-total cp-solo-movil"><span>Total</span><strong data-compra-total-recordatorio>—</strong></div>
       <button class="cp-primary cp-form__submit cp-form__submit--pay" type="submit" disabled>
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="2" y="5" width="20" height="14" rx="2"/><path d="M2 10h20"/></svg>
         <span data-pay-label>Pagar con Wompi</span>
@@ -71,6 +71,6 @@
   </div>
 </main>
 <footer class="cp-footer"><span>© 2026 MAGANDHI</span><a href="../../politicas/">Políticas</a><a href="mailto:contacto@magandhi.com">Ayuda</a></footer>
-<script type="module" src="../compra-page.js?v=5"></script>
+<script type="module" src="../compra-page.js?v=6"></script>
 </body>
 </html>

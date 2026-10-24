@@ -78,7 +78,9 @@ input{font:inherit}input:focus-visible{outline:3px solid rgba(194,138,58,.42);ou
   .co-summary .co-summary__total{display:flex;flex-direction:column;align-items:flex-start;justify-content:center;gap:1px}
   .co-summary .co-summary__total span{color:var(--gris);font-size:11px;font-weight:500;line-height:1.2}
   .co-summary .co-summary__total strong{font-size:19px;line-height:1.15;letter-spacing:-.3px;white-space:nowrap}
-  .co-summary .co-checkout{margin:0;min-height:48px;padding-inline:16px;border-radius:13px;font-size:14.5px;box-shadow:0 8px 18px rgba(166,51,46,.2)}
+  /* Botón compacto en una sola línea, al ancho de su texto, a la derecha del total. */
+  .co-summary .co-checkout{justify-self:end;width:auto;min-height:44px;margin:0;padding:10px 16px 10px 18px;border-radius:12px;font-size:13.5px;line-height:1;white-space:nowrap;gap:6px;box-shadow:0 6px 14px rgba(166,51,46,.18)}
+  .co-summary .co-checkout svg{width:16px;height:16px}
   .co-summary .co-checkout:disabled{box-shadow:none}
   .co-summary .co-checkout-help{grid-column:1/-1;min-height:0!important;margin:0!important;font-size:11px;line-height:1.45}
   .co-summary .co-checkout-help:empty{display:none}
@@ -86,4 +88,9 @@ input{font:inherit}input:focus-visible{outline:3px solid rgba(194,138,58,.42);ou
   /* Total y barra forman una sola hoja inferior. */
   body:has(#co-content:not([hidden])) .mg-mobile-nav{border-top-color:transparent;border-radius:0;box-shadow:none}
   html body:has(#co-content:not([hidden])){padding-bottom:calc(max(68px,calc(60px + env(safe-area-inset-bottom))) + 84px)}
+}
+@media(max-width:360px){
+  .co-summary{column-gap:10px}
+  .co-summary .co-summary__total strong{font-size:17px}
+  .co-summary .co-checkout{padding-inline:14px 12px;font-size:13px}
 }
