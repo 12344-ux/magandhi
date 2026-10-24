@@ -261,6 +261,26 @@ function imagenPublica(fila) {
   }
 }
 
+// Presentación: miniaturas públicas para el resumen (el snapshot del carrito no
+// trae imagen). Solo lectura del catálogo público; no participa en precio,
+// disponibilidad ni huella del resumen. Si falla, el resumen conserva el ícono.
+export async function imagenesCatalogo(ids) {
+  const validos = [...new Set((Array.isArray(ids) ? ids : []).filter((id) => typeof id === 'string' && UUID.test(id)))];
+  const imagenes = new Map();
+  if (!validos.length) return imagenes;
+  try {
+    const resultado = await resolverSolicitudAcotada(
+      supabasePublico.from('catalogo_publico').select('id,imagenes,imagen_banner_path').in('id', validos),
+      { tiempoMaximoMs: 6000 },
+    );
+    for (const fila of resultado?.data || []) {
+      const url = imagenPublica(fila);
+      if (url) imagenes.set(fila.id, url);
+    }
+  } catch { /* Sin miniaturas: el ícono de respaldo sigue visible. */ }
+  return imagenes;
+}
+
 async function consultarProducto(identificador) {
   const esSlug = SLUG.test(identificador.toLowerCase());
   const esUuid = UUID.test(identificador);
