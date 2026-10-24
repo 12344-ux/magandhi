@@ -171,3 +171,41 @@ a:focus-visible,button:focus-visible,input:focus-visible,select:focus-visible{ou
   .cp-pay-total span{color:var(--tinta);font-size:12.5px;font-weight:600}
   .cp-pay-total strong{color:var(--negro);font-size:19px;line-height:1.1;letter-spacing:-.3px;white-space:nowrap}
 }
+
+/* Móvil · el botón principal vive SIEMPRE en el mismo lugar en los tres pasos:
+   fijo abajo sobre una franja blanca, visible durante todo el desplazamiento
+   (igual que el total del carrito). En el paso 3 la franja crece hacia arriba
+   para el recordatorio del total; el botón no se mueve. */
+@media(max-width:720px){
+  /* Al enfocar un campo, el navegador lo deja por encima de la franja. */
+  html{scroll-padding-bottom:calc(130px + env(safe-area-inset-bottom))}
+  body{padding-bottom:calc(84px + env(safe-area-inset-bottom))}
+  body[data-compra-paso="entrega"]{padding-bottom:calc(118px + env(safe-area-inset-bottom))}
+
+  body::after{
+    content:"";position:fixed;left:0;right:0;bottom:0;z-index:4;
+    height:calc(80px + env(safe-area-inset-bottom));
+    background:#fff;border-top:1px solid var(--linea);box-shadow:0 -8px 24px rgba(17,17,17,.06);
+  }
+  body[data-compra-paso="entrega"]::after{height:calc(114px + env(safe-area-inset-bottom))}
+  /* Sin contexto de apilamiento propio: el botón fijo debe quedar sobre la franja. */
+  .cp-main{z-index:auto}
+
+  /* Misma geometría para «Continuar» (pasos 1 y 2) y «Pagar con Wompi» (paso 3). */
+  .cp-action-bar .cp-primary,
+  .cp-form__submit,
+  .cp-form__submit--pay{
+    position:fixed;z-index:5;left:max(16px,env(safe-area-inset-left));right:max(16px,env(safe-area-inset-right));
+    bottom:calc(14px + env(safe-area-inset-bottom));
+    width:auto;min-height:52px;margin:0;font-size:13.5px;
+  }
+  .cp-action-bar{position:static;margin:0;padding:0;border:0;border-radius:0;background:none;box-shadow:none;backdrop-filter:none;-webkit-backdrop-filter:none}
+  .cp-pay-total{
+    position:fixed;z-index:5;left:max(18px,env(safe-area-inset-left));right:max(18px,env(safe-area-inset-right));
+    bottom:calc(76px + env(safe-area-inset-bottom));
+    margin:0;padding:0;border:0;align-items:center;
+  }
+  .cp-pay-total strong{font-size:18px}
+  /* La nota de la tarjeta queda al final del formulario, sobre el flujo normal. */
+  .cp-payment-note{margin:2px 0 0}
+}
