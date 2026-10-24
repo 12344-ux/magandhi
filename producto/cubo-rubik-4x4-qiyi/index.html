@@ -33,7 +33,7 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="../marca.css?v=3">
-<link rel="stylesheet" href="../componentes/cuenta-carrito.css?v=10">
+<link rel="stylesheet" href="../componentes/cuenta-carrito.css?v=11">
 
 <!--
   MAGANDHI · Plantilla funcional UNICA de producto. Se llena sola para cualquier
@@ -314,6 +314,7 @@
     .mg-favorito-local svg{width:19px;height:19px;fill:transparent;transition:fill .15s}
     .mg-favorito-local[aria-pressed="true"]{color:var(--rojo);background:rgba(255,255,255,.94)}
     .mg-favorito-local[aria-pressed="true"] svg{fill:currentColor}
+    .mg-favorito-local:disabled{opacity:.58;cursor:wait;transform:none}
   }
   /* Flechas discretas SOLO en PC, con el mismo lenguaje del hero. La navegacion
      es circular: anterior desde la primera lleva a la ultima y viceversa. */
@@ -559,6 +560,9 @@
   .mg-meta .mg-sello--cede + .mg-estrellas{justify-content:flex-start;text-align:left}
   .mg-meta .mg-estrellas--vacia{line-height:1.35}
   .mg-favorito-escritorio{display:none}
+  .mg-favorito-status{min-height:0;margin:-9px 0 10px;color:var(--gris);font-size:11px;line-height:1.45}
+  .mg-favorito-status:empty{display:none}
+  .mg-favorito-status[data-tone="error"]{color:var(--red-700)}
   @media(max-width:860px){
     .mg-meta{align-items:center;flex-wrap:nowrap;margin-bottom:10px}
     .mg-meta .mg-sello{flex:0 1 auto;min-width:0;max-width:56%;padding:5px 9px;font-size:9px;letter-spacing:.08em;line-height:1.35}
@@ -645,6 +649,7 @@
       color:var(--rojo);border-color:rgba(166,51,46,.30);background:rgba(166,51,46,.08);
     }
     .mg-favorito-escritorio[aria-pressed="true"] svg{fill:currentColor}
+    .mg-favorito-escritorio:disabled{opacity:.58;cursor:wait;transform:none}
 
     .mg-titulo{margin-bottom:6px;letter-spacing:-.45px}
     .mg-sub{margin-bottom:24px}
@@ -1360,6 +1365,7 @@
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.6l-1-1a5.5 5.5 0 0 0-7.8 7.8l1 1L12 21l7.8-7.6 1-1a5.5 5.5 0 0 0 0-7.8z"/></svg>
       </button>
     </div>
+    <p class="mg-favorito-status" id="mg-favorito-status" role="status" aria-live="polite"></p>
     <h1 class="mg-titulo" id="mg-titulo">CUBO RUBIK 4X4 QIYI</h1>
     <p class="mg-sub" id="mg-sub">Listo para la competicion</p>
 
@@ -1843,8 +1849,14 @@
     refrescarCuentaCarrito,
     ocultarCuentaCarrito,
     abrirCentroCuenta,
-  } from '../componentes/cuenta-carrito.js?v=12';
+  } from '../componentes/cuenta-carrito.js?v=13';
   import { revalidarSesionCliente } from '../cliente/cliente-sesion.js';
+  import {
+    establecerFavorito,
+    favoritoGuardado,
+    mensajeErrorFavoritos,
+    observarFavoritos,
+  } from '../componentes/favoritos-core.js?v=1';
   import { codigoAtribucionParaIntencion } from '../scripts/atribucion-promocional.js?v=1';
   import {
     iniciarCompraDirecta,
@@ -2345,25 +2357,48 @@
     return sv ? (urlPublica(sv) || urlPublica(pathGrande)) : urlPublica(pathGrande);
   }
 
-  // Favorito deliberadamente efimero: vive solo en esta carga de la pagina.
-  // No escribe storage ni promete sincronizacion con la cuenta.
-  let favoritoLocalActivo = false;
+  // Favorito persistente de la cuenta. El corazón solo se muestra cuando la
+  // sesión pública ya fue validada; invitado y sesión incierta no ven el control.
+  let estadoFavoritosCuenta = Object.freeze({
+    autenticada: false,
+    cargando: false,
+    cargados: false,
+    favoritos: Object.freeze([]),
+    mutando: Object.freeze([]),
+  });
 
-  function pintarFavoritoLocal(){
+  function anunciarFavorito(mensaje, tono){
+    const estadoEl = document.getElementById('mg-favorito-status');
+    if(!estadoEl) return;
+    estadoEl.textContent = mensaje || '';
+    if(mensaje && tono) estadoEl.dataset.tone = tono;
+    else delete estadoEl.dataset.tone;
+  }
+
+  function pintarFavoritoCuenta(){
+    const campanaId = filaProducto && String(filaProducto.id || '');
+    const visible = estadoFavoritosCuenta.autenticada === true &&
+      estadoFavoritosCuenta.cargados === true && !!campanaId;
+    const activo = visible && favoritoGuardado(campanaId);
+    const mutando = visible && estadoFavoritosCuenta.mutando.includes(campanaId);
+    const nombre = filaProducto && filaProducto.nombre ? String(filaProducto.nombre) : 'este producto';
     document.querySelectorAll('[data-favorito-local]').forEach(function(boton){
-      boton.setAttribute('aria-pressed', favoritoLocalActivo ? 'true' : 'false');
-      boton.setAttribute('aria-label', favoritoLocalActivo
-        ? 'Desmarcar como favorito' : 'Marcar como favorito');
+      boton.hidden = !visible;
+      boton.disabled = !visible || estadoFavoritosCuenta.mutando.length > 0;
+      boton.setAttribute('aria-pressed', activo ? 'true' : 'false');
+      boton.setAttribute('aria-label', activo
+        ? 'Quitar ' + nombre + ' de favoritos'
+        : 'Agregar ' + nombre + ' a favoritos');
+      if(mutando) boton.setAttribute('aria-busy', 'true');
+      else boton.removeAttribute('aria-busy');
     });
+    if(!visible) anunciarFavorito('');
   }
 
   function habilitarOverlayGaleria(){
     const overlay = document.getElementById('mg-galeria-overlay');
     if(overlay) overlay.hidden = false;
-    document.querySelectorAll('[data-favorito-local]').forEach(function(boton){
-      boton.hidden = false;
-    });
-    pintarFavoritoLocal();
+    pintarFavoritoCuenta();
   }
 
   function actualizarContadorGaleria(indice, total){
@@ -2374,15 +2409,29 @@
     contador.textContent = multiple ? (indice + 1) + ' / ' + total : '';
   }
 
-  function configurarFavoritoLocal(){
+  function configurarFavoritoCuenta(){
     const botones = document.querySelectorAll('[data-favorito-local]');
     if(!botones.length) return;
-    pintarFavoritoLocal();
+    observarFavoritos(function(siguiente){
+      estadoFavoritosCuenta = siguiente;
+      pintarFavoritoCuenta();
+    });
     botones.forEach(function(boton){
-      boton.addEventListener('click', function(){
-        if(boton.hidden || !filaProducto) return;
-        favoritoLocalActivo = !favoritoLocalActivo;
-        pintarFavoritoLocal();
+      boton.addEventListener('click', async function(){
+        if(boton.hidden || boton.disabled || !filaProducto || !estadoFavoritosCuenta.autenticada) return;
+        const campanaId = String(filaProducto.id || '');
+        if(!campanaId) return;
+        const guardar = !favoritoGuardado(campanaId);
+        anunciarFavorito(guardar ? 'Guardando en tus favoritos…' : 'Quitando de tus favoritos…');
+        try{
+          const resultado = await establecerFavorito(campanaId, guardar);
+          if(!resultado) return;
+          anunciarFavorito(guardar
+            ? 'Guardamos este producto en tus favoritos.'
+            : 'Quitamos este producto de tus favoritos.');
+        }catch(error){
+          anunciarFavorito(mensajeErrorFavoritos(error), 'error');
+        }
       });
     });
   }
@@ -4248,7 +4297,7 @@
   configurarVueltaDelPago();
   configurarContadorNavegacionMovil();
   configurarCantidad();
-  configurarFavoritoLocal();
+  configurarFavoritoCuenta();
   configurarCarritoProducto();
   configurarCompra();
   configurarWhatsApp();
