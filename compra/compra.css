@@ -208,4 +208,7 @@ a:focus-visible,button:focus-visible,input:focus-visible,select:focus-visible{ou
   .cp-pay-total strong{font-size:18px}
   /* La nota de la tarjeta queda al final del formulario, sobre el flujo normal. */
   .cp-payment-note{margin:2px 0 0}
+  /* Sin pie de página: el formulario termina sobre la franja del botón. */
+  .cp-footer{display:none}
+  .cp-main{margin-bottom:0;padding-bottom:20px}
 }

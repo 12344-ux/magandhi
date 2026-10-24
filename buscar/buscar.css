@@ -56,3 +56,5 @@ a{color:inherit}
 .bs-state button{min-height:42px;margin-left:14px;padding:9px 16px;border:1px solid var(--rojo);border-radius:10px;background:var(--rojo);color:#fff;font:inherit;font-size:12px;font-weight:650;cursor:pointer}
 .bs-state button:hover{background:var(--rojo-osc)}
 @media(max-width:520px){.bs-state[data-tone="error"]{flex-direction:column;gap:13px}.bs-state button{margin-left:0}}
+/* Móvil · sin pie de página: el contenido termina con un margen limpio. */
+@media(max-width:860px){.bs-footer{display:none}}
