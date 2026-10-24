@@ -145,3 +145,29 @@ a:focus-visible,button:focus-visible,input:focus-visible,select:focus-visible{ou
   .cp-footer{border-top:1px solid var(--linea);color:var(--gris)}
   .cp-footer a:hover{color:var(--rojo)}
 }
+
+/* Móvil · flujo de pago con menos ruido. En PC todo conserva su composición;
+   allá solo se retiran las ayudas marcadas como «solo móvil». */
+.cp-solo-movil,.cp-submit-total{display:none}
+@media(max-width:720px){
+  .cp-solo-movil{display:block}
+  .cp-submit-total{display:inline;margin-left:-3px;font-weight:600}
+  .cp-solo-pc{display:none}
+
+  .cp-progress{margin-bottom:20px}
+  .cp-heading{margin-bottom:16px}
+  .cp-heading .cp-kicker,.cp-heading p{display:none}
+  .cp-heading h1{margin:0;font-size:25px;letter-spacing:-.5px}
+  body[data-compra-paso="datos"] .cp-heading h1,
+  body[data-compra-paso="entrega"] .cp-heading h1{font-size:clamp(18px,5.6vw,22px);letter-spacing:-.3px;white-space:nowrap}
+
+  /* Resumen: ya no hace falta vender; datos y entrega: el resumen ya se verificó. */
+  .cp-assurance{display:none}
+  body[data-compra-paso="datos"] .cp-mini,
+  body[data-compra-paso="entrega"] .cp-mini{display:none}
+
+  /* Recordatorio del total justo antes de pagar. */
+  .cp-pay-total{display:flex;align-items:baseline;justify-content:space-between;gap:12px;margin-top:2px;padding-top:15px;border-top:1px solid var(--linea)}
+  .cp-pay-total span{color:var(--tinta);font-size:12.5px;font-weight:600}
+  .cp-pay-total strong{color:var(--negro);font-size:19px;line-height:1.1;letter-spacing:-.3px;white-space:nowrap}
+}
