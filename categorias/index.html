@@ -24,7 +24,7 @@
 <link rel="stylesheet" href="../marca.css?v=3">
 <link rel="stylesheet" href="../componentes/cuenta-carrito.css?v=11">
 <link rel="stylesheet" href="../componentes/categorias.css?v=4">
-<link rel="stylesheet" href="../componentes/navegacion-movil.css?v=1">
+<link rel="stylesheet" href="../componentes/navegacion-movil.css?v=2">
 <style>
 *{box-sizing:border-box}html,body{margin:0;padding:0}body{background:var(--fondo-pagina);color:var(--tinta);font-family:'Poppins',system-ui,-apple-system,'Segoe UI',Roboto,sans-serif;line-height:1.65;-webkit-font-smoothing:antialiased}a{color:inherit}
 .cp-breadcrumb{max-width:1200px;margin:8px auto 14px;padding:0 24px;color:var(--gris);font-size:11.5px}.cp-breadcrumb a{min-height:44px;color:var(--rojo);text-decoration:none;display:inline-flex;align-items:center}.cp-breadcrumb a:hover{text-decoration:underline;text-underline-offset:4px}
@@ -61,9 +61,9 @@
   </div>
 </header>
 
-<!-- Accesos rápidos en móvil: aparecen abajo cuando la cabecera sale de la vista.
+<!-- Barra principal en móvil: anclada abajo desde el inicio.
      Su script va antes que cuenta-carrito.js para no perder el contador. -->
-<nav class="mg-mobile-nav" id="mg-mobile-nav" aria-label="Accesos rápidos" aria-hidden="true" data-visible="false" data-cabecera="header.cp-head">
+<nav class="mg-mobile-nav" id="mg-mobile-nav" aria-label="Navegación principal">
   <a class="mg-mobile-nav__item" href="../" data-mg-mobile-back aria-label="Volver">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m15 18-6-6 6-6"/></svg>
     <span>Volver</span>
@@ -81,12 +81,12 @@
     <span>Carrito</span>
     <span class="mg-mobile-nav__badge" data-mg-mobile-cart-badge aria-hidden="true" hidden>0</span>
   </a>
-  <a class="mg-mobile-nav__item" href="../cuenta/" aria-label="Ir a mi cuenta">
+  <a class="mg-mobile-nav__item" href="../cuenta/" data-mg-mobile-account aria-label="Ir a mi cuenta">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M4.5 21a7.5 7.5 0 0 1 15 0"/></svg>
     <span>Cuenta</span>
   </a>
 </nav>
-<script type="module" src="../componentes/navegacion-movil.js?v=1"></script>
+<script type="module" src="../componentes/navegacion-movil.js?v=2"></script>
 
 <nav class="cp-breadcrumb" aria-label="Migas de pan"><a href="../">Inicio</a> <span aria-hidden="true">›</span> <span id="cp-breadcrumb-current">Categorías</span></nav>
 <main>
@@ -142,7 +142,7 @@
   </div>
   <div class="cp-footer__legal"><div><span>© 2026 MAGANDHI</span><span>Tunja · Envíos nacionales</span></div></div>
 </footer>
-<script type="module" src="../componentes/cuenta-carrito.js?v=13"></script>
+<script type="module" src="../componentes/cuenta-carrito.js?v=14"></script>
 <script type="module" src="./categorias.js?v=11"></script>
 <script type="module" src="../analitica/analitica.js?v=4"></script>
 </body>

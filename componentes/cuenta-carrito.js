@@ -143,7 +143,15 @@ function crearBotonCentro(slot) {
   return boton;
 }
 
+// Presentación: la barra móvil y el CSS adaptan la cabecera según la sesión.
+function anunciarSesion() {
+  if (document.documentElement.dataset.mgSesion === sesionActual.estado) return;
+  document.documentElement.dataset.mgSesion = sesionActual.estado;
+  window.dispatchEvent(new CustomEvent('magandhi:sesion', { detail: { estado: sesionActual.estado } }));
+}
+
 function pintarSlots() {
+  anunciarSesion();
   for (const slot of slots) {
     const botonExistente = slot.querySelector('[data-cc-account-button]');
     slot.replaceChildren();
@@ -666,6 +674,18 @@ if (typeof mediaCuentaMovil.addEventListener === 'function') {
 
 window.addEventListener('magandhi:compras-invalidar', () => {
   controlCompras.invalidar();
+});
+
+// La barra inferior móvil abre el mismo centro «Mi cuenta» que la cabecera.
+window.addEventListener('magandhi:abrir-cuenta', (evento) => {
+  const detalle = evento.detail;
+  const slot = slots[0];
+  if (!detalle || !slot) return;
+  detalle.abierto = abrirCentroDesdeBoton(
+    detalle.origen || null,
+    rutasDelSlot(slot),
+    mediaCuentaMovil.matches ? 'hub' : 'compras'
+  );
 });
 
 observarSesionCliente((sesion) => {
