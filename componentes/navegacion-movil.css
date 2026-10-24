@@ -3,7 +3,7 @@
    anclada desde el primer momento y es el control principal de la página.
    Con sesión iniciada, la cabecera superior conserva solo el símbolo de marca y
    el buscador; para invitados la cabecera no cambia. En PC no existe. */
-.mg-mobile-nav,.mg-aviso-cuenta{display:none}
+.mg-mobile-nav,.mg-aviso-cuenta,.mg-legal-movil{display:none}
 @media(max-width:860px){
   .mg-mobile-nav{
     display:grid;grid-template-columns:repeat(5,minmax(0,1fr));
@@ -15,8 +15,12 @@
     box-shadow:0 -8px 28px rgba(17,17,17,.12);
     backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);
   }
-  /* Más específico que el `html,body{padding:0}` propio de cada página. */
-  html body{padding-bottom:calc(76px + env(safe-area-inset-bottom))}
+  /* Más específico que el `html,body{padding:0}` propio de cada página.
+     El contenido termina 24px por encima del panel inferior. */
+  html body{padding-bottom:calc(max(68px,calc(60px + env(safe-area-inset-bottom))) + 24px)}
+  /* En móvil la página termina en el panel: sin pie de página. Los enlaces
+     legales viven en Mi cuenta y, para invitados, en la línea mínima de Inicio. */
+  body > footer{display:none}
   .mg-mobile-nav__item{
     position:relative;min-width:0;min-height:54px;padding:5px 2px;
     display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;
@@ -54,6 +58,12 @@
   html[data-mg-sesion="valida"] body .cc-store-header .cc-store-brand{gap:0}
   html[data-mg-sesion="valida"] body .cc-store-header .cc-store-brand__text{display:none}
   html[data-mg-sesion="valida"] body .cc-store-header .cc-store-brand img{width:38px;height:38px}
+
+  /* Línea legal mínima (solo Inicio, solo invitados). */
+  .mg-legal-movil{display:block;margin:28px 0 0;padding:0 16px;color:var(--gris-cl);font-size:11px;line-height:1.4;text-align:center}
+  .mg-legal-movil a{color:var(--gris);text-decoration:underline;text-underline-offset:3px}
+  .mg-legal-movil a:hover,.mg-legal-movil a:focus-visible{color:var(--rojo)}
+  html[data-mg-sesion="valida"] .mg-legal-movil{display:none}
 
   /* El aviso de analítica (cuando exista) se apoya sobre la barra, no encima. */
   .an-aviso{bottom:calc(84px + env(safe-area-inset-bottom))}

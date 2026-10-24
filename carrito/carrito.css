@@ -65,7 +65,9 @@ input{font:inherit}input:focus-visible{outline:3px solid rgba(194,138,58,.42);ou
   .co-head-title__text{color:var(--negro);font-size:23px;font-weight:600;line-height:1;letter-spacing:-.4px}
   /* El h1 se conserva para lectores de pantalla; visualmente lo da la cabecera. */
   .co-title{position:absolute;width:1px;height:1px;margin:-1px;padding:0;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}
-  .co-main{width:calc(100% - 28px);margin:14px auto 28px}
+  .co-main{width:calc(100% - 28px);min-height:0;margin:14px auto 0}
+  /* Sin pie de página: el contenido termina sobre el panel inferior. */
+  .co-footer{display:none}
 
   .co-summary{
     position:fixed;left:0;right:0;z-index:69;
@@ -87,7 +89,7 @@ input{font:inherit}input:focus-visible{outline:3px solid rgba(194,138,58,.42);ou
 
   /* Total y barra forman una sola hoja inferior. */
   body:has(#co-content:not([hidden])) .mg-mobile-nav{border-top-color:transparent;border-radius:0;box-shadow:none}
-  html body:has(#co-content:not([hidden])){padding-bottom:calc(max(68px,calc(60px + env(safe-area-inset-bottom))) + 84px)}
+  html body:has(#co-content:not([hidden])){padding-bottom:calc(max(68px,calc(60px + env(safe-area-inset-bottom))) + 93px)}
 }
 @media(max-width:360px){
   .co-summary{column-gap:10px}
